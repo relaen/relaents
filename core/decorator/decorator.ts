@@ -1,67 +1,6 @@
-/**
- * 实体字段配置
- */
-interface IEntityColumn{
-    /**
-     * 字段名，默认为属性名
-     */
-    name?:string;
+import { IEntityPKey, IEntityColumn, IEntityRelation } from "../entitydefine";
+import { EntityManager } from "../entitymanager";
 
-    /**
-     * 数据类型 int double string date
-     */
-    type:string;
-
-    /**
-     * 是否可空
-     */
-    nullable?:boolean;
-
-    /**
-     * 长度，type为字符串时有效
-     */
-    length?:number;
-}
-
-/**
- * 实体主键配置
- */
-interface IEntityPKey{
-    /**
-     * 主键来源表，数据库表，专门用于主键生成
-     */
-    table?:string;
-
-    /**
-     * 主键对应来源表字段
-     */
-    column?:string;
-}
-
-/**
- * 实体关系配置
- */
-interface IEntityRelation{
-    /**
-     * 实体类名
-     */
-    entity:string;
-
-    /**
-     * 实体字段字段名
-     */
-    colunn:string;
-
-    /**
-     * 外键删除策略  cascade,setnull,none
-     */
-    onDelete?:string;
-
-    /**
-     * 外键更新策略 cascade,setnull,none
-     */
-    onUpdate?:string;
-}
 /**
  * 装饰器（注解类）
  */
@@ -74,28 +13,19 @@ interface IEntityRelation{
  */
 function Entity(tblName:string,schema?:string){
     return (target) =>{
-        //初始化orm配置项
-        target.prototype.__orm = {
-            table:tblName,      //表名
-            ids:new Map(),       //可能存在多个主键
-            columns:new Map()   //字段集合 {columnName:tableColumnName,...}
-        }
+        EntityManager.addClass(target.prototype.name,tblName,schema);
     }
 }
 
 /**
  * @exclude
  * 主键装饰器，装饰属性
- * @param genMethod 主键生成方法
  * @param cfg       配置项
  */
-function Id(genMethod:string,cfg?:IEntityPKey){
+function Id(cfg?:IEntityPKey){
     return (target:any,propertyName:string)=>{
         process.nextTick(()=>{
-            target.__orm.ids.set(propertyName,{
-                genMethod:genMethod,
-                cfg:cfg
-            })
+            EntityManager.addPKey(target.prototype.name,propertyName,cfg);
         });
     }
 }
@@ -111,7 +41,7 @@ function Column(cfg:IEntityColumn){
             throw "@Column配置参数错误";
         }
         process.nextTick(()=>{
-            target.__orm.columns.set(propertyName,cfg);
+            EntityManager.addColumn(target.prototype.name,propertyName,cfg);
         });
     }
 }
@@ -160,4 +90,4 @@ function ManyToMany(cfg:IEntityRelation){
     }
 }
 
-export {IEntityColumn,IEntityPKey,IEntityRelation,Entity,Id,Column,OneToMany,OneToOne,ManyToOne,ManyToMany}
+export {Entity,Id,Column,OneToMany,OneToOne,ManyToOne,ManyToMany}

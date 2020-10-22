@@ -1,3 +1,6 @@
+import {EntityManager} from "./entitymanager";
+import { IEntityCfg } from "./entitydefine";
+
 /**
  * 翻译器
  */
@@ -7,8 +10,8 @@ class Translator{
      * entity转insert sql
      * @param entity 
      */
-    static entityToInsert<T>(entity:T):string{
-        let orm:any = entity['__orm'];
+    static entityToInsert(entity:any):string{
+        let orm:IEntityCfg = EntityManager.getClass(entity.prototype.name);
         let arr:string[] = [];
         arr.push('insert into');
         arr.push(orm.table);
@@ -19,7 +22,7 @@ class Translator{
         let values:string[] = [];
         for(let key of orm.columns){
             let fo:any = key[1];
-            let v = entity[key];
+            let v = entity[key[0]];
             
             //值不存在，则下一个
             if(v === undefined){
@@ -47,8 +50,8 @@ class Translator{
      * entity转update sql
      * @param entity 
      */
-    static entityToUpdate<T>(entity:T):string{
-        let orm:any = entity['__orm'];
+    static entityToUpdate(entity:any):string{
+        let orm:IEntityCfg = EntityManager.getClass(entity.prototype.name);
         let arr:string[] = [];
         arr.push('update');
         arr.push(orm.table);
@@ -57,7 +60,7 @@ class Translator{
         let fv:string[] = [];
         for(let key of orm.columns){
             let fo:any = key[1];
-            let v = entity[key];
+            let v = entity[key[0]];
             //值不存在，则下一个
             if(v === undefined){
                 continue;
@@ -80,8 +83,8 @@ class Translator{
      * entity转update sql
      * @param entity 
      */
-    static entityToDelete<T>(entity:T):string{
-        let orm:any = entity['__orm'];
+    static entityToDelete(entity:any):string{
+        let orm:IEntityCfg = EntityManager.getClass(entity.prototype.name);
         let arr:string[] = [];
         arr.push('delete from');
         arr.push(orm.table);
@@ -111,6 +114,6 @@ class Translator{
         arr.push(fv.join(' and '));
         return arr.join(' ');
     }
-    
+
 
 }
