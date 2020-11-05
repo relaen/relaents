@@ -1,5 +1,5 @@
-import { IEntityPKey, IEntityColumn, IEntityRelation } from "../entitydefine";
-import { EntityManager } from "../entitymanager";
+import { IEntityPKey, IEntityColumn, IEntityRelation, IEntityRefColumn, ERelationType } from "../entitydefine";
+import { EntityFactory } from "../entityfactory";
 
 /**
  * 装饰器（注解类）
@@ -13,7 +13,7 @@ import { EntityManager } from "../entitymanager";
  */
 function Entity(tblName:string,schema?:string){
     return (target) =>{
-        EntityManager.addClass(target.prototype.name,tblName,schema);
+        EntityFactory.addClass(target.prototype.name,tblName,schema);
     }
 }
 
@@ -25,7 +25,7 @@ function Entity(tblName:string,schema?:string){
 function Id(cfg?:IEntityPKey){
     return (target:any,propertyName:string)=>{
         process.nextTick(()=>{
-            EntityManager.addPKey(target.prototype.name,propertyName,cfg);
+            EntityFactory.addPKey(target.prototype.name,propertyName,cfg);
         });
     }
 }
@@ -41,7 +41,24 @@ function Column(cfg:IEntityColumn){
             throw "@Column配置参数错误";
         }
         process.nextTick(()=>{
-            EntityManager.addColumn(target.prototype.name,propertyName,cfg);
+            EntityFactory.addColumn(target.prototype.name,propertyName,cfg);
+        });
+    }
+}
+
+/**
+ * @exclude
+ * 字段装饰器，装饰属性
+ * @param cfg 配置项
+ */
+function JoinColumn(cfg:IEntityRefColumn){
+    return (target:any,propertyName:string)=>{
+        process.nextTick(()=>{
+            //引用外键字段名默认与字段名一致
+            if(!cfg.refName){
+                cfg.refName = cfg.name;
+            }
+            EntityFactory.addColumn(target.prototype.name,propertyName,cfg);
         });
     }
 }
@@ -53,7 +70,10 @@ function Column(cfg:IEntityColumn){
  */
 function OneToMany(cfg:IEntityRelation){
     return (target:any,propertyName:string)=>{
-        
+        cfg.type = ERelationType.OneToMany;
+        process.nextTick(()=>{
+            EntityFactory.addRelation(target.prototype.name,propertyName,cfg);
+        });
     }
 }
 
@@ -64,7 +84,10 @@ function OneToMany(cfg:IEntityRelation){
  */
 function OneToOne(cfg:IEntityRelation){
     return (target:any,propertyName:string)=>{
-        
+        cfg.type = ERelationType.OneToOne;
+        process.nextTick(()=>{
+            EntityFactory.addRelation(target.prototype.name,propertyName,cfg);
+        });
     }
 }
 
@@ -75,7 +98,10 @@ function OneToOne(cfg:IEntityRelation){
  */
 function ManyToOne(cfg:IEntityRelation){
     return (target:any,propertyName:string)=>{
-        
+        cfg.type = ERelationType.ManyToOne;
+        process.nextTick(()=>{
+            EntityFactory.addRelation(target.prototype.name,propertyName,cfg);
+        });
     }
 }
 
@@ -86,8 +112,11 @@ function ManyToOne(cfg:IEntityRelation){
  */
 function ManyToMany(cfg:IEntityRelation){
     return (target:any,propertyName:string)=>{
-        
+        cfg.type = ERelationType.ManyToMany;
+        process.nextTick(()=>{
+            EntityFactory.addRelation(target.prototype.name,propertyName,cfg);
+        });
     }
 }
 
-export {Entity,Id,Column,OneToMany,OneToOne,ManyToOne,ManyToMany}
+export {Entity,Id,Column,JoinColumn,OneToMany,OneToOne,ManyToOne,ManyToMany}
