@@ -128,6 +128,11 @@ interface IEntityRelation{
      * 懒加载关联对象
      */
     lazyFetch?:boolean;
+    
+    /**
+     * 被引用时对应子表属性 
+     */
+    mappedBy?:string;
 }
 
 /**

@@ -3,6 +3,7 @@ import { RedisManager } from "./redismanager";
 import { EEntityState } from "./entitydefine";
 import { Translator } from "./translator";
 import ConnectionManager from "./connectionmanager";
+import {SqlExecutor} from "./sqlexecutor";
 
 /**
  * 持久化助手
@@ -16,58 +17,20 @@ class PersistenceAssist{
      * 持久化单个实体
      * @param entity 
      */
-    public static persistOne(entity:BaseEntity){
+    public static async persistOne(entity:BaseEntity){
         switch(entity.state){
             case EEntityState.NEW:
-                Translator.entityToInsert(entity);
+                let r = await SqlExecutor.exec(Translator.entityToInsert(entity));
+                //设置id
             case EEntityState.UPDATED:
-
+                SqlExecutor.exec(Translator.entityToUpdate(entity));
+                
             break;
             case EEntityState.DELETED:
 
             break;
         }
-        //处理子对象
-    }
-
-    /**
-     * 执行sql
-     * @param sql 
-     */
-    public static async execSql(sql:string):Promise<any>{
-        switch(RelaenManager.product){
-            case 'mysql':
-                return await this.execMysql(sql);
-            case 'oracle':
-
-            case 'mssql':
-        }     
-
-    }
-
-    /**
-     * 执行mysql sql语句
-     * @param sql 
-     */
-    public static async execMysql(sql:string){
-        let conn = await ConnectionManager.getConnection();
-        return await conn.query(sql);
-    }
-
-
-    /**
-     * 执行oracle sql语句
-     * @param sql 
-     */
-    public static async execOracle(sql:string){
-
-    }
-
-    /**
-     * 执行mssql sql语句
-     * @param sql 
-     */
-    public static async execMssql(sql:string){
-
+        //处理关联对象
+        return entity;
     }
 }

@@ -10,7 +10,7 @@ export default class ConnectionManager{
     static pool:any;
 
 
-    static async  getConnection():Promise<any>{
+    public static async getConnection():Promise<any>{
         switch(RelaenManager.product){
             case 'mysql':
             return this.getMysqlConnection();
@@ -22,9 +22,18 @@ export default class ConnectionManager{
     }
 
     /**
+     * 关闭连接
+     * @param conn 
+     */
+    public static async closeConnection(conn:any){
+
+    }
+
+
+    /**
      * 获取 mysql 连接
      */
-    static async getMysqlConnection():Promise<any>{
+    private static async getMysqlConnection():Promise<any>{
         if(this.pool){
             return new Promise((resolve,reject)=>{
                 this.pool.getConnection((err,conn)=>{
@@ -39,11 +48,11 @@ export default class ConnectionManager{
         }
     }
 
-    static async getOracleConnection(){
+    private static async getOracleConnection(){
 
     }
 
-    static async getMssqlConnection(){
+    private static async getMssqlConnection(){
 
     }
 }

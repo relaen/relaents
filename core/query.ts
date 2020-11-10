@@ -39,6 +39,8 @@ class Query{
      */
     public getResultList<T>():Array<T>{
         let sql:string = Translator.toQueryString(this.entity,this.paramMap);
-        
+        return null;
     }
+
+    
 }
