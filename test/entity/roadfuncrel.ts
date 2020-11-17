@@ -1,8 +1,8 @@
-
+import { Entity, Id, Column, ManyToOne, JoinColumn, OneToMany } from '../../core/decorator/decorator'
+import { BaseEntity } from '../../core/entity'
+import { EFkConstraint } from '../../core/entitydefine'
 import {Road} from './road'
 import {FuncCompany} from './funccompany'
-import { Entity, Id, Column, ManyToOne, JoinColumn } from '../../core/decorator/decorator';
-import { BaseEntity } from '../../core/entity';
 
 @Entity("t_road_func_rel",'tunnel')
 export class RoadFuncRel extends BaseEntity{
@@ -12,14 +12,35 @@ export class RoadFuncRel extends BaseEntity{
 		type:'int',
 		nullable:false
 	})
-	roadFuncRelId:number;
+	private roadFuncRelId:number;
 
-	@ManyToOne({entity:RoadFuncRel,lazyFetch:true})
+	@ManyToOne({entity:'Road',eager:false})
 	@JoinColumn({name:'road_id',refName:'road_id'})
-	road:Road;
+	private road:Road;
 
-	@ManyToOne({entity:RoadFuncRel,lazyFetch:true})
+	@ManyToOne({entity:'FuncCompany',eager:false})
 	@JoinColumn({name:'func_company_id',refName:'func_company_id'})
-	funcCompany:FuncCompany;
+	private funcCompany:FuncCompany;
+
+	public getRoadFuncRelId():number{
+		return this.roadFuncRelId;
+	}
+	public setRoadFuncRelId(value:number){
+		this.roadFuncRelId = value;
+	}
+
+	public getRoad():Road{
+		return this.road;
+	}
+	public setRoad(value:Road){
+		this.road = value;
+	}
+
+	public getFuncCompany():FuncCompany{
+		return this.funcCompany;
+	}
+	public setFuncCompany(value:FuncCompany){
+		this.funcCompany = value;
+	}
 
 }

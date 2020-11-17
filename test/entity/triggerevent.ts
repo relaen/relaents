@@ -1,10 +1,9 @@
-
+import { Entity, Id, Column, ManyToOne, JoinColumn, OneToMany } from '../../core/decorator/decorator'
+import { BaseEntity } from '../../core/entity'
+import { EFkConstraint } from '../../core/entitydefine'
 import {Trigger} from './trigger'
 import {CollectdataType} from './collectdatatype'
 import {TriggerLog} from './triggerlog'
-import { Entity, Id, Column, ManyToOne, JoinColumn, OneToMany } from '../../core/decorator/decorator';
-import { BaseEntity } from '../../core/entity';
-import { EFkConstraint } from '../../core/entitydefine';
 
 @Entity("t_trigger_event",'tunnel')
 export class TriggerEvent extends BaseEntity{
@@ -14,24 +13,59 @@ export class TriggerEvent extends BaseEntity{
 		type:'int',
 		nullable:false
 	})
-	triggerEventId:number;
+	private triggerEventId:number;
 
-	@ManyToOne({entity:TriggerEvent,lazyFetch:true})
+	@ManyToOne({entity:'Trigger',eager:false})
 	@JoinColumn({name:'trigger_id',refName:'trigger_id'})
-	trigger:Trigger;
+	private trigger:Trigger;
 
-	@ManyToOne({entity:TriggerEvent,lazyFetch:true})
+	@ManyToOne({entity:'CollectdataType',eager:false})
 	@JoinColumn({name:'collectdata_type_id',refName:'collectdata_type_id'})
-	collectdataType:CollectdataType;
+	private collectdataType:CollectdataType;
 
 	@Column({
 		name:'trigger_cond',
 		type:'int',
 		nullable:true
 	})
-	triggerCond:number;
+	private triggerCond:number;
 
-	@OneToMany({entity:'TriggerLog',onDelete:EFkConstraint.CASCADE,onUpdate:EFkConstraint.CASCADE,mappedBy:'triggerEvent',lazyFetch:true})
-	triggerLogs:Array<TriggerLog>;
+	@OneToMany({entity:'TriggerLog',onDelete:EFkConstraint.CASCADE,onUpdate:EFkConstraint.CASCADE,mappedBy:'triggerEvent',eager:false})
+	private triggerLogs:Array<TriggerLog>;
+
+	public getTriggerEventId():number{
+		return this.triggerEventId;
+	}
+	public setTriggerEventId(value:number){
+		this.triggerEventId = value;
+	}
+
+	public getTrigger():Trigger{
+		return this.trigger;
+	}
+	public setTrigger(value:Trigger){
+		this.trigger = value;
+	}
+
+	public getCollectdataType():CollectdataType{
+		return this.collectdataType;
+	}
+	public setCollectdataType(value:CollectdataType){
+		this.collectdataType = value;
+	}
+
+	public getTriggerCond():number{
+		return this.triggerCond;
+	}
+	public setTriggerCond(value:number){
+		this.triggerCond = value;
+	}
+
+	public getTriggerLogs():Array<TriggerLog>{
+		return this.triggerLogs;
+	}
+	public setTriggerLogs(value:Array<TriggerLog>){
+		this.triggerLogs = value;
+	}
 
 }

@@ -1,8 +1,8 @@
-
+import { Entity, Id, Column, ManyToOne, JoinColumn, OneToMany } from '../../core/decorator/decorator'
+import { BaseEntity } from '../../core/entity'
+import { EFkConstraint } from '../../core/entitydefine'
 import {Authority} from './authority'
 import {Resource} from './resource'
-import { Entity, Id, Column, ManyToOne, JoinColumn } from '../../core/decorator/decorator';
-import { BaseEntity } from '../../core/entity';
 
 @Entity("t_resource_authority",'tunnel')
 export class ResourceAuthority extends BaseEntity{
@@ -12,14 +12,35 @@ export class ResourceAuthority extends BaseEntity{
 		type:'int',
 		nullable:false
 	})
-	resourceAuthorityId:number;
+	private resourceAuthorityId:number;
 
-	@ManyToOne({entity:ResourceAuthority,lazyFetch:true})
+	@ManyToOne({entity:'Authority',eager:false})
 	@JoinColumn({name:'authority',refName:'authority'})
-	authority:Authority;
+	private authority:Authority;
 
-	@ManyToOne({entity:ResourceAuthority,lazyFetch:true})
+	@ManyToOne({entity:'Resource',eager:false})
 	@JoinColumn({name:'resource_id',refName:'resource_id'})
-	resource:Resource;
+	private resource:Resource;
+
+	public getResourceAuthorityId():number{
+		return this.resourceAuthorityId;
+	}
+	public setResourceAuthorityId(value:number){
+		this.resourceAuthorityId = value;
+	}
+
+	public getAuthority():Authority{
+		return this.authority;
+	}
+	public setAuthority(value:Authority){
+		this.authority = value;
+	}
+
+	public getResource():Resource{
+		return this.resource;
+	}
+	public setResource(value:Resource){
+		this.resource = value;
+	}
 
 }

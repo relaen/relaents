@@ -1,8 +1,7 @@
-
+import { Entity, Id, Column, ManyToOne, JoinColumn, OneToMany } from '../../core/decorator/decorator'
+import { BaseEntity } from '../../core/entity'
+import { EFkConstraint } from '../../core/entitydefine'
 import {Resource} from './resource'
-import { Entity, Id, Column, OneToMany } from '../../core/decorator/decorator';
-import { BaseEntity } from '../../core/entity';
-import { EFkConstraint } from '../../core/entitydefine';
 
 @Entity("t_resource_type",'tunnel')
 export class ResourceType extends BaseEntity{
@@ -12,16 +11,37 @@ export class ResourceType extends BaseEntity{
 		type:'int',
 		nullable:false
 	})
-	resourceTypeId:number;
+	private resourceTypeId:number;
 
 	@Column({
 		name:'type_name',
 		type:'string',
 		nullable:true
 	})
-	typeName:string;
+	private typeName:string;
 
-	@OneToMany({entity:'Resource',onDelete:EFkConstraint.SETNULL,onUpdate:EFkConstraint.CASCADE,mappedBy:'resourceType',lazyFetch:true})
-	resources:Array<Resource>;
+	@OneToMany({entity:'Resource',onDelete:EFkConstraint.SETNULL,onUpdate:EFkConstraint.CASCADE,mappedBy:'resourceType',eager:false})
+	private resources:Array<Resource>;
+
+	public getResourceTypeId():number{
+		return this.resourceTypeId;
+	}
+	public setResourceTypeId(value:number){
+		this.resourceTypeId = value;
+	}
+
+	public getTypeName():string{
+		return this.typeName;
+	}
+	public setTypeName(value:string){
+		this.typeName = value;
+	}
+
+	public getResources():Array<Resource>{
+		return this.resources;
+	}
+	public setResources(value:Array<Resource>){
+		this.resources = value;
+	}
 
 }

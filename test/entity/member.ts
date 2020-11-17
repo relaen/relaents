@@ -1,128 +1,254 @@
-
+import { Entity, Id, Column, ManyToOne, JoinColumn, OneToMany } from '../../core/decorator/decorator'
+import { BaseEntity } from '../../core/entity'
+import { EFkConstraint } from '../../core/entitydefine'
 import {User} from './user'
 import {FuncCompany} from './funccompany'
 import {Agent} from './agent'
-import { Entity, Id, ManyToOne, JoinColumn, Column } from '../../core/decorator/decorator';
-import { BaseEntity } from '../../core/entity';
 
 @Entity("t_member",'tunnel')
 export class Member extends BaseEntity{
 	@Id()
-	@ManyToOne({entity:Member,lazyFetch:true})
+	@ManyToOne({entity:'User',eager:false})
 	@JoinColumn({name:'user_id',refName:'user_id'})
-	user:User;
+	private user:User;
 
-	@ManyToOne({entity:Member,lazyFetch:true})
+	@ManyToOne({entity:'FuncCompany',eager:false})
 	@JoinColumn({name:'func_company_id',refName:'func_company_id'})
-	funcCompany:FuncCompany;
+	private funcCompany:FuncCompany;
 
-	@ManyToOne({entity:Member,lazyFetch:true})
+	@ManyToOne({entity:'Agent',eager:false})
 	@JoinColumn({name:'agent_id',refName:'agent_id'})
-	agent:Agent;
+	private agent:Agent;
 
 	@Column({
 		name:'user_name',
 		type:'string',
 		nullable:true
 	})
-	userName:string;
+	private userName:string;
 
 	@Column({
 		name:'password',
 		type:'string',
 		nullable:true
 	})
-	password:string;
+	private password:string;
 
 	@Column({
 		name:'head_img',
 		type:'string',
 		nullable:true
 	})
-	headImg:string;
+	private headImg:string;
 
 	@Column({
 		name:'nick_name',
 		type:'string',
 		nullable:true
 	})
-	nickName:string;
+	private nickName:string;
 
 	@Column({
 		name:'birthday',
 		type:'string',
 		nullable:true
 	})
-	birthday:string;
+	private birthday:string;
 
 	@Column({
 		name:'sex',
 		type:'int',
 		nullable:true
 	})
-	sex:number;
+	private sex:number;
 
 	@Column({
 		name:'email',
 		type:'string',
 		nullable:true
 	})
-	email:string;
+	private email:string;
 
 	@Column({
 		name:'openid',
 		type:'string',
 		nullable:true
 	})
-	openid:string;
+	private openid:string;
 
 	@Column({
 		name:'real_name',
 		type:'string',
 		nullable:true
 	})
-	realName:string;
+	private realName:string;
 
 	@Column({
 		name:'id_no',
 		type:'string',
 		nullable:true
 	})
-	idNo:string;
+	private idNo:string;
 
 	@Column({
 		name:'idno_imgs',
 		type:'string',
 		nullable:true
 	})
-	idnoImgs:string;
+	private idnoImgs:string;
 
 	@Column({
 		name:'regist_time',
 		type:'int',
 		nullable:true
 	})
-	registTime:number;
+	private registTime:number;
 
 	@Column({
 		name:'mobile',
 		type:'string',
 		nullable:true
 	})
-	mobile:string;
+	private mobile:string;
 
 	@Column({
 		name:'tel',
 		type:'string',
 		nullable:true
 	})
-	tel:string;
+	private tel:string;
 
 	@Column({
 		name:'enabled',
 		type:'int',
 		nullable:true
 	})
-	enabled:number;
+	private enabled:number;
+
+	public getUser():User{
+		return this.user;
+	}
+	public setUser(value:User){
+		this.user = value;
+	}
+
+	public getFuncCompany():FuncCompany{
+		return this.funcCompany;
+	}
+	public setFuncCompany(value:FuncCompany){
+		this.funcCompany = value;
+	}
+
+	public getAgent():Agent{
+		return this.agent;
+	}
+	public setAgent(value:Agent){
+		this.agent = value;
+	}
+
+	public getUserName():string{
+		return this.userName;
+	}
+	public setUserName(value:string){
+		this.userName = value;
+	}
+
+	public getPassword():string{
+		return this.password;
+	}
+	public setPassword(value:string){
+		this.password = value;
+	}
+
+	public getHeadImg():string{
+		return this.headImg;
+	}
+	public setHeadImg(value:string){
+		this.headImg = value;
+	}
+
+	public getNickName():string{
+		return this.nickName;
+	}
+	public setNickName(value:string){
+		this.nickName = value;
+	}
+
+	public getBirthday():string{
+		return this.birthday;
+	}
+	public setBirthday(value:string){
+		this.birthday = value;
+	}
+
+	public getSex():number{
+		return this.sex;
+	}
+	public setSex(value:number){
+		this.sex = value;
+	}
+
+	public getEmail():string{
+		return this.email;
+	}
+	public setEmail(value:string){
+		this.email = value;
+	}
+
+	public getOpenid():string{
+		return this.openid;
+	}
+	public setOpenid(value:string){
+		this.openid = value;
+	}
+
+	public getRealName():string{
+		return this.realName;
+	}
+	public setRealName(value:string){
+		this.realName = value;
+	}
+
+	public getIdNo():string{
+		return this.idNo;
+	}
+	public setIdNo(value:string){
+		this.idNo = value;
+	}
+
+	public getIdnoImgs():string{
+		return this.idnoImgs;
+	}
+	public setIdnoImgs(value:string){
+		this.idnoImgs = value;
+	}
+
+	public getRegistTime():number{
+		return this.registTime;
+	}
+	public setRegistTime(value:number){
+		this.registTime = value;
+	}
+
+	public getMobile():string{
+		return this.mobile;
+	}
+	public setMobile(value:string){
+		this.mobile = value;
+	}
+
+	public getTel():string{
+		return this.tel;
+	}
+	public setTel(value:string){
+		this.tel = value;
+	}
+
+	public getEnabled():number{
+		return this.enabled;
+	}
+	public setEnabled(value:number){
+		this.enabled = value;
+	}
 
 }

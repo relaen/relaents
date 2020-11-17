@@ -1,8 +1,7 @@
-
+import { Entity, Id, Column, ManyToOne, JoinColumn, OneToMany } from '../../core/decorator/decorator'
+import { BaseEntity } from '../../core/entity'
+import { EFkConstraint } from '../../core/entitydefine'
 import {Tunnel} from './tunnel'
-import { Entity, Id, Column, OneToMany } from '../../core/decorator/decorator';
-import { BaseEntity } from '../../core/entity';
-import { EFkConstraint } from '../../core/entitydefine';
 
 @Entity("t_tunnel_type",'tunnel')
 export class TunnelType extends BaseEntity{
@@ -12,30 +11,65 @@ export class TunnelType extends BaseEntity{
 		type:'int',
 		nullable:false
 	})
-	tunnelTypeId:number;
+	private tunnelTypeId:number;
 
 	@Column({
 		name:'tunnel_type_name',
 		type:'string',
 		nullable:true
 	})
-	tunnelTypeName:string;
+	private tunnelTypeName:string;
 
 	@Column({
 		name:'is_twoway',
 		type:'int',
 		nullable:true
 	})
-	isTwoway:number;
+	private isTwoway:number;
 
 	@Column({
 		name:'remarks',
 		type:'string',
 		nullable:true
 	})
-	remarks:string;
+	private remarks:string;
 
-	@OneToMany({entity:'Tunnel',onDelete:EFkConstraint.SETNULL,onUpdate:EFkConstraint.CASCADE,mappedBy:'tunnelType',lazyFetch:true})
-	tunnels:Array<Tunnel>;
+	@OneToMany({entity:'Tunnel',onDelete:EFkConstraint.SETNULL,onUpdate:EFkConstraint.CASCADE,mappedBy:'tunnelType',eager:false})
+	private tunnels:Array<Tunnel>;
+
+	public getTunnelTypeId():number{
+		return this.tunnelTypeId;
+	}
+	public setTunnelTypeId(value:number){
+		this.tunnelTypeId = value;
+	}
+
+	public getTunnelTypeName():string{
+		return this.tunnelTypeName;
+	}
+	public setTunnelTypeName(value:string){
+		this.tunnelTypeName = value;
+	}
+
+	public getIsTwoway():number{
+		return this.isTwoway;
+	}
+	public setIsTwoway(value:number){
+		this.isTwoway = value;
+	}
+
+	public getRemarks():string{
+		return this.remarks;
+	}
+	public setRemarks(value:string){
+		this.remarks = value;
+	}
+
+	public getTunnels():Array<Tunnel>{
+		return this.tunnels;
+	}
+	public setTunnels(value:Array<Tunnel>){
+		this.tunnels = value;
+	}
 
 }

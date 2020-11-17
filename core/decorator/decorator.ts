@@ -13,7 +13,7 @@ import { EntityFactory } from "../entityfactory";
  */
 function Entity(tblName:string,schema?:string){
     return (target) =>{
-        EntityFactory.addClass(target.prototype.name,tblName,schema);
+        EntityFactory.addClass(target.name,tblName,schema);
     }
 }
 
@@ -24,9 +24,7 @@ function Entity(tblName:string,schema?:string){
  */
 function Id(cfg?:IEntityPKey){
     return (target:any,propertyName:string)=>{
-        process.nextTick(()=>{
-            EntityFactory.addPKey(target.prototype.name,propertyName,cfg);
-        });
+        EntityFactory.addPKey(target.constructor.name,propertyName,cfg);
     }
 }
 
@@ -40,9 +38,7 @@ function Column(cfg:IEntityColumn){
         if(!cfg || !cfg.type){
             throw "@Column配置参数错误";
         }
-        process.nextTick(()=>{
-            EntityFactory.addColumn(target.prototype.name,propertyName,cfg);
-        });
+        EntityFactory.addColumn(target.constructor.name,propertyName,cfg);
     }
 }
 
@@ -53,13 +49,11 @@ function Column(cfg:IEntityColumn){
  */
 function JoinColumn(cfg:IEntityRefColumn){
     return (target:any,propertyName:string)=>{
-        process.nextTick(()=>{
-            //引用外键字段名默认与字段名一致
-            if(!cfg.refName){
-                cfg.refName = cfg.name;
-            }
-            EntityFactory.addColumn(target.prototype.name,propertyName,cfg);
-        });
+        //引用外键字段名默认与字段名一致
+        if(!cfg.refName){
+            cfg.refName = cfg.name;
+        }
+        EntityFactory.addColumn(target.constructor.name,propertyName,cfg);
     }
 }
 
@@ -71,9 +65,7 @@ function JoinColumn(cfg:IEntityRefColumn){
 function OneToMany(cfg:IEntityRelation){
     return (target:any,propertyName:string)=>{
         cfg.type = ERelationType.OneToMany;
-        process.nextTick(()=>{
-            EntityFactory.addRelation(target.prototype.name,propertyName,cfg);
-        });
+        EntityFactory.addRelation(target.constructor.name,propertyName,cfg);
     }
 }
 
@@ -85,9 +77,7 @@ function OneToMany(cfg:IEntityRelation){
 function OneToOne(cfg:IEntityRelation){
     return (target:any,propertyName:string)=>{
         cfg.type = ERelationType.OneToOne;
-        process.nextTick(()=>{
-            EntityFactory.addRelation(target.prototype.name,propertyName,cfg);
-        });
+        EntityFactory.addRelation(target.constructor.name,propertyName,cfg);
     }
 }
 
@@ -99,9 +89,9 @@ function OneToOne(cfg:IEntityRelation){
 function ManyToOne(cfg:IEntityRelation){
     return (target:any,propertyName:string)=>{
         cfg.type = ERelationType.ManyToOne;
-        process.nextTick(()=>{
-            EntityFactory.addRelation(target.prototype.name,propertyName,cfg);
-        });
+        // process.nextTick(()=>{
+        EntityFactory.addRelation(target.constructor.name,propertyName,cfg);
+        // });
     }
 }
 
@@ -113,9 +103,7 @@ function ManyToOne(cfg:IEntityRelation){
 function ManyToMany(cfg:IEntityRelation){
     return (target:any,propertyName:string)=>{
         cfg.type = ERelationType.ManyToMany;
-        process.nextTick(()=>{
-            EntityFactory.addRelation(target.prototype.name,propertyName,cfg);
-        });
+        EntityFactory.addRelation(target.constructor.name,propertyName,cfg);
     }
 }
 

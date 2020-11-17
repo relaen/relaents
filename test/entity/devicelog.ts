@@ -1,7 +1,7 @@
-
+import { Entity, Id, Column, ManyToOne, JoinColumn, OneToMany } from '../../core/decorator/decorator'
+import { BaseEntity } from '../../core/entity'
+import { EFkConstraint } from '../../core/entitydefine'
 import {Device} from './device'
-import { Entity, Id, Column, ManyToOne, JoinColumn } from '../../core/decorator/decorator';
-import { BaseEntity } from '../../core/entity';
 
 @Entity("t_device_log",'tunnel')
 export class DeviceLog extends BaseEntity{
@@ -11,31 +11,66 @@ export class DeviceLog extends BaseEntity{
 		type:'int',
 		nullable:false
 	})
-	deviceLogId:number;
+	private deviceLogId:number;
 
-	@ManyToOne({entity:DeviceLog,lazyFetch:true})
+	@ManyToOne({entity:'Device',eager:false})
 	@JoinColumn({name:'devide_id',refName:'devide_id'})
-	device:Device;
+	private device:Device;
 
 	@Column({
 		name:'log_time',
 		type:'int',
 		nullable:true
 	})
-	logTime:number;
+	private logTime:number;
 
 	@Column({
 		name:'operator',
 		type:'int',
 		nullable:true
 	})
-	operator:number;
+	private operator:number;
 
 	@Column({
 		name:'value',
 		type:'string',
 		nullable:true
 	})
-	value:string;
+	private value:string;
+
+	public getDeviceLogId():number{
+		return this.deviceLogId;
+	}
+	public setDeviceLogId(value:number){
+		this.deviceLogId = value;
+	}
+
+	public getDevice():Device{
+		return this.device;
+	}
+	public setDevice(value:Device){
+		this.device = value;
+	}
+
+	public getLogTime():number{
+		return this.logTime;
+	}
+	public setLogTime(value:number){
+		this.logTime = value;
+	}
+
+	public getOperator():number{
+		return this.operator;
+	}
+	public setOperator(value:number){
+		this.operator = value;
+	}
+
+	public getValue():string{
+		return this.value;
+	}
+	public setValue(value:string){
+		this.value = value;
+	}
 
 }

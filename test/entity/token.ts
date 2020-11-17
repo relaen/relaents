@@ -1,34 +1,62 @@
-
+import { Entity, Id, Column, ManyToOne, JoinColumn, OneToMany } from '../../core/decorator/decorator'
+import { BaseEntity } from '../../core/entity'
+import { EFkConstraint } from '../../core/entitydefine'
 import {User} from './user'
-import { Entity, Id, ManyToOne, JoinColumn, Column } from '../../core/decorator/decorator';
-import { BaseEntity } from '../../core/entity';
 
 @Entity("t_token",'tunnel')
 export class Token extends BaseEntity{
 	@Id()
-	@ManyToOne({entity:Token,lazyFetch:true})
+	@ManyToOne({entity:'User',eager:false})
 	@JoinColumn({name:'user_id',refName:'user_id'})
-	user:User;
+	private user:User;
 
 	@Column({
 		name:'token',
 		type:'string',
 		nullable:true
 	})
-	token:string;
+	private token:string;
 
 	@Column({
 		name:'create_time',
 		type:'int',
 		nullable:true
 	})
-	createTime:number;
+	private createTime:number;
 
 	@Column({
 		name:'disable_time',
 		type:'int',
 		nullable:true
 	})
-	disableTime:number;
+	private disableTime:number;
+
+	public getUser():User{
+		return this.user;
+	}
+	public setUser(value:User){
+		this.user = value;
+	}
+
+	public getToken():string{
+		return this.token;
+	}
+	public setToken(value:string){
+		this.token = value;
+	}
+
+	public getCreateTime():number{
+		return this.createTime;
+	}
+	public setCreateTime(value:number){
+		this.createTime = value;
+	}
+
+	public getDisableTime():number{
+		return this.disableTime;
+	}
+	public setDisableTime(value:number){
+		this.disableTime = value;
+	}
 
 }

@@ -1,8 +1,7 @@
-
+import { Entity, Id, Column, ManyToOne, JoinColumn, OneToMany } from '../../core/decorator/decorator'
+import { BaseEntity } from '../../core/entity'
+import { EFkConstraint } from '../../core/entitydefine'
 import {TriggerEvent} from './triggerevent'
-import { Entity, Id, Column, OneToMany } from '../../core/decorator/decorator';
-import { BaseEntity } from '../../core/entity';
-import { EFkConstraint } from '../../core/entitydefine';
 
 @Entity("t_trigger",'tunnel')
 export class Trigger extends BaseEntity{
@@ -12,30 +11,65 @@ export class Trigger extends BaseEntity{
 		type:'int',
 		nullable:false
 	})
-	triggerId:number;
+	private triggerId:number;
 
 	@Column({
 		name:'trigger_name',
 		type:'string',
 		nullable:true
 	})
-	triggerName:string;
+	private triggerName:string;
 
 	@Column({
 		name:'instance_name',
 		type:'string',
 		nullable:true
 	})
-	instanceName:string;
+	private instanceName:string;
 
 	@Column({
 		name:'method_name',
 		type:'string',
 		nullable:true
 	})
-	methodName:string;
+	private methodName:string;
 
-	@OneToMany({entity:'TriggerEvent',onDelete:EFkConstraint.CASCADE,onUpdate:EFkConstraint.CASCADE,mappedBy:'trigger',lazyFetch:true})
-	triggerEvents:Array<TriggerEvent>;
+	@OneToMany({entity:'TriggerEvent',onDelete:EFkConstraint.CASCADE,onUpdate:EFkConstraint.CASCADE,mappedBy:'trigger',eager:false})
+	private triggerEvents:Array<TriggerEvent>;
+
+	public getTriggerId():number{
+		return this.triggerId;
+	}
+	public setTriggerId(value:number){
+		this.triggerId = value;
+	}
+
+	public getTriggerName():string{
+		return this.triggerName;
+	}
+	public setTriggerName(value:string){
+		this.triggerName = value;
+	}
+
+	public getInstanceName():string{
+		return this.instanceName;
+	}
+	public setInstanceName(value:string){
+		this.instanceName = value;
+	}
+
+	public getMethodName():string{
+		return this.methodName;
+	}
+	public setMethodName(value:string){
+		this.methodName = value;
+	}
+
+	public getTriggerEvents():Array<TriggerEvent>{
+		return this.triggerEvents;
+	}
+	public setTriggerEvents(value:Array<TriggerEvent>){
+		this.triggerEvents = value;
+	}
 
 }

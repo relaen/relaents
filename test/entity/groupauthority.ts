@@ -1,8 +1,8 @@
-
+import { Entity, Id, Column, ManyToOne, JoinColumn, OneToMany } from '../../core/decorator/decorator'
+import { BaseEntity } from '../../core/entity'
+import { EFkConstraint } from '../../core/entitydefine'
 import {Authority} from './authority'
 import {Group} from './group'
-import { Entity, Id, Column, ManyToOne, JoinColumn } from '../../core/decorator/decorator';
-import { BaseEntity } from '../../core/entity';
 
 @Entity("t_group_authority",'tunnel')
 export class GroupAuthority extends BaseEntity{
@@ -12,14 +12,35 @@ export class GroupAuthority extends BaseEntity{
 		type:'int',
 		nullable:false
 	})
-	groupAuthorityId:number;
+	private groupAuthorityId:number;
 
-	@ManyToOne({entity:GroupAuthority,lazyFetch:true})
+	@ManyToOne({entity:'Authority',eager:false})
 	@JoinColumn({name:'authority',refName:'authority'})
-	authority:Authority;
+	private authority:Authority;
 
-	@ManyToOne({entity:GroupAuthority,lazyFetch:true})
+	@ManyToOne({entity:'Group',eager:false})
 	@JoinColumn({name:'group_id',refName:'group_id'})
-	group:Group;
+	private group:Group;
+
+	public getGroupAuthorityId():number{
+		return this.groupAuthorityId;
+	}
+	public setGroupAuthorityId(value:number){
+		this.groupAuthorityId = value;
+	}
+
+	public getAuthority():Authority{
+		return this.authority;
+	}
+	public setAuthority(value:Authority){
+		this.authority = value;
+	}
+
+	public getGroup():Group{
+		return this.group;
+	}
+	public setGroup(value:Group){
+		this.group = value;
+	}
 
 }

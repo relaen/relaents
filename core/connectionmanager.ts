@@ -1,3 +1,5 @@
+import { RelaenManager } from "./relaenmanager";
+
 export default class ConnectionManager{
     /**
      * 配置
@@ -11,9 +13,9 @@ export default class ConnectionManager{
 
 
     public static async getConnection():Promise<any>{
-        switch(RelaenManager.product){
+        switch(RelaenManager.dialect){
             case 'mysql':
-            return this.getMysqlConnection();
+                return this.getMysqlConnection();
             case 'oracle':
                 return this.getOracleConnection();
             case 'mssql':

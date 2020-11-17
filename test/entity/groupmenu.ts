@@ -1,8 +1,8 @@
-
+import { Entity, Id, Column, ManyToOne, JoinColumn, OneToMany } from '../../core/decorator/decorator'
+import { BaseEntity } from '../../core/entity'
+import { EFkConstraint } from '../../core/entitydefine'
 import {Menu} from './menu'
 import {Group} from './group'
-import { Entity, Id, Column, ManyToOne, JoinColumn } from '../../core/decorator/decorator';
-import { BaseEntity } from '../../core/entity';
 
 @Entity("t_group_menu",'tunnel')
 export class GroupMenu extends BaseEntity{
@@ -12,14 +12,35 @@ export class GroupMenu extends BaseEntity{
 		type:'int',
 		nullable:false
 	})
-	groupMenuId:number;
+	private groupMenuId:number;
 
-	@ManyToOne({entity:GroupMenu,lazyFetch:true})
+	@ManyToOne({entity:'Menu',eager:false})
 	@JoinColumn({name:'menu_id',refName:'menu_id'})
-	menu:Menu;
+	private menu:Menu;
 
-	@ManyToOne({entity:GroupMenu,lazyFetch:true})
+	@ManyToOne({entity:'Group',eager:false})
 	@JoinColumn({name:'group_id',refName:'group_id'})
-	group:Group;
+	private group:Group;
+
+	public getGroupMenuId():number{
+		return this.groupMenuId;
+	}
+	public setGroupMenuId(value:number){
+		this.groupMenuId = value;
+	}
+
+	public getMenu():Menu{
+		return this.menu;
+	}
+	public setMenu(value:Menu){
+		this.menu = value;
+	}
+
+	public getGroup():Group{
+		return this.group;
+	}
+	public setGroup(value:Group){
+		this.group = value;
+	}
 
 }

@@ -1,9 +1,8 @@
-
+import { Entity, Id, Column, ManyToOne, JoinColumn, OneToMany } from '../../core/decorator/decorator'
+import { BaseEntity } from '../../core/entity'
+import { EFkConstraint } from '../../core/entitydefine'
 import {CollectData} from './collectdata'
 import {TriggerEvent} from './triggerevent'
-import { Entity, Id, Column, OneToMany } from '../../core/decorator/decorator';
-import { BaseEntity } from '../../core/entity';
-import { EFkConstraint } from '../../core/entitydefine';
 
 @Entity("t_collectdata_type",'tunnel')
 export class CollectdataType extends BaseEntity{
@@ -13,47 +12,103 @@ export class CollectdataType extends BaseEntity{
 		type:'int',
 		nullable:false
 	})
-	collectdataTypeId:number;
+	private collectdataTypeId:number;
 
 	@Column({
 		name:'type_name',
 		type:'string',
 		nullable:true
 	})
-	typeName:string;
+	private typeName:string;
 
 	@Column({
 		name:'simple_name',
 		type:'string',
 		nullable:true
 	})
-	simpleName:string;
+	private simpleName:string;
 
 	@Column({
 		name:'valid_min',
 		type:'double',
 		nullable:true
 	})
-	validMin:number;
+	private validMin:number;
 
 	@Column({
 		name:'valid_max',
 		type:'double',
 		nullable:true
 	})
-	validMax:number;
+	private validMax:number;
 
 	@Column({
 		name:'remarks',
 		type:'string',
 		nullable:true
 	})
-	remarks:string;
+	private remarks:string;
 
-	@OneToMany({entity:'CollectData',onDelete:EFkConstraint.SETNULL,onUpdate:EFkConstraint.CASCADE,mappedBy:'collectdataType',lazyFetch:true})
-	collectDatas:Array<CollectData>;
+	@OneToMany({entity:'CollectData',onDelete:EFkConstraint.SETNULL,onUpdate:EFkConstraint.CASCADE,mappedBy:'collectdataType',eager:false})
+	private collectDatas:Array<CollectData>;
 
-	@OneToMany({entity:'TriggerEvent',onDelete:EFkConstraint.CASCADE,onUpdate:EFkConstraint.CASCADE,mappedBy:'collectdataType',lazyFetch:true})
-	triggerEvents:Array<TriggerEvent>;
+	@OneToMany({entity:'TriggerEvent',onDelete:EFkConstraint.CASCADE,onUpdate:EFkConstraint.CASCADE,mappedBy:'collectdataType',eager:false})
+	private triggerEvents:Array<TriggerEvent>;
+
+	public getCollectdataTypeId():number{
+		return this.collectdataTypeId;
+	}
+	public setCollectdataTypeId(value:number){
+		this.collectdataTypeId = value;
+	}
+
+	public getTypeName():string{
+		return this.typeName;
+	}
+	public setTypeName(value:string){
+		this.typeName = value;
+	}
+
+	public getSimpleName():string{
+		return this.simpleName;
+	}
+	public setSimpleName(value:string){
+		this.simpleName = value;
+	}
+
+	public getValidMin():number{
+		return this.validMin;
+	}
+	public setValidMin(value:number){
+		this.validMin = value;
+	}
+
+	public getValidMax():number{
+		return this.validMax;
+	}
+	public setValidMax(value:number){
+		this.validMax = value;
+	}
+
+	public getRemarks():string{
+		return this.remarks;
+	}
+	public setRemarks(value:string){
+		this.remarks = value;
+	}
+
+	public getCollectDatas():Array<CollectData>{
+		return this.collectDatas;
+	}
+	public setCollectDatas(value:Array<CollectData>){
+		this.collectDatas = value;
+	}
+
+	public getTriggerEvents():Array<TriggerEvent>{
+		return this.triggerEvents;
+	}
+	public setTriggerEvents(value:Array<TriggerEvent>){
+		this.triggerEvents = value;
+	}
 
 }

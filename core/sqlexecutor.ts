@@ -1,4 +1,5 @@
 import ConnectionManager from "./connectionmanager";
+import { RelaenManager } from "./relaenmanager";
 
 /**
  * sql执行器
@@ -10,7 +11,7 @@ class SqlExecutor{
      * @param sql 
      */
     public static async exec(sql:string):Promise<any>{
-        switch(RelaenManager.product){
+        switch(RelaenManager.dialect){
             case 'mysql':
                 return await this.execMysql(sql);
             case 'oracle':
@@ -26,7 +27,7 @@ class SqlExecutor{
      */
     private static async execMysql(sql:string){
         let conn = await ConnectionManager.getConnection();
-        return await new Promise((resolve,reject)=>{
+        let r:any = await new Promise((resolve,reject)=>{
             conn.query(sql,(error,results,fields)=>{
                 if(error){
                     reject(error);
@@ -34,6 +35,10 @@ class SqlExecutor{
                 resolve(results);
             });
         });
+        if(r.insertId){
+            return r.insertId;
+        }
+        return r;
     }
 
     /**

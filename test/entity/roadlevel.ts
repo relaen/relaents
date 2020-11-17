@@ -1,8 +1,7 @@
-
+import { Entity, Id, Column, ManyToOne, JoinColumn, OneToMany } from '../../core/decorator/decorator'
+import { BaseEntity } from '../../core/entity'
+import { EFkConstraint } from '../../core/entitydefine'
 import {Road} from './road'
-import { Entity, Id, Column, OneToMany } from '../../core/decorator/decorator';
-import { BaseEntity } from '../../core/entity';
-import { EFkConstraint } from '../../core/entitydefine';
 
 @Entity("t_road_level",'tunnel')
 export class RoadLevel extends BaseEntity{
@@ -12,16 +11,37 @@ export class RoadLevel extends BaseEntity{
 		type:'int',
 		nullable:false
 	})
-	roadLevelId:number;
+	private roadLevelId:number;
 
 	@Column({
 		name:'road_level_name',
 		type:'string',
 		nullable:true
 	})
-	roadLevelName:string;
+	private roadLevelName:string;
 
-	@OneToMany({entity:'Road',onDelete:EFkConstraint.SETNULL,onUpdate:EFkConstraint.CASCADE,mappedBy:'roadLevel',lazyFetch:true})
-	roads:Array<Road>;
+	@OneToMany({entity:'Road',onDelete:EFkConstraint.SETNULL,onUpdate:EFkConstraint.CASCADE,mappedBy:'roadLevel',eager:false})
+	private roads:Array<Road>;
+
+	public getRoadLevelId():number{
+		return this.roadLevelId;
+	}
+	public setRoadLevelId(value:number){
+		this.roadLevelId = value;
+	}
+
+	public getRoadLevelName():string{
+		return this.roadLevelName;
+	}
+	public setRoadLevelName(value:string){
+		this.roadLevelName = value;
+	}
+
+	public getRoads():Array<Road>{
+		return this.roads;
+	}
+	public setRoads(value:Array<Road>){
+		this.roads = value;
+	}
 
 }

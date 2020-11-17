@@ -1,5 +1,6 @@
 import { BaseEntity } from "./entity";
 import {Serializer} from "serializer-node";
+import { RelaenManager } from "./relaenmanager";
 
 /**
  * redis 工厂

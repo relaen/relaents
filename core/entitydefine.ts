@@ -7,7 +7,7 @@ interface IEntityCfg{
     /**
      * 表名
      */
-    table:string;
+    table?:string;
 
     /**
      * 数据库名
@@ -15,9 +15,9 @@ interface IEntityCfg{
     schema?:string;
 
     /**
-     * 主键集合，可能存在多个主键
+     * 主键
      */
-    ids:Map<string,IEntityPKey>;
+    id?:IEntityPKey;
 
     /**
      * 字段集合，键为对象属性名(非表字段名)
@@ -85,6 +85,10 @@ interface IEntityRefColumn{
  */
 interface IEntityPKey{
     /**
+     * 主键名
+     */
+    name:string;
+    /**
      * 主键生成策略 identity table uuid
      */
     generator?:string;
@@ -107,7 +111,7 @@ interface IEntityRelation{
     /**
      * 被依赖的实体类
      */
-    entity:any;
+    entity:string;
 
     /**
      * 关系类型
@@ -115,7 +119,7 @@ interface IEntityRelation{
     type?:ERelationType;
 
     /**
-     * 外键删除策略  cascade,setnull,none
+     * 外键删除策略 cascade,setnull,none
      */
     onDelete?:string;
 
@@ -125,9 +129,9 @@ interface IEntityRelation{
     onUpdate?:string;
 
     /**
-     * 懒加载关联对象
+     * 懒加载关联对象, false 懒加载，true 非懒加载
      */
-    lazyFetch?:boolean;
+    eager?:boolean;
     
     /**
      * 被引用时对应子表属性 

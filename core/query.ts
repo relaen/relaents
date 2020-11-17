@@ -15,6 +15,7 @@ class Query{
      * 参数map
      */
     paramMap:Map<string,any> = new Map();
+    
     /**
      * 实体
      */
@@ -33,6 +34,7 @@ class Query{
     public setParameter(paramName:string,value:any){
         this.paramMap.set(paramName,value);
     }
+    
 
     /**
      * 获取结果列表
@@ -42,5 +44,8 @@ class Query{
         return null;
     }
 
+
     
 }
+
+export {Query}

@@ -1,8 +1,7 @@
-
+import { Entity, Id, Column, ManyToOne, JoinColumn, OneToMany } from '../../core/decorator/decorator'
+import { BaseEntity } from '../../core/entity'
+import { EFkConstraint } from '../../core/entitydefine'
 import {FuncCompany} from './funccompany'
-import { Entity, Id, Column, OneToMany } from '../../core/decorator/decorator';
-import { BaseEntity } from '../../core/entity';
-import { EFkConstraint } from '../../core/entitydefine';
 
 @Entity("t_func_type",'tunnel')
 export class FuncType extends BaseEntity{
@@ -12,16 +11,37 @@ export class FuncType extends BaseEntity{
 		type:'int',
 		nullable:false
 	})
-	funcTypeId:number;
+	private funcTypeId:number;
 
 	@Column({
 		name:'func_type_name',
 		type:'string',
 		nullable:true
 	})
-	funcTypeName:string;
+	private funcTypeName:string;
 
-	@OneToMany({entity:'FuncCompany',onDelete:EFkConstraint.SETNULL,onUpdate:EFkConstraint.CASCADE,mappedBy:'funcType',lazyFetch:true})
-	funcCompanys:Array<FuncCompany>;
+	@OneToMany({entity:'FuncCompany',onDelete:EFkConstraint.SETNULL,onUpdate:EFkConstraint.CASCADE,mappedBy:'funcType',eager:false})
+	private funcCompanys:Array<FuncCompany>;
+
+	public getFuncTypeId():number{
+		return this.funcTypeId;
+	}
+	public setFuncTypeId(value:number){
+		this.funcTypeId = value;
+	}
+
+	public getFuncTypeName():string{
+		return this.funcTypeName;
+	}
+	public setFuncTypeName(value:string){
+		this.funcTypeName = value;
+	}
+
+	public getFuncCompanys():Array<FuncCompany>{
+		return this.funcCompanys;
+	}
+	public setFuncCompanys(value:Array<FuncCompany>){
+		this.funcCompanys = value;
+	}
 
 }

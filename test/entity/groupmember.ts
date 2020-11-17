@@ -1,8 +1,8 @@
-
+import { Entity, Id, Column, ManyToOne, JoinColumn, OneToMany } from '../../core/decorator/decorator'
+import { BaseEntity } from '../../core/entity'
+import { EFkConstraint } from '../../core/entitydefine'
 import {User} from './user'
 import {Group} from './group'
-import { Entity, Id, Column, ManyToOne, JoinColumn } from '../../core/decorator/decorator';
-import { BaseEntity } from '../../core/entity';
 
 @Entity("t_group_member",'tunnel')
 export class GroupMember extends BaseEntity{
@@ -12,14 +12,35 @@ export class GroupMember extends BaseEntity{
 		type:'int',
 		nullable:false
 	})
-	groupMemberId:number;
+	private groupMemberId:number;
 
-	@ManyToOne({entity:GroupMember,lazyFetch:true})
+	@ManyToOne({entity:'User',eager:false})
 	@JoinColumn({name:'user_id',refName:'user_id'})
-	user:User;
+	private user:User;
 
-	@ManyToOne({entity:GroupMember,lazyFetch:true})
+	@ManyToOne({entity:'Group',eager:false})
 	@JoinColumn({name:'group_id',refName:'group_id'})
-	group:Group;
+	private group:Group;
+
+	public getGroupMemberId():number{
+		return this.groupMemberId;
+	}
+	public setGroupMemberId(value:number){
+		this.groupMemberId = value;
+	}
+
+	public getUser():User{
+		return this.user;
+	}
+	public setUser(value:User){
+		this.user = value;
+	}
+
+	public getGroup():Group{
+		return this.group;
+	}
+	public setGroup(value:Group){
+		this.group = value;
+	}
 
 }
