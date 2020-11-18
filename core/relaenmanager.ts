@@ -17,12 +17,17 @@ class RelaenManager{
     public static dialect:string;
 
     /**
+     * 是否调试模式
+     */
+    public static debug:boolean;
+    /**
      * 初始化
      * @param config 
      */
     static init(path:string){
         let cfg = this.parseFile(path);
         this.dialect = cfg.dialect || 'mysql';
+        this.debug = cfg.debug || false;
         switch(this.dialect){
             case "oracle":
 

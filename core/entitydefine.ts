@@ -5,6 +5,10 @@ import { BaseEntity } from "./entity";
  */
 interface IEntityCfg{
     /**
+     * 实体类
+     */
+    entity?:any;
+    /**
      * 表名
      */
     table?:string;

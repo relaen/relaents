@@ -24,7 +24,7 @@ class EntityManager{
         let sql:string = Translator.entityToInsert(entity);
         let r = await SqlExecutor.exec(sql);
         //针对单主键设置主键
-        entity.setId(r);
+        this.setIdValue(entity,r);
         //加入缓存
         this.entityMap.set(this.genCacheId(entity),entity);
         return entity;
@@ -39,6 +39,7 @@ class EntityManager{
         
         return entity;
     }
+
 
     /**
      * 删除实体
@@ -70,10 +71,19 @@ class EntityManager{
     }
 
     /**
-     * 查询实体
+     * 创建查询对象
+     * @param rql       relean ql
+     * @param entity    实体类
      */
-    public async createQuery(sql:string):Promise<Query>{
+    public createQuery(rql:string,entity:any):Query{
+        return new Query(rql,this,entity);
+    }
 
+    /**
+     * 原生sql查询
+     * @param sql 
+     */
+    public createNativeQuery(sql:string):Query{
         return null;
     }
 
@@ -98,7 +108,7 @@ class EntityManager{
      * @param entity    实体对象
      * @param value     实体值
      */
-    setIdValue(entity:BaseEntity,value:any){
+    public setIdValue(entity:BaseEntity,value:any){
         let cfg:IEntityCfg = EntityFactory.getClass(entity.constructor.name);
         if(cfg.id){
             entity.setProp(cfg.id.name,value);
@@ -110,13 +120,20 @@ class EntityManager{
      * 获取id值
      * @param entity    实体对象
      */
-    getIdValue(entity:BaseEntity):any{
+    public getIdValue(entity:BaseEntity):any{
         let cfg:IEntityCfg = EntityFactory.getClass(entity.constructor.name);
         if(cfg.id){
             return entity[cfg.id.name];
         }
     }
 
+    /**
+     * 添加实体对象到cache
+     * @param entity 实体对象
+     */
+    public addCache(entity:any){
+        this.entityMap.set(this.genCacheId(entity),entity);
+    }
 }
 
 export{EntityManager}

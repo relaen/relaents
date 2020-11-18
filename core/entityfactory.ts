@@ -16,13 +16,16 @@ class EntityFactory{
      * @param tblName       表名       
      * @param schema        数据库名
      */
-    public static addClass(entityName:string,tblName:string,schema?:string){
+    public static addClass(entity:any,tblName:string,schema?:string){
+        let entityName:string = entity.name;
         if(this.entityClasses.has(entityName)){
             let clazz:IEntityCfg = this.entityClasses.get(entityName);
             clazz.table = tblName;
             clazz.schema = schema;
+            clazz.entity = entity;
         }else{
             this.entityClasses.set(entityName,{
+                entity:entity,
                 table:tblName,
                 schema:schema,
                 id:null,

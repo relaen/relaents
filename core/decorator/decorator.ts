@@ -13,7 +13,7 @@ import { EntityFactory } from "../entityfactory";
  */
 function Entity(tblName:string,schema?:string){
     return (target) =>{
-        EntityFactory.addClass(target.name,tblName,schema);
+        EntityFactory.addClass(target,tblName,schema);
     }
 }
 

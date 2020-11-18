@@ -3,6 +3,8 @@ import { EntityManager } from "../core/entitymanager";
 import { RelaenManager } from "../core/relaenmanager";
 import { Translator } from "../core/translator";
 import { User } from "./entity/user";
+import { Agent } from "./entity/agent";
+import { Query } from "../core/query";
 
 async function testPersist(){
     let em:EntityManager = new EntityManager();
@@ -15,10 +17,19 @@ async function testPersist(){
     console.log(user);
 }
 
-async function testQuery(){
-    let sql = "select count(a1) ,a1.area.areaId    from       Agent a1 left join Area a2 on a1.area =a2 , Authority a3 where a1.areaId=1";
-    // let sql = "select a1  from       Agent a1 left join Area a2 on a1.area =a2 , Authority a3 where a1.areaId=1";
-    Translator.getQuerySql(sql);
+function testQuery(){
+    let a:Agent = new Agent();
+    a.setAgentId(10);
+    a.setAgentName('yang');
+    // console.log(Translator.entityToDelete(a));
+    // let sql = "select a1    from  Agent a1 where a1.area=? order by a1.agentId";
+    let sql = "select a1  from  Agent a1";
+    let em:EntityManager = new EntityManager();
+    let query = em.createQuery(sql,Agent);
+    query.getResultList().then(r=>{
+        console.log(r);
+    });
+    
 }
 
 RelaenManager.init(process.cwd() + '/relaen.json');
