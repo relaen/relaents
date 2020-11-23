@@ -1,6 +1,6 @@
 import { EntityManager } from "./entitymanager";
 import { Translator } from "./translator";
-import { BaseEntity } from "./entity";
+import { BaseEntity } from "./baseentity";
 import { SqlExecutor } from "./sqlexecutor";
 import { RelaenManager } from "./relaenmanager";
 import { EntityFactory } from "./entityfactory";
@@ -50,11 +50,16 @@ class Query{
      * @param entity    对应的结果实体
      */
     constructor(rql:string,em:EntityManager,entity?:BaseEntity){
-        this.entityManager = em;        
+        this.entityManager = em;
         this.entity = entity;
         let obj = Translator.getQuerySql(rql);
         this.execSql = obj.sql;
         this.aliasMap = obj.map;
+        this.paramArr = [];
+        //调试模式，输出执行的sql
+        if(RelaenManager.debug){
+            console.log(this.execSql);
+        }
     }
 
     /**
@@ -110,45 +115,67 @@ class Query{
     }
 
     /**
-     * 获取结果列表
+     * 获取单个实体
      */
-    public async getResultList<T>():Promise<Array<T>>{
-        //调试模式，输出执行的sql
-        if(RelaenManager.debug){
-            console.log(this.execSql);
+    public async getResult():Promise<BaseEntity>{
+        let results:any[] = await SqlExecutor.exec(this.entityManager.connection,this.execSql,this.paramArr);
+        if(results.length>0){
+            return this.genEntity(results[0]);
         }
-        let results:any[] = await SqlExecutor.exec(this.execSql,this.paramArr,this.start,this.limit);
+        return null;
+    }
+
+    /**
+     * 获取结果列表
+     * @param start     开始索引
+     * @param limit     记录数
+     */
+    public async getResultList<T>(start?:number,limit?:number):Promise<Array<T>>{
+        if(start){
+            this.start = start;
+        }
+        if(limit){
+            this.limit = limit;
+        }
+        let results:any[] = await SqlExecutor.exec(this.entityManager.connection,this.execSql,this.paramArr,this.start,this.limit);
         let retArr:any[] = [];
 
         for(let r of results){
-            let map:Map<string,BaseEntity> = new Map();
-            Object.getOwnPropertyNames(r).forEach((field)=>{
-                let fa:string[] = field.split('_');
-                let fo = this.aliasMap.get(fa[0]);
-                if(!map.has(fa[0])){
-                    let enObj:any = EntityFactory.getClass(fo['entity']);
-                    map.set(fa[0],Reflect.construct(enObj.entity,[]));
-                }
-                let entity:any = map.get(fa[0]);
-                entity[fa[1]] = r[field];
-            });
-            
-            //给对象加上关联关系
-            for(let m of this.aliasMap){
-                if(m[1]['from']){
-                    let mo = map.get(m[1]['from']);
-                    mo[m[1]['propName']] = map.get(m[0]);
-                }
-            }
-            
-            //加入entity manager缓存
-            for(let m of map){
-                this.entityManager.addCache(m[1]);
-            }
-            
-            retArr.push(map.get('t0'));
+            retArr.push(this.genEntity(r));
         }
         return retArr;
+    }
+
+    /**
+     * 生成实体
+     * @param r     查询结果
+     * @returns     实体对象
+     */
+    private genEntity(r:any):BaseEntity{
+        let map:Map<string,BaseEntity> = new Map();
+        Object.getOwnPropertyNames(r).forEach((field)=>{
+            let fa:string[] = field.split('_');
+            let fo = this.aliasMap.get(fa[0]);
+            if(!map.has(fa[0])){
+                let enObj:any = EntityFactory.getClass(fo['entity']);
+                map.set(fa[0],Reflect.construct(enObj.entity,[]));
+            }
+            let entity:any = map.get(fa[0]);
+            entity[fa[1]] = r[field];
+        });
+        
+        //给对象加上关联关系
+        for(let m of this.aliasMap){
+            if(m[1]['from']){
+                let mo = map.get(m[1]['from']);
+                mo[m[1]['propName']] = map.get(m[0]);
+            }
+        }
+        //加入entity manager缓存
+        for(let m of map){
+            this.entityManager.addCache(m[1]);
+        }
+        return map.get('t0');
     }
 }
 

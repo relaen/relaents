@@ -1,17 +1,12 @@
 {
     "dialect":"mysql",
-    "debug":true,
     "host":"localhost",
     "port":3306,
     "username":"root",
     "password":"field",
     "database":"tunnel",
-    "pool": {
-        "max": 5,
-        "min": 0,
-        "acquire": 30000,
-        "idle": 10000
-    },
+    "cache":true,
+    "debug":true,
     "entities": [
         "/dist/test/entity/**/*.js"
     ]

@@ -1,4 +1,4 @@
-import { BaseEntity } from "./entity";
+import { BaseEntity } from "./baseentity";
 import {Serializer} from "serializer-node";
 import { RelaenManager } from "./relaenmanager";
 

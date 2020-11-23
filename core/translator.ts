@@ -1,6 +1,6 @@
 import {EntityManager} from "./entitymanager";
 import { IEntityCfg, IEntityRelation, ERelationType, IEntityColumn } from "./entitydefine";
-import { BaseEntity } from "./entity";
+import { BaseEntity } from "./baseentity";
 import { EntityFactory } from "./entityfactory";
 import { ErrorFactory } from "./errorfactory";
 import { join } from "path";

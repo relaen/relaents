@@ -1,0 +1,57 @@
+{
+  "name": "relaen",
+  "version": "0.0.1",
+  "description": "一个node环境下基于typescript ORM框架",
+  "main": "dist/index.js",
+  "types": "dist/types/index.d.ts",
+  "files": [
+    "dist/types/index.d.ts",
+    "dist/core/**/*.js",
+    "dist/types/core/**/*.d.ts"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/noomijs/noomi.git"
+  },
+  "keywords": [
+    "noomi",
+    "typescript",
+    "Enterprise Framework"
+  ],
+  "author": "fieldyang <fieldyang@163.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/noomijs/noomi/issues"
+  },
+  "homepage": "https://github.com/noomijs/noomi#readme",
+  "dependencies": {
+    "cls-hooked": "^4.2.2",
+    "json5": "^2.1.3",
+    "mime": "^2.4.6",
+    "sequelize": "^5.22.3",
+    "sequelize-typescript": "^1.1.0",
+    "typeorm": "^0.2.26",
+    "uuid": "^8.3.0"
+  },
+  "devDependencies": {
+    "mssql": "^6.2.1",
+    "mysql": "^2.18.1"
+  },
+  "engines": {
+    "node": ">=11.0.0"
+  },
+  "contributors": [
+    {
+      "name": "杨雷",
+      "email": "fieldyang@163.com"
+    },
+    {
+      "name": "唐榜",
+      "email": "244750596@qq.com"
+    }
+  ]
+}

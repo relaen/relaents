@@ -1,4 +1,4 @@
-import { BaseEntity } from "./entity";
+import { BaseEntity } from "./baseentity";
 
 /**
  * entity类配置项

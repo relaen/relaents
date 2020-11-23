@@ -1,5 +1,6 @@
-import ConnectionManager from "./connectionmanager";
+import { ConnectionManager } from "./connectionmanager";
 import { EntityFactory } from "./entityfactory";
+import { Connection } from "./connection";
 
 /**
  * relaen 框架管理器
@@ -17,6 +18,11 @@ class RelaenManager{
     public static dialect:string;
 
     /**
+     * 开启一级cache
+     */
+    public static cache:boolean;
+
+    /**
      * 是否调试模式
      */
     public static debug:boolean;
@@ -28,26 +34,8 @@ class RelaenManager{
         let cfg = this.parseFile(path);
         this.dialect = cfg.dialect || 'mysql';
         this.debug = cfg.debug || false;
-        switch(this.dialect){
-            case "oracle":
-
-                break;
-            case "mssql":
-            
-                break;
-            default: //mysql
-                ConnectionManager.options = {
-                    host:cfg.host,
-                    port:cfg.port,
-                    user:cfg.username,
-                    password:cfg.password,
-                    database:cfg.database
-                };
-                //连接池
-                if(cfg.pool && cfg.pool.max){
-                    ConnectionManager.options.connectionLimit = cfg.pool.max;
-                }
-        }
+        this.cache = cfg.cache === false?false:true;
+        ConnectionManager.init(cfg);
         //加载实体
         for(let path of cfg.entities){
             EntityFactory.addEntities(path);

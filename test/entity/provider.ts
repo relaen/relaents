@@ -1,5 +1,5 @@
 import { Entity, Id, Column, ManyToOne, JoinColumn, OneToMany } from '../../core/decorator/decorator'
-import { BaseEntity } from '../../core/entity'
+import { BaseEntity } from '../../core/baseentity'
 import { EFkConstraint } from '../../core/entitydefine'
 import {Area} from './area'
 import {DeviceModel} from './devicemodel'

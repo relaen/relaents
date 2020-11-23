@@ -1,8 +1,9 @@
 import { EntityManager } from "./entitymanager";
+import { Connection } from "./connection";
 
 class EntityManagerFactory{
-    public static createEntityManager(){
-        return new EntityManager();
+    public static createEntityManager(conn:Connection){
+        return new EntityManager(conn);
     }
 }
 
