@@ -28,15 +28,22 @@ async function testPersist(){
 async function testQuery(){
     let conn:Connection = await getConnection();
     let em:EntityManager = EntityManagerFactory.createEntityManager(conn);
-    let a:Agent = new Agent();
-    a.setAgentId(10);
-    a.setAgentName('yang');
-    
-    // console.log(Translator.entityToDelete(a));
-    // let sql = "select a1    from  Agent a1 where a1.area=? order by a1.agentId";
-    let sql = "select a1  from  Agent a1";
-    // let em:EntityManager = new EntityManager();
+    let sql = "select a1    from  Agent a1 where a1.area=? order by a1.agentId";
     let query = em.createQuery(sql,Agent);
+    query.setParameter(0,1);
+    query.getResultList().then(r=>{
+        console.log(r);
+    });
+
+    em.close();
+}
+
+async function testNativeQuery(){
+    let conn:Connection = await getConnection();
+    let em:EntityManager = EntityManagerFactory.createEntityManager(conn);
+    let sql = "select a1.agent_id,a1.agent_name   from  t_agent a1";
+    // let em:EntityManager = new EntityManager();
+    let query = em.createNativeQuery(sql);
     query.getResultList().then(r=>{
         console.log(r);
     });

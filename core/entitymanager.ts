@@ -7,6 +7,7 @@ import { Query } from "./query";
 import { RelaenManager } from "./relaenmanager";
 import { Connection } from "./connection";
 import { ErrorFactory } from "./errorfactory";
+import { NativeQuery } from "./nativequery";
 
 
 /**
@@ -102,8 +103,8 @@ class EntityManager{
      * 原生sql查询
      * @param sql 
      */
-    public createNativeQuery(sql:string):Query{
-        return null;
+    public createNativeQuery(sql:string):NativeQuery{
+        return new NativeQuery(sql,this);
     }
 
     /**
