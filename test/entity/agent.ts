@@ -7,7 +7,7 @@ import {Tunnel} from './tunnel'
 
 @Entity("t_agent",'tunnel')
 export class Agent extends BaseEntity{
-	@Id()
+	@Id({generator:'table',table:'t_id_table',keyName:'ID_AGENT'})
 	@Column({
 		name:'agent_id',
 		type:'int',

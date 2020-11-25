@@ -1,5 +1,5 @@
 import { IEntityCfg, IEntityPKey, IEntityColumn, IEntityRelation } from "./entitydefine";
-import { Entity } from "./decorator/decorator";
+import { BaseEntity } from "./baseentity";
 
 /**
  * 实体工厂，管理所有实体类
@@ -9,6 +9,11 @@ class EntityFactory{
      * 实体类集
      */
     private static entityClasses:Map<string,IEntityCfg> = new Map();
+    /**
+     * 新建实体map，用于存放新建状态的实体，当实体执行save、delete操作后，将从该map移除
+     * {entity:createTime}
+     */
+    private static newEntityMap:WeakMap<BaseEntity,number> = new WeakMap();
 
     /**
      * 添加实体类
@@ -41,19 +46,14 @@ class EntityFactory{
      * @param propName      实体字段名
      * @param cfg 
      */
-    public static addPKey(entityName:string,colName:string,cfg:IEntityPKey){
-        if(!this.entityClasses.has(entityName)){
-            this.entityClasses.set(entityName,{
-                columns:new Map(),
-                relations:new Map()
-            });
-        }
+    public static addPKey(entityName:string,propName:string,cfg:IEntityPKey){
+        this.checkAndNewClass(entityName);
         if(!cfg){
             cfg = {
-                name:colName
+                name:propName
             }
         }else{
-            cfg.name = colName;
+            cfg.name = propName;
         }
         let entity:IEntityCfg = this.entityClasses.get(entityName);
         entity.id = cfg;
@@ -66,12 +66,7 @@ class EntityFactory{
      * @param cfg 
      */
     public static addColumn(entityName:string,colName:string,cfg:IEntityColumn){
-        if(!this.entityClasses.has(entityName)){
-            this.entityClasses.set(entityName,{
-                columns:new Map(),
-                relations:new Map()
-            });
-        }
+        this.checkAndNewClass(entityName);
         let entity:IEntityCfg = this.entityClasses.get(entityName);
         entity.columns.set(colName,cfg);
     }
@@ -83,16 +78,23 @@ class EntityFactory{
      * @param rel           关系对象
      */
     public static addRelation(entityName:string,colName:string,rel:IEntityRelation){
+        this.checkAndNewClass(entityName);
+        let entity:IEntityCfg = this.entityClasses.get(entityName);
+        entity.relations.set(colName,rel);
+    }
+
+    /**
+     * 检查class是否存在，不存在则新建
+     * @param entityName    实体类名
+     */
+    private static checkAndNewClass(entityName){
         if(!this.entityClasses.has(entityName)){
             this.entityClasses.set(entityName,{
                 columns:new Map(),
                 relations:new Map()
             });
         }
-        let entity:IEntityCfg = this.entityClasses.get(entityName);
-        entity.relations.set(colName,rel);
     }
-
     /**
      * 获取entity对应的entity class 配置型
      * @param entityName    实体类名
@@ -152,7 +154,7 @@ class EntityFactory{
     }
 
     
-    static toReg(str:string,side?:number):RegExp{
+    private static toReg(str:string,side?:number):RegExp{
         // 转字符串为正则表达式并加入到数组
         //替换/为\/
         str = str.replace(/\//g,'\\/');
@@ -173,6 +175,37 @@ class EntityFactory{
             }
         }
         return new RegExp(str);
+    }
+
+    /**
+     * 添加实体到新建实体map
+     * @param entity    待加入的实体
+     */
+    public static addNewEntity(entity:BaseEntity){
+        if(this.newEntityMap.has(entity)){
+            return;
+        }
+        this.newEntityMap.set(entity,new Date().getTime());
+    }
+
+    /**
+     * 从新建实体map移除实体
+     * @param entity    待移除的实体
+     */
+    public static removeNewEntity(entity:BaseEntity){
+        if(!this.newEntityMap.has(entity)){
+            return;
+        }
+        this.newEntityMap.delete(entity);
+    }
+
+    /**
+     * 是否存在new entity
+     * @param entity    待查询entity
+     * @returns         true/false
+     */
+    public static hasNewEntity(entity:BaseEntity):boolean{
+        return this.newEntityMap.has(entity);
     }
 }
 

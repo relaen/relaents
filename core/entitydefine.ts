@@ -89,9 +89,9 @@ interface IEntityRefColumn{
  */
 interface IEntityPKey{
     /**
-     * 主键名
+     * 对应属性名
      */
-    name:string;
+    name?:string;
     /**
      * 主键生成策略 identity table uuid
      */
@@ -99,13 +99,16 @@ interface IEntityPKey{
 
     /**
      * 主键来源表，数据库表，专门用于主键生成
+     * 该表必须包含两个字段 
+     * id_name: string,对应某个实体主键生成器名,
+     * id_value: int,对应主键值
      */
     table?:string;
 
     /**
-     * 主键对应来源表字段
+     * 主键对应来源表记录项，如User实体用id_name='ID_USER'这一条记录产生主键，则keyName='ID_USER'
      */
-    column?:string;
+    keyName?:string;
 }
 
 /**
@@ -167,9 +170,7 @@ enum ERelationType{
  * 实体状态
  */
 enum EEntityState{
-    NONE = 0,       //无状态，持久化时不需要做任何操作，如果为new或updated，则持久化后设置为none
-    NEW = 1,        //新建，持久化时执行sql insert操作
-    UPDATED = 2,    //修改，持久化时执行sql update操作
-    DELETED = 3     //删除，持计化时执行sql delete操作
+    NEW = 1,        //新建状态
+    PERSIST = 2     //持久化状态
 }
 export {IEntityCfg,IEntityColumn,IEntityRefColumn,IEntityPKey,IEntityRelation,EFkConstraint,ERelationType,EEntityState}

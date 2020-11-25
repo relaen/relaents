@@ -10,19 +10,24 @@ import { Connection } from "../core/connection";
 import { EntityManagerFactory } from "../core/entitymanagerfactory";
 import { Transaction } from "../core/transaction/transaction";
 
-async function testPersist(){
+async function testNew(){
     let conn:Connection = await getConnection();
-    let tran:Transaction = await conn.createTransaction();
-    tran.begin();
+    // let tran:Transaction = await conn.createTransaction();
+    // tran.begin();
     let em:EntityManager = EntityManagerFactory.createEntityManager(conn);
-    let user:User = new User();
-    user.setUserName('field');
-    user.setUserPwd('123456');
-    user.setEnabled(1);
-    await user.persist(em);
-    tran.rollback();
+    // let user:User = new User();
+    // user.setUserName('field');
+    // user.setUserPwd('123456');
+    // user.setEnabled(1);
+    // await user.save(em);
+
+    // tran.rollback();
+    let agent:Agent = new Agent();
+    agent.setAgentName("李四建筑");
+    await agent.save(em);
+    em.close();
     conn.close();
-    console.log(user);
+    
 }
 
 async function testQuery(){
@@ -69,8 +74,8 @@ async function testMerge(){
     let user:User = new User();
     user.setUserId(13);
     user.setUserName('aaaa');
-    let r = await em.merge(user);
+    let r = await em.save(user);
 }
 
 RelaenManager.init(process.cwd() + '/relaen.json');
-testQuery();
+testNew();

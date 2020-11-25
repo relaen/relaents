@@ -5,6 +5,7 @@ import { EntityFactory } from "./entityfactory";
 import { ErrorFactory } from "./errorfactory";
 import { join } from "path";
 import { Entity } from "./decorator/decorator";
+import { RelaenManager } from "./relaenmanager";
 
 /**
  * 翻译器
@@ -50,7 +51,11 @@ class Translator{
         arr.push(') values (');
         arr.push(values.join(','));
         arr.push(')');
-        return arr.join(' ');
+        let sql = arr.join(' ');
+        if(RelaenManager.debug){
+            console.log(sql);
+        }
+        return sql;
     }
 
     /**
@@ -103,7 +108,11 @@ class Translator{
         //where
         arr.push('where');
         arr.push(idName + '=' + idValue);
-        return arr.join(' ');
+        let sql = arr.join(' ');
+        if(RelaenManager.debug){
+            console.log(sql);
+        }
+        return sql;
     }
 
     /**
