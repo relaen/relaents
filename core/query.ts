@@ -42,7 +42,12 @@ class Query{
     /**
      * 别名关联map {aliasName:{entity:对应实体类,fromEntity:来源实体,propName:属性名}}
      */
-    aliasMap:Map<string,object> = new Map();
+    aliasMap:Map<string,object>;
+
+    /**
+     * 外键数组
+     */
+    fkArray:string[];
     /**
      * 构造query对象
      * @param rql       relean ql 
@@ -55,6 +60,7 @@ class Query{
         let obj = Translator.getQuerySql(rql);
         this.execSql = obj.sql;
         this.aliasMap = obj.map;
+        this.fkArray = obj.fk;
         this.paramArr = [];
         //调试模式，输出执行的sql
         if(RelaenManager.debug){
@@ -118,11 +124,7 @@ class Query{
      * 获取单个实体
      */
     public async getResult():Promise<BaseEntity>{
-        let results:any[] = await SqlExecutor.exec(this.entityManager.connection,this.execSql,this.paramArr);
-        if(results.length>0){
-            return this.genEntity(results[0]);
-        }
-        return null;
+        return this.getResultList(1,1)[0];
     }
 
     /**
@@ -174,6 +176,15 @@ class Query{
         //加入entity manager缓存
         for(let m of map){
             this.entityManager.addCache(m[1]);
+        }
+        //存储外键值
+        let map1:Map<string,any> = new Map();
+        if(this.fkArray.length>0){
+            for(let fk of this.fkArray){
+                //去掉表别名再存储
+                map1.set(fk.substr(fk.indexOf('_')+1),r[fk]);
+            }
+            this.entityManager.addCache(map.get('t0'),map1);
         }
         return map.get('t0');
     }

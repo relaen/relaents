@@ -1,6 +1,7 @@
 import { RelaenManager } from "./relaenmanager";
 import { Connection } from "./connection";
 import { ErrorFactory } from "./errorfactory";
+import { ThreadStorage } from "./threadlocal";
 
 /**
  * 连接池配置
@@ -41,12 +42,18 @@ class ConnectionManager{
     /**
      * 连接池
      */
-    static pool:any;
+    private static pool:any;
 
     /**
      * 数据库 npm 模块
      */
-    static dbMdl:any;
+    private static dbMdl:any;
+
+    /**
+     * 连接map {threadId:{num:conn创建次数,conn:连接}}
+     * 保证一个异步方法中只能有一个connection
+     */
+    private static connectionMap:Map<number,any> = new Map();
 
     /**
      * 获取连接对象
@@ -54,17 +61,33 @@ class ConnectionManager{
      */
     public static async getConnection():Promise<Connection>{
         let conn:Connection;
-        switch(RelaenManager.dialect){
-            case 'mysql':
-                conn = new Connection(await this.getMysqlConnection());
-                conn.connected = true;
-                break;
-            case 'oracle':
-                // conn = await this.getOracleConnection();
-                break;
-            case 'mssql':
-                // conn = await this.getMssqlConnection();
-                break;
+        //把conn加入connectionMap
+        let sid:number = ThreadStorage.getStore();
+
+        if(!sid){ //新建conn
+            sid = ThreadStorage.newStorage();
+        }
+        if(!this.connectionMap.has(sid)){ //线程id对应对象不存在
+            switch(RelaenManager.dialect){
+                case 'mysql':
+                    conn = new Connection(await this.getMysqlConnection());
+                    conn.connected = true;
+                    break;
+                case 'oracle':
+                    // conn = await this.getOracleConnection();
+                    break;
+                case 'mssql':
+                    // conn = await this.getMssqlConnection();
+                    break;
+            }
+            this.connectionMap.set(sid,{
+                num:1,
+                conn:conn
+            });
+        }else{ //已存在，则只修改conn的创建数，不新建conn
+            let o = this.connectionMap.get(sid);
+            o.num++;
+            conn = o.conn;
         }
         return conn;
     }
@@ -112,6 +135,15 @@ class ConnectionManager{
                 break;
             case 'mssql':
                 break;
+        }
+        //清理 connection map
+        //获取threadId
+        let sid:number = ThreadStorage.getStore();
+        if(sid && this.connectionMap.has(sid)){
+            let o = this.connectionMap.get(sid);
+            if(--o.num <= 0){ //最后一个close，需要从map删除
+                this.connectionMap.delete(sid);
+            }
         }
     }
 

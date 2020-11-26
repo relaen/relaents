@@ -1,6 +1,9 @@
 import { EntityManager } from "./entitymanager";
 import { EntityFactory } from "./entityfactory";
 import { IEntityCfg } from "./entitydefine";
+import { EntityManagerFactory } from "./entitymanagerfactory";
+import { ErrorFactory } from "./errorfactory";
+import { getConnection } from "./connectionmanager";
 
 /**
  * 实体基类
@@ -11,16 +14,31 @@ export class BaseEntity extends Object{
     }
 
     /**
-     * 保存实体，如果状态为none，则修改为updated，如果为new，则保持不变
+     * 保存实体
+     * @param em    entity manager
+     * @returns     保存后的实体
      */
-    save(em:EntityManager){
+    async save(em?:EntityManager):Promise<any>{
+        if(!em){
+            em = await EntityManagerFactory.createEntityManager();
+        }
+        if(!em){
+            throw ErrorFactory.getError('0300');
+        }
         return em.save(this);
     }
 
     /**
-     * 删除实体，如果状态为new，则从实体状态改为deleted
+     * 删除实体
+     * @param em    entity manager
      */
-    delete(em:EntityManager){
+    async delete(em?:EntityManager){
+        if(!em){
+            em = await EntityManagerFactory.createEntityManager();
+        }
+        if(!em){
+            throw ErrorFactory.getError('0300');
+        }
         return em.delete(this);
     }
 

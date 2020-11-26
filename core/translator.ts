@@ -157,12 +157,11 @@ class Translator{
     /**
      * 获取sql 字符串
      * @param rql 
-     * @returns     {sql:string,map:{aliasName:{entity:对应实体类,from:来源别名,propName:属性名}}}
+     * @returns     {sql:string,fk:外键字段数组,map:{aliasName:{entity:对应实体类,from:来源别名,propName:属性名}}}
      */
     public static getQuerySql(rql:string):any{
         //删除多余的空格
         rql = rql.trim().replace(/\s+/g,' ');
-        
         let rql1:string = rql.toLowerCase();
 
         //select 位置
@@ -219,8 +218,10 @@ class Translator{
         // 隐含join main table 的tables{entity:实体名,refEntity:join 右侧实体名,column:column对象}
         let joinTbls:any[] = [];
 
-        // select 字段集合
-        // {entityName:[field1,field2]}
+        // 外键查询别名数组
+        let fkArray:string[] = [];
+
+        // select 字段集合 {column:true}
         let selectFieldMap:Map<string,boolean> = new Map();
 
         handleTable(tableArr);
@@ -257,7 +258,7 @@ class Translator{
         if(orderByArr){
             sql += ' order by ' + orderByArr.join(' ');
         }
-        return {sql:sql,map:retAliasMap};
+        return {sql:sql,map:retAliasMap,fk:fkArray};
         /**
          * 处理表串
          * @param tblArr    表名数组
@@ -526,7 +527,7 @@ class Translator{
         }
 
         /**
-         * 获取实体字段（含eager=true的关联实体）
+         * 获取实体字段（含eager=true的关联实体）,一律懒加载
          * @param entityName    实体名
          * @param fieldArr      操作的字段数组
          */
@@ -544,7 +545,7 @@ class Translator{
                 let alias:string;
                 let propName = fo[0];
                 let co:IEntityColumn = orm.columns.get(fo[0]);
-                if(co.refName){ //处理关联字段
+                /*if(co.refName){ //处理关联字段
                     let rel:IEntityRelation = orm.relations.get(propName);
                     if(rel.eager){
                         if(!oldEnAliasMap.has(rel.entity)){
@@ -568,6 +569,7 @@ class Translator{
                         }
                         
                         getEntityField(rel.entity,fieldArr);
+
                     }
                 }else{
                     let alias:string = newEnAliasMap.get(entityName);
@@ -578,6 +580,21 @@ class Translator{
                         fieldArr.push(cn);
                         selectFieldMap.set(cn,true);
                     }
+                }*/
+                
+                alias = newEnAliasMap.get(entityName);
+                //查询结果别名
+                let alfn:string = alias + '_' + fo[0];
+                //拼接字段
+                let cn:string = alias + '.' + co.name + ' as ' + alfn;
+                //如果不存在，则加入选择集
+                if(!selectFieldMap.has(cn)){
+                    fieldArr.push(cn);
+                    selectFieldMap.set(cn,true);
+                }
+                //添加到外键数组
+                if(co.refName && !fkArray.includes(alfn)){
+                    fkArray.push(alfn);
                 }
             }
         }

@@ -9,22 +9,22 @@ import { Connection } from "./connection";
 import { ErrorFactory } from "./errorfactory";
 import { NativeQuery } from "./nativequery";
 import { Entity } from "./decorator/decorator";
+import { EntityManagerFactory } from "./entitymanagerfactory";
 
 /**
  * 实体管理器
  */
 class EntityManager{
-
     /**
      * 连接
      */
     public connection:Connection;
 
     /**
-     * 实体缓存map {cacheId:Entity}
+     * 实体缓存map {cacheId:{entity:Entity,fk:外键值map}
      */
-    public entityMap:Map<string,BaseEntity>;
-
+    public entityMap:Map<string,any>;
+    
     /**
      * 实体状态map {实体:}
      */
@@ -59,27 +59,28 @@ class EntityManager{
             //检查并生成主键
             await this.genKey(entity);
             let sql:string = Translator.entityToInsert(entity);
-            
             let r = await SqlExecutor.exec(this.connection,sql);
             //针对单主键设置主键
             this.setIdValue(entity,r);
             //加入缓存
             if(RelaenManager.cache){
-                this.entityMap.set(this.genCacheId(entity),entity);
+                this.addCache(entity);
             }
             this.statusMap.set(entity,EEntityState.PERSIST);
         }else{ //update
             let cacheId = this.genCacheId(this);
             if(cacheId){
-                let entity1:BaseEntity = this.entityMap.get(cacheId);
-                //对比有差别
-                if(entity1 && !entity.compare(entity1)){
-                    //更新到数据库
-                    let sql:string = Translator.entityToUpdate(entity);
-                    await SqlExecutor.exec(this.connection,sql);
-                    //更新缓存
-                    this.addCache(entity);
-                }    
+                if(this.entityMap.has(cacheId)){
+                    let entity1:BaseEntity = this.entityMap.get(cacheId).entity;
+                    //对比有差别
+                    if(entity1 && !entity.compare(entity1)){
+                        //更新到数据库
+                        let sql:string = Translator.entityToUpdate(entity);
+                        await SqlExecutor.exec(this.connection,sql);
+                        //更新缓存
+                        this.addCache(entity);
+                    }    
+                }
             }
         }
         return entity;
@@ -109,7 +110,7 @@ class EntityManager{
     public async find(entityClassName:string,id:any):Promise<BaseEntity>{
         let key:string = entityClassName + '@' + id;
         if(this.entityMap.has(key)){  //从缓存中获取
-            return this.entityMap.get(key);
+            return this.entityMap.get(key).entity;
         }else{  //从数据库获取
             let idName:string = this.getIdName(entityClassName);
             if(!idName){
@@ -143,7 +144,7 @@ class EntityManager{
      * 关闭
      */
     public close(){
-        this.entityMap.clear();
+        EntityManagerFactory.closeEntityManager(this);
     }
 
 
@@ -199,15 +200,27 @@ class EntityManager{
     /**
      * 添加实体对象到cache
      * @param entity 实体对象
+     * @param fk     外键值map
      */
-    public addCache(entity:any){
+    public addCache(entity:any,fk?:Map<string,any>){
         //如果cache设置为false，则不缓存
         if(!RelaenManager.cache){
             return;
         }
-        this.entityMap.set(this.genCacheId(entity),entity);
+        this.entityMap.set(this.genCacheId(entity),{entity:entity,fk:fk});
     }
 
+    /**
+     * 获取cache
+     * @param entity  实体对象
+     * @returns       {entity:实体,fk:外键map}
+     */
+    public getCache(entity:any):any{
+        let cacheId:string = this.genCacheId(entity);
+        if(this.entityMap.has(cacheId)){
+            return this.entityMap.get(cacheId);
+        }
+    }
     /**
      * 生成主键
      * @param entity 
