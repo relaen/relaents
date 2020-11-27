@@ -1,14 +1,21 @@
-import { BaseEntity } from "./baseentity";
-import { IEntityCfg, IEntityRelation, ERelationType, IEntityColumn } from "./entitydefine";
+import { IEntityCfg, IEntityRelation, ERelationType, IEntityColumn, IEntity } from "./entitydefine";
 import { EntityFactory } from "./entityfactory";
-import { O_EXCL } from "constants";
 import { EntityManager } from "./entitymanager";
 import { EntityManagerFactory } from "./entitymanagerfactory";
 import { Query } from "./query";
 import { ErrorFactory } from "./errorfactory";
+import { NativeQuery } from "./nativequery";
 
+/**
+ * 实体代理类
+ */
 class EntityProxy{
-    async get(entity:BaseEntity,propName:string){
+    /**
+     * 获取实体关联对象
+     * @param entity    实体
+     * @param propName  关联属性名
+     */
+    public static async get(entity:IEntity,propName:string):Promise<any>{
         let em:EntityManager = await EntityManagerFactory.createEntityManager();
         let pv = entity[propName];
         if(pv !== undefined && pv !== null){
@@ -16,7 +23,6 @@ class EntityProxy{
         }
 
         let eo:IEntityCfg = EntityFactory.getClass(entity.constructor.name);
-        
                 
         //具备关联关系
         if(eo.relations.has(propName)){
@@ -29,16 +35,20 @@ class EntityProxy{
             if(rel.type === ERelationType.ManyToOne || rel.type === ERelationType.OneToOne && !rel.mappedBy){
                 let enObj = em.getCache(entity);
                 let rql:string;
-                if(enObj && enObj.fk && enObj.fk.has(propName)){ //外键存在
-                    rql = "select m from " + rel.entity + " m where " + column.refName + " = ?";
-                }else{
-                    rql = "select m from " + rel.entity + " m,"+ entity.constructor.name +" m1 where m." +
-                                    eo1.id.name + "= m1." +  column.name + " and m1." + eo.id.name + " = ?";
-                }
+                let query:NativeQuery;
                 //查询外键对象
-                let query:Query = em.createQuery(rql,rel.entity);
-                //设置外键id
-                query.setParameter(0,enObj.fk.get(propName));
+                if(enObj && enObj.fk && enObj.fk.has(column.name)){ //外键存在
+                    rql = "select * from " + eo1.table + " m where " + column.refName + " = ?";
+                    query = em.createNativeQuery(rql,rel.entity);
+                    //设置外键id
+                    query.setParameter(0,enObj.fk.get(column.name));
+                }else{
+                    rql = "select m.* from " + eo1.table + " m,"+ eo.table +" m1 where m." +
+                                    column.refName + "= m1." +  column.name + " and m1." + eo.columns.get(eo.id.name).name + " = ?";
+                    query = em.createNativeQuery(rql,rel.entity);
+                    //设置外键id
+                    query.setParameter(0,em.getIdValue(entity));                                    
+                }
                 entity[propName] = await query.getResult();
             }else if(rel.mappedBy && (rel.type === ERelationType.OneToMany || rel.type === ERelationType.OneToOne)){ //被引用
                 if(!eo1){
@@ -49,9 +59,10 @@ class EntityProxy{
                 if(!column1){
                     throw ErrorFactory.getError('0022',[rel.entity,column1]);
                 }
-                let rql:string = "select m from " + rel.entity + " m where " + column1.refName + " = ?";
+                
+                let rql:string = "select * from " + eo1.table + " where " + column1.refName + " = ?";
                 //查询外键对象
-                let query:Query = em.createQuery(rql,rel.entity);
+                let query:NativeQuery = em.createNativeQuery(rql,rel.entity);
                 //设置查询值
                 query.setParameter(0,em.getIdValue(entity));
                 entity[propName] = rel.type===ERelationType.OneToOne?await query.getResult():await query.getResultList();

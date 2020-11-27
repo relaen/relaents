@@ -14,7 +14,7 @@ async function testNew(){
     let conn:Connection = await getConnection();
     // let tran:Transaction = await conn.createTransaction();
     // tran.begin();
-    let em:EntityManager = EntityManagerFactory.createEntityManager(conn);
+    let em:EntityManager = await EntityManagerFactory.createEntityManager(conn);
     // let user:User = new User();
     // user.setUserName('field');
     // user.setUserPwd('123456');
@@ -32,20 +32,21 @@ async function testNew(){
 
 async function testQuery(){
     let conn:Connection = await getConnection();
-    let em:EntityManager = EntityManagerFactory.createEntityManager(conn);
-    let sql = "select a1    from  Agent a1 where a1.area=? order by a1.agentId";
-    let query = em.createQuery(sql,Agent);
+    let em:EntityManager = await EntityManagerFactory.createEntityManager(conn);
+    let sql = "select a1.agentId,a1.agentName    from  Agent a1 where a1.area=? order by a1.agentId";
+    let query = em.createQuery(sql,Agent.name);
     query.setParameter(0,1);
-    query.getResultList().then(r=>{
-        console.log(r);
-    });
+    let r = await query.getResult();
+    let a:Agent = <Agent>r;
+    await a.getArea();
+    console.log(a);
 
     em.close();
 }
 
 async function testNativeQuery(){
     let conn:Connection = await getConnection();
-    let em:EntityManager = EntityManagerFactory.createEntityManager(conn);
+    let em:EntityManager = await EntityManagerFactory.createEntityManager(conn);
     let sql = "select a1.agent_id,a1.agent_name   from  t_agent a1";
     // let em:EntityManager = new EntityManager();
     let query = em.createNativeQuery(sql);
@@ -56,13 +57,13 @@ async function testNativeQuery(){
 
 async function testGetOne(){
     let conn:Connection = await getConnection();
-    let em:EntityManager = EntityManagerFactory.createEntityManager(conn);
+    let em:EntityManager = await EntityManagerFactory.createEntityManager(conn);
     let u = await em.find('User',7);
 }
 
 async function testDelete(){
     let conn:Connection = await getConnection();
-    let em:EntityManager = EntityManagerFactory.createEntityManager(conn);
+    let em:EntityManager = await EntityManagerFactory.createEntityManager(conn);
     let user:User = new User();
     user.setUserId(12);
     let r = await em.delete(user);
@@ -70,7 +71,7 @@ async function testDelete(){
 
 async function testMerge(){
     let conn:Connection = await getConnection();
-    let em:EntityManager = EntityManagerFactory.createEntityManager(conn);
+    let em:EntityManager = await EntityManagerFactory.createEntityManager(conn);
     let user:User = new User();
     user.setUserId(13);
     user.setUserName('aaaa');
@@ -78,4 +79,4 @@ async function testMerge(){
 }
 
 RelaenManager.init(process.cwd() + '/relaen.json');
-testNew();
+testQuery();

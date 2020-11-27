@@ -1,4 +1,4 @@
-import { IEntityPKey, IEntityColumn, IEntityCfg, IEntityRelation, EEntityState } from "./entitydefine";
+import {IEntityCfg, EEntityState, IEntity } from "./entitydefine";
 import { BaseEntity } from "./baseentity";
 import { Translator } from "./translator";
 import { SqlExecutor } from "./sqlexecutor";
@@ -8,7 +8,6 @@ import { RelaenManager } from "./relaenmanager";
 import { Connection } from "./connection";
 import { ErrorFactory } from "./errorfactory";
 import { NativeQuery } from "./nativequery";
-import { Entity } from "./decorator/decorator";
 import { EntityManagerFactory } from "./entitymanagerfactory";
 
 /**
@@ -28,7 +27,7 @@ class EntityManager{
     /**
      * 实体状态map {实体:}
      */
-    public statusMap:WeakMap<BaseEntity,EEntityState>;
+    public statusMap:WeakMap<IEntity,EEntityState>;
 
     /**
      * 构造函数
@@ -46,7 +45,7 @@ class EntityManager{
      * @param entity    实体
      * @returns         保存后的实体  
      */
-    public async save(entity:any):Promise<any>{
+    public async save(entity:IEntity):Promise<any>{
         let idValue = this.getIdValue(entity);
         //无主键或状态为new
         if(idValue === undefined || idValue === null || 
@@ -68,10 +67,10 @@ class EntityManager{
             }
             this.statusMap.set(entity,EEntityState.PERSIST);
         }else{ //update
-            let cacheId = this.genCacheId(this);
+            let cacheId = this.genCacheId(entity);
             if(cacheId){
                 if(this.entityMap.has(cacheId)){
-                    let entity1:BaseEntity = this.entityMap.get(cacheId).entity;
+                    let entity1:IEntity = this.entityMap.get(cacheId).entity;
                     //对比有差别
                     if(entity1 && !entity.compare(entity1)){
                         //更新到数据库
@@ -91,7 +90,7 @@ class EntityManager{
      * @param entity    待删除实体
      * @returns         是否删除成功
      */
-    public async delete(entity:BaseEntity):Promise<BaseEntity>{
+    public async delete(entity:IEntity):Promise<IEntity>{
         let sql:string = Translator.entityToDelete(entity);
         let r = await SqlExecutor.exec(this.connection,sql);
         //从状态map移除
@@ -107,7 +106,8 @@ class EntityManager{
      * @param id            entity id 值
      * @returns             entity
      */
-    public async find(entityClassName:string,id:any):Promise<BaseEntity>{
+    public async find(entityClassName:string,id:any):Promise<IEntity>{
+        
         let key:string = entityClassName + '@' + id;
         if(this.entityMap.has(key)){  //从缓存中获取
             return this.entityMap.get(key).entity;
@@ -125,19 +125,19 @@ class EntityManager{
 
     /**
      * 创建查询对象
-     * @param rql       relean ql
-     * @param entity    实体类
+     * @param rql               relean ql
+     * @param entityClassName   实体类名
      */
-    public createQuery(rql:string,entity:any):Query{
-        return new Query(rql,this,entity);
+    public createQuery(rql:string,entityClassName:string):Query{
+        return new Query(rql,this,entityClassName);
     }
 
     /**
      * 原生sql查询
      * @param sql 
      */
-    public createNativeQuery(sql:string):NativeQuery{
-        return new NativeQuery(sql,this);
+    public createNativeQuery(sql:string,entityClassName?:string):NativeQuery{
+        return new NativeQuery(sql,this,entityClassName);
     }
 
     /**
@@ -147,12 +147,11 @@ class EntityManager{
         EntityManagerFactory.closeEntityManager(this);
     }
 
-
     /**
      * 生成缓存id
      * @param entity    实体对象
      */
-    private genCacheId(entity:any):string{
+    private genCacheId(entity:IEntity):string{
         return entity.constructor.name + '@' + this.getIdValue(entity);
     }
 
@@ -161,7 +160,7 @@ class EntityManager{
      * @param entity    实体对象
      * @param value     实体值
      */
-    public setIdValue(entity:BaseEntity,value:any){
+    public setIdValue(entity:IEntity,value:any){
         let cfg:IEntityCfg = EntityFactory.getClass(entity.constructor.name);
         if(cfg.id && cfg.id.name){
             entity[cfg.id.name] = value;
@@ -172,7 +171,7 @@ class EntityManager{
      * 获取id值
      * @param entity    实体对象
      */
-    public getIdValue(entity:BaseEntity):any{
+    public getIdValue(entity:IEntity):any{
         let cfg:IEntityCfg = EntityFactory.getClass(entity.constructor.name);
         if(cfg.id){
             return entity[cfg.id.name];
@@ -225,7 +224,7 @@ class EntityManager{
      * 生成主键
      * @param entity 
      */
-    private async genKey(entity:BaseEntity){
+    private async genKey(entity:IEntity){
         //如果generator为table，则从指定主键生成表中获取主键，并赋予entity
         let orm:IEntityCfg = EntityFactory.getClass(entity.constructor.name);
         

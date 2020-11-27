@@ -87,7 +87,7 @@ class MysqlTransaction extends BaseTransaction{
                 if(err){
                     reject(err);
                 }
-                resolve();
+                resolve(null);
             });
         });
     }
@@ -101,7 +101,7 @@ class MysqlTransaction extends BaseTransaction{
                 if(err){
                     reject(err);
                 }
-                resolve();
+                resolve(null);
             });
         });
     }
@@ -115,7 +115,7 @@ class MysqlTransaction extends BaseTransaction{
                 if(err){
                     reject(err);
                 }
-                resolve();
+                resolve(null);
             });
         });
     }

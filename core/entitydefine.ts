@@ -1,6 +1,14 @@
 import { BaseEntity } from "./baseentity";
 
 /**
+ * 实体接口
+ */
+interface IEntity{
+    save:Function;
+    delete:Function;
+    compare:Function;
+}
+/**
  * entity类配置项
  */
 interface IEntityCfg{
@@ -116,7 +124,7 @@ interface IEntityPKey{
  */
 interface IEntityRelation{
     /**
-     * 被依赖的实体类
+     * 被依赖的实体类名
      */
     entity:string;
 
@@ -173,4 +181,4 @@ enum EEntityState{
     NEW = 1,        //新建状态
     PERSIST = 2     //持久化状态
 }
-export {IEntityCfg,IEntityColumn,IEntityRefColumn,IEntityPKey,IEntityRelation,EFkConstraint,ERelationType,EEntityState}
+export {IEntity,IEntityCfg,IEntityColumn,IEntityRefColumn,IEntityPKey,IEntityRelation,EFkConstraint,ERelationType,EEntityState}

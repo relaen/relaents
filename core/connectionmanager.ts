@@ -178,7 +178,7 @@ class ConnectionManager{
                     if(err){
                         rej(ErrorFactory.getError('0201',[err]));
                     }
-                    res();
+                    res(null);
                 })
             });
         }else{
@@ -187,7 +187,7 @@ class ConnectionManager{
                     if(err){
                         rej(ErrorFactory.getError('0201',[err]));
                     }
-                    res();
+                    res(null);
                 });
             });
         }

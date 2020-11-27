@@ -4,6 +4,7 @@ import { EFkConstraint } from '../../core/entitydefine'
 import {Area} from './area'
 import {Member} from './member'
 import {Tunnel} from './tunnel'
+import { EntityProxy } from '../../core/entityproxy';
 
 @Entity("t_agent",'tunnel')
 export class Agent extends BaseEntity{
@@ -95,8 +96,8 @@ export class Agent extends BaseEntity{
 		this.agentId = value;
 	}
 
-	public getArea():Area{
-		return this.area;
+	public async getArea():Promise<Area>{
+		return await EntityProxy.get(this,'area');
 	}
 	public setArea(value:Area){
 		this.area = value;

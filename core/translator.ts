@@ -543,45 +543,7 @@ class Translator{
             //旧别名
             for(let fo of orm.columns){
                 let alias:string;
-                let propName = fo[0];
                 let co:IEntityColumn = orm.columns.get(fo[0]);
-                /*if(co.refName){ //处理关联字段
-                    let rel:IEntityRelation = orm.relations.get(propName);
-                    if(rel.eager){
-                        if(!oldEnAliasMap.has(rel.entity)){
-                            //生成别名
-                            alias = 't' + aliasIndex++;
-                            oldAliasEnMap.set(alias,rel.entity);
-                            oldEnAliasMap.set(rel.entity,alias);
-                            newEnAliasMap.set(rel.entity,alias);
-                            joinTbls.push({
-                                entity:entityName,
-                                refEntity:rel.entity,
-                                column:co
-                            });
-
-                            //加入返回alias map
-                            retAliasMap.set(alias,{
-                                entity:rel.entity,
-                                from:newEnAliasMap.get(entityName),
-                                propName:fo[0]
-                            });
-                        }
-                        
-                        getEntityField(rel.entity,fieldArr);
-
-                    }
-                }else{
-                    let alias:string = newEnAliasMap.get(entityName);
-                    //拼接字段
-                    let cn:string = alias + '.' + co.name + ' as ' + alias + '_' + fo[0];
-                    //如果不存在，则加入选择集
-                    if(!selectFieldMap.has(cn)){
-                        fieldArr.push(cn);
-                        selectFieldMap.set(cn,true);
-                    }
-                }*/
-                
                 alias = newEnAliasMap.get(entityName);
                 //查询结果别名
                 let alfn:string = alias + '_' + fo[0];

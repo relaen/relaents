@@ -1,14 +1,13 @@
 import { EntityManager } from "./entitymanager";
 import { EntityFactory } from "./entityfactory";
-import { IEntityCfg } from "./entitydefine";
+import { IEntityCfg, IEntity } from "./entitydefine";
 import { EntityManagerFactory } from "./entitymanagerfactory";
 import { ErrorFactory } from "./errorfactory";
-import { getConnection } from "./connectionmanager";
 
 /**
  * 实体基类
  */
-export class BaseEntity extends Object{
+export class BaseEntity extends Object implements IEntity{
     constructor(){
         super();
     }
@@ -42,13 +41,12 @@ export class BaseEntity extends Object{
         return em.delete(this);
     }
 
-
     /**
      * 对比
      * @param entity    被比较entity
      * @returns         如果相同，则返回true，否则返回false
      */
-    compare(entity:BaseEntity):boolean{
+    compare(entity:IEntity):boolean{
         let orm:IEntityCfg = EntityFactory.getClass(entity.constructor.name);
         for(let c of orm.columns){
             let fn:string = c[0];

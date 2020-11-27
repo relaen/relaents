@@ -1,4 +1,4 @@
-import { IEntityCfg, IEntityPKey, IEntityColumn, IEntityRelation } from "./entitydefine";
+import { IEntityCfg, IEntityPKey, IEntityColumn, IEntityRelation, IEntity } from "./entitydefine";
 import { BaseEntity } from "./baseentity";
 
 /**
@@ -13,7 +13,7 @@ class EntityFactory{
      * 新建实体map，用于存放新建状态的实体，当实体执行save、delete操作后，将从该map移除
      * {entity:createTime}
      */
-    private static newEntityMap:WeakMap<BaseEntity,number> = new WeakMap();
+    private static newEntityMap:WeakMap<IEntity,number> = new WeakMap();
 
     /**
      * 添加实体类
@@ -181,7 +181,7 @@ class EntityFactory{
      * 添加实体到新建实体map
      * @param entity    待加入的实体
      */
-    public static addNewEntity(entity:BaseEntity){
+    public static addNewEntity(entity:IEntity){
         if(this.newEntityMap.has(entity)){
             return;
         }
@@ -192,7 +192,7 @@ class EntityFactory{
      * 从新建实体map移除实体
      * @param entity    待移除的实体
      */
-    public static removeNewEntity(entity:BaseEntity){
+    public static removeNewEntity(entity:IEntity){
         if(!this.newEntityMap.has(entity)){
             return;
         }
@@ -204,7 +204,7 @@ class EntityFactory{
      * @param entity    待查询entity
      * @returns         true/false
      */
-    public static hasNewEntity(entity:BaseEntity):boolean{
+    public static hasNewEntity(entity:IEntity):boolean{
         return this.newEntityMap.has(entity);
     }
 }

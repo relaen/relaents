@@ -1,49 +1,22 @@
 import { EntityManager } from "./entitymanager";
-import { RelaenManager } from "./relaenmanager";
 import { SqlExecutor } from "./sqlexecutor";
+import { BaseEntity } from "./baseentity";
+import { IEntityCfg, IEntityColumn, IEntity } from "./entitydefine";
+import { EntityFactory } from "./entityfactory";
+import { Query } from "./query";
 
 /**
  * 原生查询
  */
-class NativeQuery{
-    /**
-     * entity 管理器
-     */
-    entityManager:EntityManager;
-
-    /**
-     * 参数值数组
-     */
-    paramArr:any[];
-
-    /**
-     * 执行sql
-     */
-    execSql:string;
-
-    /**
-     * 查询记录的start index
-     */
-    start:number;
-
-    /**
-     * 查询记录的条数限制
-     */
-    limit:number;
-
+class NativeQuery extends Query{
     /**
      * 构造query对象
-     * @param rql       relean ql 
-     * @param em        entity manager
+     * @param rql               relean ql 
+     * @param em                entity manager
+     * @param entityClassName   实体类名
      */
-    constructor(sql:string,em:EntityManager){
-        this.entityManager = em;
-        this.paramArr = [];
-        this.execSql = sql;
-        //调试模式，输出执行的sql
-        if(RelaenManager.debug){
-            console.log(this.execSql);
-        }
+    constructor(sql:string,em:EntityManager,entityClassName?:string){
+        super(sql,em,entityClassName,true);
     }
 
     /**
@@ -82,6 +55,27 @@ class NativeQuery{
      * @param r 
      */
     private genOne(r:any){
+        if(this.entityClassName){
+            let ecfg:IEntityCfg = EntityFactory.getClass(this.entityClassName);
+            if(ecfg){  //具备该实体类，则处理为实体
+                let fkMap:Map<string,any> = new Map();
+                let entity:IEntity = new ecfg.entity();
+                for(let col of ecfg.columns){
+                    let c:IEntityColumn = col[1];
+                    //该字段无值
+                    if(r[c.name] === undefined){
+                        continue;
+                    }
+                    if(c.refName){ //外键 需要保存到外键map
+                        fkMap.set(c.name,r[c.name]);
+                    }else{      //自有属性
+                        entity[col[0]] = r[c.name];
+                    }
+                }    
+                this.entityManager.addCache(entity,fkMap);
+                return entity;
+            }
+        }
         let obj = {};
         Object.getOwnPropertyNames(r).forEach(item=>{
             obj[item] = r[item];

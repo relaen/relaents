@@ -4,6 +4,8 @@ import { BaseEntity } from "./baseentity";
 import { SqlExecutor } from "./sqlexecutor";
 import { RelaenManager } from "./relaenmanager";
 import { EntityFactory } from "./entityfactory";
+import { IEntityCfg, IEntity } from "./entitydefine";
+import { ErrorFactory } from "./errorfactory";
 
 /**
  * 查询类
@@ -25,9 +27,9 @@ class Query{
     execSql:string;
 
     /**
-     * 实体
+     * 实体类名
      */
-    entity:BaseEntity;
+    entityClassName:string;
 
     /**
      * 查询记录的start index
@@ -50,21 +52,32 @@ class Query{
     fkArray:string[];
     /**
      * 构造query对象
-     * @param rql       relean ql 
-     * @param em        entity manager
-     * @param entity    对应的结果实体
+     * @param rql               relean ql 
+     * @param em                entity manager
+     * @param entityClassName   对应的结果实体类名
+     * @param notTransate       不转换rql
      */
-    constructor(rql:string,em:EntityManager,entity?:BaseEntity){
+    constructor(rql:string,em:EntityManager,entityClassName?:string,notTransate?:boolean){
+        if(entityClassName && !EntityFactory.getClass(entityClassName)){
+            throw ErrorFactory.getError("0020",[entityClassName]);
+        }
         this.entityManager = em;
-        this.entity = entity;
-        let obj = Translator.getQuerySql(rql);
-        this.execSql = obj.sql;
-        this.aliasMap = obj.map;
-        this.fkArray = obj.fk;
+        this.entityClassName = entityClassName;
+        
+        //需要转换rql
+        if(!notTransate){
+            let obj = Translator.getQuerySql(rql);
+            this.execSql = obj.sql;
+            this.aliasMap = obj.map;
+            this.fkArray = obj.fk;
+        }else{
+            this.execSql = rql;
+        }
+        
         this.paramArr = [];
         //调试模式，输出执行的sql
         if(RelaenManager.debug){
-            console.log(this.execSql);
+            console.log("[Relaen Query]:",this.execSql);
         }
     }
 
@@ -123,8 +136,12 @@ class Query{
     /**
      * 获取单个实体
      */
-    public async getResult():Promise<BaseEntity>{
-        return this.getResultList(1,1)[0];
+    public async getResult():Promise<IEntity>{
+        let r = await this.getResultList(0,1);
+        if(r.length>0){
+            return r[0];
+        }
+        return null;
     }
 
     /**
@@ -132,7 +149,7 @@ class Query{
      * @param start     开始索引
      * @param limit     记录数
      */
-    public async getResultList<T>(start?:number,limit?:number):Promise<Array<T>>{
+    public async getResultList(start?:number,limit?:number):Promise<Array<IEntity>>{
         if(start){
             this.start = start;
         }
@@ -153,40 +170,35 @@ class Query{
      * @param r     查询结果
      * @returns     实体对象
      */
-    private genEntity(r:any):BaseEntity{
-        let map:Map<string,BaseEntity> = new Map();
+    private genEntity(r:any):IEntity{
+        let ecfg:IEntityCfg = EntityFactory.getClass(this.entityClassName);
+        let entity:any = new ecfg.entity();
         Object.getOwnPropertyNames(r).forEach((field)=>{
-            let fa:string[] = field.split('_');
-            let fo = this.aliasMap.get(fa[0]);
-            if(!map.has(fa[0])){
-                let enObj:any = EntityFactory.getClass(fo['entity']);
-                map.set(fa[0],Reflect.construct(enObj.entity,[]));
+            let ind:number = field.indexOf('_');
+            //别名
+            let alias:string = field.substr(0,ind);
+            if(alias !== 't0'){
+                return;
             }
-            let entity:any = map.get(fa[0]);
-            entity[fa[1]] = r[field];
+            //属性名
+            let propName:string = field.substr(ind+1);
+            if(ecfg.columns.has(propName) && !ecfg.columns.get(propName).refName){ //属性
+                entity[propName] = r[field];
+            }
         });
         
-        //给对象加上关联关系
-        for(let m of this.aliasMap){
-            if(m[1]['from']){
-                let mo = map.get(m[1]['from']);
-                mo[m[1]['propName']] = map.get(m[0]);
-            }
-        }
-        //加入entity manager缓存
-        for(let m of map){
-            this.entityManager.addCache(m[1]);
-        }
         //存储外键值
-        let map1:Map<string,any> = new Map();
+        let map:Map<string,any> = new Map();
+        
         if(this.fkArray.length>0){
             for(let fk of this.fkArray){
+                let fn = fk.substr(fk.indexOf('_')+1);
                 //去掉表别名再存储
-                map1.set(fk.substr(fk.indexOf('_')+1),r[fk]);
+                map.set(ecfg.columns.get(fn).name,r[fk]);
             }
-            this.entityManager.addCache(map.get('t0'),map1);
         }
-        return map.get('t0');
+        this.entityManager.addCache(entity,map);
+        return entity;
     }
 }
 
