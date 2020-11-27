@@ -1,6 +1,5 @@
 export * from './core/decorator/decorator';
-export * from './core/locales/msg_zh';
-export * from './core/locales/msg_en';
+export * from './core/relaentip';
 export * from './core/transaction/transaction';
 export * from './core/baseentity';
 export * from './core/connection';

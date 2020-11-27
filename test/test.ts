@@ -33,7 +33,7 @@ async function testNew(){
 async function testQuery(){
     let conn:Connection = await getConnection();
     let em:EntityManager = await EntityManagerFactory.createEntityManager(conn);
-    let sql = "select a1.agentId,a1.agentName    from  Agent a1 where a1.area=? order by a1.agentId";
+    let sql = "select a1.agentName    from  Agent a1 where a1.area=? order by a1.agentId";
     let query = em.createQuery(sql,Agent.name);
     query.setParameter(0,1);
     let r = await query.getResult();

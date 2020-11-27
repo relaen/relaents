@@ -1,5 +1,4 @@
-import { RelaenTip_zh } from "./locales/msg_zh";
-import { RelaenTip_en } from "./locales/msg_en";
+import { RelaenTip } from "./relaentip";
 
 /**
  * 异常工厂
@@ -14,19 +13,18 @@ class ErrorFactory{
     /**
      * 异常提示语言
      */
-    static language:string='zh';
     /**
      * 获取异常
      * @param errNo     异常码
      * @param param     参数值数组，用于处理消息带参数的情况
      * @returns         {code:异常码,message:异常信息}    
      */
-    static getError(errNo:string,param?:Array<any>):any{
+    static getError(errNo:string,param?:Array<any>):Error{
         //默认为未知错误
-        if(!this.errMap.has(errNo)){
+        if(!RelaenTip[errNo]){
             errNo = "0000";   
         }
-        let msg = this.errMap.get(errNo);
+        let msg = RelaenTip[errNo];
         let reg = /\$\{.+?\}/g;
         let r;
         //处理消息中的参数
@@ -37,56 +35,9 @@ class ErrorFactory{
             }
             msg = msg.replace(r[0],param[index]);
         }
-        return {
-            code:errNo,
-            message:msg
-        }
-    }
-    /**
-     * 异常初始化
-     * @param language  异常提示语言
-     */
-    static init(language){
-        this.language = language;
-        let json:object;
-        switch(language){
-            case 'zh':
-                json = RelaenTip_zh;
-                break;
-            case 'en':
-                json = RelaenTip_en;
-                break;
-        }
+        return new Error("Error:\""+ errNo + "\",message is:\"" + msg + "\"");
         
-        if(json !== undefined){
-            //object 转 map
-            for(let o of Object.getOwnPropertyNames(json)){
-                this.errMap.set(o,json[o]);
-            }
-        }
     }
 }
 
-/**
- * Noomi异常类
- * @remarks
- * 用于产生异常信息
- */
-class NoomiError extends Error{
-    code:string;
-    /**
-     * 构造器
-     * @param code      异常码 
-     * @param param     参数或参数数组
-     */
-    constructor(code:string,param?:any){
-        if(param && !Array.isArray(param)){
-            param = [param]
-        }
-        let o = ErrorFactory.getError(code,param);
-        super(o.message);
-        this.code = o.code;
-    }
-}
-
-export {ErrorFactory,NoomiError}
+export {ErrorFactory}

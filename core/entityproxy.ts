@@ -5,6 +5,7 @@ import { EntityManagerFactory } from "./entitymanagerfactory";
 import { Query } from "./query";
 import { ErrorFactory } from "./errorfactory";
 import { NativeQuery } from "./nativequery";
+import { Logger } from "./logger";
 
 /**
  * 实体代理类
@@ -17,6 +18,11 @@ class EntityProxy{
      */
     public static async get(entity:IEntity,propName:string):Promise<any>{
         let em:EntityManager = await EntityManagerFactory.createEntityManager();
+        if(!em.getIdValue(entity)){
+            Logger.console(ErrorFactory.getError("0105").message);
+            return null;
+        }
+
         let pv = entity[propName];
         if(pv !== undefined && pv !== null){
             return pv;

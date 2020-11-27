@@ -6,6 +6,7 @@ import { RelaenManager } from "./relaenmanager";
 import { EntityFactory } from "./entityfactory";
 import { IEntityCfg, IEntity } from "./entitydefine";
 import { ErrorFactory } from "./errorfactory";
+import { Logger } from "./logger";
 
 /**
  * 查询类
@@ -77,7 +78,7 @@ class Query{
         this.paramArr = [];
         //调试模式，输出执行的sql
         if(RelaenManager.debug){
-            console.log("[Relaen Query]:",this.execSql);
+            Logger.console("[Relaen Sql]:"+this.execSql);
         }
     }
 

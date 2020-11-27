@@ -6,6 +6,7 @@ import { ErrorFactory } from "./errorfactory";
 import { join } from "path";
 import { Entity } from "./decorator/decorator";
 import { RelaenManager } from "./relaenmanager";
+import { Logger } from "./logger";
 
 /**
  * 翻译器
@@ -53,7 +54,7 @@ class Translator{
         arr.push(')');
         let sql = arr.join(' ');
         if(RelaenManager.debug){
-            console.log(sql);
+            Logger.console("[Relaen Sql]:" + sql);
         }
         return sql;
     }
@@ -110,7 +111,7 @@ class Translator{
         arr.push(idName + '=' + idValue);
         let sql = arr.join(' ');
         if(RelaenManager.debug){
-            console.log(sql);
+            Logger.console("[Relaen Sql]:" + sql);
         }
         return sql;
     }
