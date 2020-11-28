@@ -68,6 +68,10 @@ class EntityFactory{
     public static addColumn(entityName:string,colName:string,cfg:IEntityColumn){
         this.checkAndNewClass(entityName);
         let entity:IEntityCfg = this.entityClasses.get(entityName);
+        //column name 默认为属性名
+        if(!cfg.name){
+            cfg.name = colName;
+        }
         entity.columns.set(colName,cfg);
     }
 

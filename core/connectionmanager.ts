@@ -58,6 +58,7 @@ class ConnectionManager{
     /**
      * 获取连接对象
      * @returns     连接对象，已连接
+     * 
      */
     public static async getConnection():Promise<Connection>{
         let conn:Connection;

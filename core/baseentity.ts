@@ -1,15 +1,21 @@
 import { EntityManager } from "./entitymanager";
 import { EntityFactory } from "./entityfactory";
-import { IEntityCfg, IEntity } from "./entitydefine";
+import { IEntityCfg, IEntity, EEntityState } from "./entitydefine";
 import { EntityManagerFactory } from "./entitymanagerfactory";
-import { ErrorFactory } from "./errorfactory";
 
 /**
  * 实体基类
  */
 export class BaseEntity extends Object implements IEntity{
+    /**
+     * 状态
+     */
+    public __status:EEntityState;
+
     constructor(){
         super();
+        //设置新建状态
+        this.__status = EEntityState.NEW;
     }
 
     /**
@@ -17,27 +23,17 @@ export class BaseEntity extends Object implements IEntity{
      * @param em    entity manager
      * @returns     保存后的实体
      */
-    async save(em?:EntityManager):Promise<any>{
-        if(!em){
-            em = await EntityManagerFactory.createEntityManager();
-        }
-        if(!em){
-            throw ErrorFactory.getError('0300');
-        }
-        return em.save(this);
+    async save(ignoreUndefinedValue?:boolean):Promise<any>{
+        let em:EntityManager = await EntityManagerFactory.createEntityManager();
+        return em.save(this,ignoreUndefinedValue);
     }
 
     /**
      * 删除实体
      * @param em    entity manager
      */
-    async delete(em?:EntityManager){
-        if(!em){
-            em = await EntityManagerFactory.createEntityManager();
-        }
-        if(!em){
-            throw ErrorFactory.getError('0300');
-        }
+    async delete(){
+        let em:EntityManager = await EntityManagerFactory.createEntityManager();
         return em.delete(this);
     }
 

@@ -7,6 +7,7 @@ import { EntityFactory } from "./entityfactory";
 import { IEntityCfg, IEntity } from "./entitydefine";
 import { ErrorFactory } from "./errorfactory";
 import { Logger } from "./logger";
+import { RelaenUtil } from "./relaenutil";
 
 /**
  * 查询类
@@ -95,7 +96,7 @@ class Query{
         }
         //对于entity，只获取其主键
         if(value instanceof BaseEntity){
-            value = this.entityManager.getIdValue(value);
+            value = RelaenUtil.getIdValue(value);
         }
         this.paramArr[index] = value;
     }
@@ -112,7 +113,7 @@ class Query{
         }
         valueArr.forEach((value,i)=>{
             if(value instanceof BaseEntity){
-                value = this.entityManager.getIdValue(value);
+                value = RelaenUtil.getIdValue(value);
             }
             this.paramArr[i] = value;
         });

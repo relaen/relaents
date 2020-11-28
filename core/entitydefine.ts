@@ -4,8 +4,21 @@ import { BaseEntity } from "./baseentity";
  * 实体接口
  */
 interface IEntity{
+    /**
+     * 状态
+     */
+    __status:EEntityState;
+    /**
+     * 保存方法
+     */
     save:Function;
+    /**
+     * 删除方法
+     */
     delete:Function;
+    /**
+     * 比较方法
+     */
     compare:Function;
 }
 /**

@@ -1,12 +1,7 @@
-import { Entity, Id, Column, ManyToOne, JoinColumn, OneToMany } from '../../core/decorator/decorator'
-import { BaseEntity } from '../../core/baseentity'
-import { EFkConstraint } from '../../core/entitydefine'
-import {GroupMember} from './groupmember'
-import {Login} from './login'
-import {Member} from './member'
-import {Token} from './token'
+import {UserType} from './usertype'
+import { Entity, BaseEntity, Id, Column, ManyToOne, JoinColumn, EntityProxy } from '../..';
 
-@Entity("t_user",'tunnel')
+@Entity("t_user",'test')
 export class User extends BaseEntity{
 	@Id()
 	@Column({
@@ -19,36 +14,32 @@ export class User extends BaseEntity{
 	@Column({
 		name:'user_name',
 		type:'string',
-		nullable:true
+		nullable:false
 	})
 	private userName:string;
 
 	@Column({
-		name:'user_pwd',
-		type:'string',
-		nullable:true
+		name:'age',
+		type:'int',
+		nullable:false
 	})
-	private userPwd:string;
+	private age:number;
 
 	@Column({
-		name:'enabled',
-		type:'int',
-		nullable:true
+		name:'sexy',
+		type:'string',
+		nullable:false
 	})
-	private enabled:number;
+	private sexy:string;
 
-	@OneToMany({entity:'GroupMember',onDelete:EFkConstraint.CASCADE,onUpdate:EFkConstraint.CASCADE,mappedBy:'user',eager:false})
-	private groupMembers:Array<GroupMember>;
+	@ManyToOne({entity:'UserType',eager:false})
+	@JoinColumn({name:'user_type_id',refName:'user_type_id'})
+	private userType:UserType;
 
-	@OneToMany({entity:'Login',onDelete:EFkConstraint.CASCADE,onUpdate:EFkConstraint.CASCADE,mappedBy:'user',eager:false})
-	private logins:Array<Login>;
-
-	@OneToMany({entity:'Member',onDelete:EFkConstraint.CASCADE,onUpdate:EFkConstraint.CASCADE,mappedBy:'user',eager:false})
-	private members:Array<Member>;
-
-	@OneToMany({entity:'Token',onDelete:EFkConstraint.CASCADE,onUpdate:EFkConstraint.CASCADE,mappedBy:'user',eager:false})
-	private tokens:Array<Token>;
-
+	constructor(idValue?:number){
+		super();
+		this.userId = idValue;
+	}
 	public getUserId():number{
 		return this.userId;
 	}
@@ -63,46 +54,25 @@ export class User extends BaseEntity{
 		this.userName = value;
 	}
 
-	public getUserPwd():string{
-		return this.userPwd;
+	public getAge():number{
+		return this.age;
 	}
-	public setUserPwd(value:string){
-		this.userPwd = value;
-	}
-
-	public getEnabled():number{
-		return this.enabled;
-	}
-	public setEnabled(value:number){
-		this.enabled = value;
+	public setAge(value:number){
+		this.age = value;
 	}
 
-	public getGroupMembers():Array<GroupMember>{
-		return this.groupMembers;
+	public getSexy():string{
+		return this.sexy;
 	}
-	public setGroupMembers(value:Array<GroupMember>){
-		this.groupMembers = value;
-	}
-
-	public getLogins():Array<Login>{
-		return this.logins;
-	}
-	public setLogins(value:Array<Login>){
-		this.logins = value;
+	public setSexy(value:string){
+		this.sexy = value;
 	}
 
-	public getMembers():Array<Member>{
-		return this.members;
+	public async getUserType():Promise<UserType>{
+		return await EntityProxy.get(this,'userType');
 	}
-	public setMembers(value:Array<Member>){
-		this.members = value;
-	}
-
-	public getTokens():Array<Token>{
-		return this.tokens;
-	}
-	public setTokens(value:Array<Token>){
-		this.tokens = value;
+	public setUserType(value:UserType){
+		this.userType = value;
 	}
 
 }

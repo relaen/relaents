@@ -1,5 +1,6 @@
 import { RelaenManager } from "./relaenmanager";
 import { Connection } from "./connection";
+import { Logger } from "./logger";
 
 /**
  * sql执行器
@@ -12,17 +13,28 @@ class SqlExecutor{
      * @param params        参数数组
      * @param start         开始记录行
      * @param limit         最大记录行
+     * @returns             执行结果或undefined
      */
     public static async exec(conn:Connection,sql:string,params?:any[],start?:number,limit?:number):Promise<any>{
-        switch(RelaenManager.dialect){
-            case 'mysql':
-                return await this.execMysql(conn,sql,params,start,limit);
-            case 'oracle':
-                return await this.execOracle(conn,sql,params,start,limit);
-            case 'mssql':
-                return await this.execMssql(conn,sql,params,start,limit);
+        if(RelaenManager.debug){
+            Logger.console("[Execute relaen sql]:\"" + sql + "\"");
         }
-
+        let r:any;
+        try{
+            switch(RelaenManager.dialect){
+                case 'mysql':
+                    r = await this.execMysql(conn,sql,params,start,limit);
+                case 'oracle':
+                    r = await this.execOracle(conn,sql,params,start,limit);
+                case 'mssql':
+                    r = await this.execMssql(conn,sql,params,start,limit);
+            }
+        }catch(e){
+            Logger.console("[Execute relaen sql error]:\"" + e + "\"");
+            return;
+        }
+        Logger.console("[Execute relaen sql]:\"OK\"");
+        return r;
     }
 
     /**

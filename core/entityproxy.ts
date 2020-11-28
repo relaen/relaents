@@ -2,11 +2,10 @@ import { IEntityCfg, IEntityRelation, ERelationType, IEntityColumn, IEntity } fr
 import { EntityFactory } from "./entityfactory";
 import { EntityManager } from "./entitymanager";
 import { EntityManagerFactory } from "./entitymanagerfactory";
-import { Query } from "./query";
 import { ErrorFactory } from "./errorfactory";
 import { NativeQuery } from "./nativequery";
 import { Logger } from "./logger";
-
+import { RelaenUtil } from "./relaenutil";
 /**
  * 实体代理类
  */
@@ -18,7 +17,7 @@ class EntityProxy{
      */
     public static async get(entity:IEntity,propName:string):Promise<any>{
         let em:EntityManager = await EntityManagerFactory.createEntityManager();
-        if(!em.getIdValue(entity)){
+        if(!RelaenUtil.getIdValue(entity)){
             Logger.console(ErrorFactory.getError("0105").message);
             return null;
         }
@@ -53,7 +52,7 @@ class EntityProxy{
                                     column.refName + "= m1." +  column.name + " and m1." + eo.columns.get(eo.id.name).name + " = ?";
                     query = em.createNativeQuery(rql,rel.entity);
                     //设置外键id
-                    query.setParameter(0,em.getIdValue(entity));                                    
+                    query.setParameter(0,RelaenUtil.getIdValue(entity));                                    
                 }
                 entity[propName] = await query.getResult();
             }else if(rel.mappedBy && (rel.type === ERelationType.OneToMany || rel.type === ERelationType.OneToOne)){ //被引用
@@ -70,7 +69,7 @@ class EntityProxy{
                 //查询外键对象
                 let query:NativeQuery = em.createNativeQuery(rql,rel.entity);
                 //设置查询值
-                query.setParameter(0,em.getIdValue(entity));
+                query.setParameter(0,RelaenUtil.getIdValue(entity));
                 entity[propName] = rel.type===ERelationType.OneToOne?await query.getResult():await query.getResultList();
             }
 

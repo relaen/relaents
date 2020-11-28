@@ -4,10 +4,10 @@
     "port":3306,
     "username":"root",
     "password":"field",
-    "database":"tunnel",
-    "cache":true,
-    "debug":true,
+    "database":"test",
     "entities": [
         "/dist/test/entity/**/*.js"
-    ]
+    ],
+    "cache":true,
+    "debug":true
 }

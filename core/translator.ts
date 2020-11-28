@@ -1,12 +1,11 @@
 import {EntityManager} from "./entitymanager";
-import { IEntityCfg, IEntityRelation, ERelationType, IEntityColumn } from "./entitydefine";
+import { IEntityCfg, IEntityRelation, ERelationType, IEntityColumn, IEntity } from "./entitydefine";
 import { BaseEntity } from "./baseentity";
 import { EntityFactory } from "./entityfactory";
 import { ErrorFactory } from "./errorfactory";
-import { join } from "path";
-import { Entity } from "./decorator/decorator";
 import { RelaenManager } from "./relaenmanager";
 import { Logger } from "./logger";
+import { RelaenUtil } from "./relaenutil";
 
 /**
  * 翻译器
@@ -30,40 +29,44 @@ class Translator{
         //值组合
         let values:string[] = [];
         for(let key of orm.columns){
-            let fo:any = key[1];
-            let v = entity[key[0]];
+            let fo:IEntityColumn = key[1];
+            let v:any;
+            if(fo.refName){ //外键，只取主键
+                if(entity[key[0]] instanceof BaseEntity){
+                    v = RelaenUtil.getIdValue(entity[key[0]]);
+                }
+            }else{
+                v = entity[key[0]];
+            }
             
             //值不存在，则下一个
             if(v === undefined){
                 continue;
             }
-
-            //如果绑定字段名不存在，则用属性名
-            fields.push(orm.table + '.' + fo.name?fo.name:key);
+            
+            fields.push(fo.name);
             
             //值
             if(v !== null && (fo.type === 'date' || fo.type === 'string')){
-                values.push("'" + v + "'");
-            }else{
-                values.push(v);
+                v = RelaenUtil.valueToString(v);
             }
+            values.push(v);
+            
         }
         arr.push(fields.join(','));
         arr.push(') values (');
         arr.push(values.join(','));
         arr.push(')');
         let sql = arr.join(' ');
-        if(RelaenManager.debug){
-            Logger.console("[Relaen Sql]:" + sql);
-        }
         return sql;
     }
 
     /**
      * entity转update sql
-     * @param entity 
+     * @param entity                待更新entity
+     * @param ignoreUndefinedValue  忽略undefined值
      */
-    public static entityToUpdate(entity:any):string{
+    public static entityToUpdate(entity:IEntity,ignoreUndefinedValue?:boolean):string{
         let orm:IEntityCfg = EntityFactory.getClass(entity.constructor.name);
         if(!orm){
             throw ErrorFactory.getError("0010",[entity.constructor.name]);
@@ -88,20 +91,34 @@ class Translator{
             if(fo.refName){
                 continue;
             }
-            let v = entity[key[0]];
+
+            //字段值
+            let v;
+            if(fo.refName){ //外键，只取主键
+                if(entity[key[0]] instanceof BaseEntity){
+                    v = RelaenUtil.getIdValue(entity[key[0]]);
+                }
+            }else{
+                v = entity[key[0]];
+            }
+
             //如果绑定字段名不存在，则用属性名
             let fn = fo.name?fo.name:key;
             if(v === null || v === undefined){
-                if(!fo.nullable){
-                    throw ErrorFactory.getError('0021',[key]);
+                if(ignoreUndefinedValue){
+                    continue;
+                }else{
+                    if(!fo.nullable){
+                        throw ErrorFactory.getError('0021',[key]);
+                    }
                 }
                 v = null;
             }else if(fo.type === 'date' || fo.type === 'string'){
-                v = "'" + v + "'";
+                v = RelaenUtil.valueToString(v);
             }
             fv.push(fn + '=' + v);
             if(key[0] === cfg.id.name){
-                idValue = v;   
+                idValue = v;
                 idName = key[1].name;
             }
         }
@@ -110,9 +127,6 @@ class Translator{
         arr.push('where');
         arr.push(idName + '=' + idValue);
         let sql = arr.join(' ');
-        if(RelaenManager.debug){
-            Logger.console("[Relaen Sql]:" + sql);
-        }
         return sql;
     }
 
@@ -151,9 +165,33 @@ class Translator{
             idValue = "'" + idValue + "'";
         }
         arr.push(idName + " = " + idValue);
-        return arr.join(' ');
+        let sql = arr.join(' ');
+        
+        return sql;
     }
 
+    /**
+     * 生成entity 查询sql串
+     * @param entityClassName   实体类名
+     * @param params            参数对象
+     */
+    public static genEntityQuery(entityClassName:string,params?:any):string{
+        let ecfg:IEntityCfg = EntityFactory.getClass(entityClassName);
+        if(!ecfg){
+            throw ErrorFactory.getError("0020",[entityClassName]);
+        }
+
+        let sql:string = "select * from " + ecfg.table;
+        if(params){
+            let whereArr:string[] = [];
+            Object.getOwnPropertyNames(params).forEach((item)=>{
+                whereArr.push(ecfg.columns.get(item).name + "=?");
+            });
+            sql += ' where ' + whereArr.join(' and ');
+        }
+
+        return sql;
+    }
     
     /**
      * 获取sql 字符串

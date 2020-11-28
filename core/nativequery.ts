@@ -24,7 +24,7 @@ class NativeQuery extends Query{
      */
     public async getResult():Promise<any>{
         let results:any[] = await SqlExecutor.exec(this.entityManager.connection,this.execSql,this.paramArr);
-        if(results.length>0){
+        if(results && results.length>0){
             return this.genOne(results[0]);
         }
         return null;

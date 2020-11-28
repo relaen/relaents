@@ -6,6 +6,7 @@ export * from './core/connection';
 export * from './core/connectionmanager';
 export * from './core/entitydefine';
 export * from './core/entityfactory';
+export * from './core/entityproxy';
 export * from './core/entitymanager';
 export * from './core/entitymanagerfactory';
 export * from './core/errorfactory';

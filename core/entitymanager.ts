@@ -9,6 +9,7 @@ import { Connection } from "./connection";
 import { ErrorFactory } from "./errorfactory";
 import { NativeQuery } from "./nativequery";
 import { EntityManagerFactory } from "./entitymanagerfactory";
+import { RelaenUtil } from "./relaenutil";
 
 /**
  * 实体管理器
@@ -25,47 +26,42 @@ class EntityManager{
     public entityMap:Map<string,any>;
     
     /**
-     * 实体状态map {实体:}
-     */
-    public statusMap:WeakMap<IEntity,EEntityState>;
-
-    /**
      * 构造函数
      * @param conn  连接对象
      */
     constructor(conn:Connection){
         this.connection = conn;
         this.entityMap = new Map();
-        this.statusMap = new WeakMap();
     }
 
     /**
      * 保存新对象
      * 如果状态为new，则执行insert，同时改变为persist，如果为persist，则执行update
-     * @param entity    实体
-     * @returns         保存后的实体  
+     * @param entity                实体
+     * @param ignoreUndefinedValue  忽略undefined值，针对update时有效
+     * @returns                     保存后的实体  
      */
-    public async save(entity:IEntity):Promise<any>{
-        let idValue = this.getIdValue(entity);
+    public async save(entity:IEntity,ignoreUndefinedValue?:boolean):Promise<any>{
         //无主键或状态为new
-        if(idValue === undefined || idValue === null || 
-                this.statusMap.has(entity) && this.statusMap.get(entity) === EEntityState.NEW){
-            //设置为new
-            if(!this.statusMap.has(entity)){
-                this.statusMap.set(entity,EEntityState.NEW);
-            }
-            
+        if(entity.__status === EEntityState.NEW){
             //检查并生成主键
             await this.genKey(entity);
             let sql:string = Translator.entityToInsert(entity);
             let r = await SqlExecutor.exec(this.connection,sql);
+            if(r === null){
+                return;
+            }
+            //修改状态
+            entity.__status = EEntityState.PERSIST;
             //针对单主键设置主键
-            this.setIdValue(entity,r);
+            if(!RelaenUtil.getIdValue(entity)){
+                RelaenUtil.setIdValue(entity,r.insertId);
+            }
+            
             //加入缓存
             if(RelaenManager.cache){
                 this.addCache(entity);
             }
-            this.statusMap.set(entity,EEntityState.PERSIST);
         }else{ //update
             let cacheId = this.genCacheId(entity);
             if(cacheId){
@@ -74,8 +70,11 @@ class EntityManager{
                     //对比有差别
                     if(entity1 && !entity.compare(entity1)){
                         //更新到数据库
-                        let sql:string = Translator.entityToUpdate(entity);
-                        await SqlExecutor.exec(this.connection,sql);
+                        let sql:string = Translator.entityToUpdate(entity,ignoreUndefinedValue);
+                        let r = await SqlExecutor.exec(this.connection,sql);
+                        if(r === null){
+                            return null;
+                        }
                         //更新缓存
                         this.addCache(entity);
                     }    
@@ -93,8 +92,9 @@ class EntityManager{
     public async delete(entity:IEntity):Promise<IEntity>{
         let sql:string = Translator.entityToDelete(entity);
         let r = await SqlExecutor.exec(this.connection,sql);
-        //从状态map移除
-        this.statusMap.delete(entity);
+        if(r === null){
+            return null;
+        }
         //从实体map移除
         this.entityMap.delete(this.genCacheId(entity));
         return entity;
@@ -107,18 +107,24 @@ class EntityManager{
      * @returns             entity
      */
     public async find(entityClassName:string,id:any):Promise<IEntity>{
-        
         let key:string = entityClassName + '@' + id;
         if(this.entityMap.has(key)){  //从缓存中获取
             return this.entityMap.get(key).entity;
         }else{  //从数据库获取
-            let idName:string = this.getIdName(entityClassName);
+            let idName:string = RelaenUtil.getIdName(entityClassName);
             if(!idName){
                 throw ErrorFactory.getError("0103");
             }
-            let query = this.createQuery("select m from " + entityClassName + " m where m." + idName + "=?",entityClassName);
+            
+            let params = {};
+            params[idName] = id;
+            let query = this.createNativeQuery(Translator.genEntityQuery(entityClassName,params),entityClassName);
             query.setParameter(0,id);
             let en = await query.getResult();
+            //加入cache
+            if(en !== null && RelaenManager.cache){
+                this.addCache(en);
+            }
             return en;
         }
     }
@@ -152,50 +158,10 @@ class EntityManager{
      * @param entity    实体对象
      */
     private genCacheId(entity:IEntity):string{
-        return entity.constructor.name + '@' + this.getIdValue(entity);
+        return entity.constructor.name + '@' + RelaenUtil.getIdValue(entity);
     }
 
-    /**
-     * 设置属性值
-     * @param entity    实体对象
-     * @param value     实体值
-     */
-    public setIdValue(entity:IEntity,value:any){
-        let cfg:IEntityCfg = EntityFactory.getClass(entity.constructor.name);
-        if(cfg.id && cfg.id.name){
-            entity[cfg.id.name] = value;
-        }
-    }
-
-    /**
-     * 获取id值
-     * @param entity    实体对象
-     */
-    public getIdValue(entity:IEntity):any{
-        let cfg:IEntityCfg = EntityFactory.getClass(entity.constructor.name);
-        if(cfg.id){
-            return entity[cfg.id.name];
-        }
-    }
-
-    /**
-     * 获取id名 
-     * @param entity 实体对象或实体名
-     * @returns      实体id名
-     */
-    public getIdName(entity:any):string{
-        let en:string;
-        if(entity instanceof BaseEntity){
-            en = entity.constructor.name;
-        }else if(typeof entity === 'string'){
-            en = entity;
-        }
-        let cfg:IEntityCfg = EntityFactory.getClass(en);
-        if(cfg.id){
-            return cfg.id.name
-        }
-    }
-
+    
     /**
      * 添加实体对象到cache
      * @param entity 实体对象
@@ -251,7 +217,7 @@ class EntityManager{
             }
             //设置主键值
             if(value){
-                this.setIdValue(entity,value);
+                RelaenUtil.setIdValue(entity,value);
             }
         }
     }

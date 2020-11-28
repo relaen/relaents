@@ -76,6 +76,10 @@ onUpdate|外键更新策略|string|否|EFkConstraint枚举类型的SETNULL,NONE,
 ## 实体对象生成
 relaen提供了[relaen cli](https://www.npmjs.com/package/relaen-cli)工具，该工具可自动生成relaen所需要的实体。
 
+## 版本
+### 0.0.2
+1. 修复引用包中缺少EntityProxy的bug。
+
 ## API
 api请参考[github文档](https://www.github.com/)
 

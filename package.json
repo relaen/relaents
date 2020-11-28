@@ -1,7 +1,7 @@
 {
   "name": "relaen",
-  "version": "0.0.1",
-  "description": "一个node环境下基于typescript ORM框架",
+  "version": "0.0.2",
+  "description": "一个node环境下基于typescript的ORM框架",
   "main": "dist/index.js",
   "types": "dist/types/index.d.ts",
   "files": [
@@ -35,7 +35,7 @@
     "mysql": "^2.18.1"
   },
   "engines": {
-    "node": ">=11.0.0"
+    "node": ">=13.10.0"
   },
   "contributors": [
     {

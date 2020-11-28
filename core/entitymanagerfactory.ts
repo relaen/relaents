@@ -2,6 +2,7 @@ import { EntityManager } from "./entitymanager";
 import { Connection } from "./connection";
 import { ThreadStorage } from "./threadlocal";
 import { getConnection } from "./connectionmanager";
+import { ErrorFactory } from "./errorfactory";
 
 /**
  * entity manager 工厂
@@ -58,6 +59,26 @@ class EntityManagerFactory{
         }
     }
 
+    /**
+     * 获取当前实体管理器(线程内唯一)
+     */
+    public static getCurrentEntityManager(){
+        //获取threadId
+        let sid:number = ThreadStorage.getStore();
+        let notExist:boolean = false;
+        if(!sid || !this.entityManagerMap.has(sid)){
+            notExist = true;
+        }
+
+        let o = this.entityManagerMap.get(sid);
+        if(!o.em){
+            notExist = true;
+        }
+        if(notExist){
+            throw ErrorFactory.getError("0250");
+        }
+        return o.em;
+    }
 }
 
 export {EntityManagerFactory};
