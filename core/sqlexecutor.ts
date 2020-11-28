@@ -24,10 +24,13 @@ class SqlExecutor{
             switch(RelaenManager.dialect){
                 case 'mysql':
                     r = await this.execMysql(conn,sql,params,start,limit);
+                    break;
                 case 'oracle':
                     r = await this.execOracle(conn,sql,params,start,limit);
+                    break;
                 case 'mssql':
                     r = await this.execMssql(conn,sql,params,start,limit);
+                    break;
             }
         }catch(e){
             Logger.console("[Execute relaen sql error]:\"" + e + "\"");

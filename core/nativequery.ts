@@ -23,9 +23,9 @@ class NativeQuery extends Query{
      * 获取单个实体
      */
     public async getResult():Promise<any>{
-        let results:any[] = await SqlExecutor.exec(this.entityManager.connection,this.execSql,this.paramArr);
+        let results:any[] = await this.getResultList(0,1);
         if(results && results.length>0){
-            return this.genOne(results[0]);
+            return results[0];
         }
         return null;
     }
@@ -35,7 +35,7 @@ class NativeQuery extends Query{
      * @param start     开始索引
      * @param limit     记录数
      */
-    public async getResultList<T>(start?:number,limit?:number):Promise<Array<T>>{
+    public async getResultList(start?:number,limit?:number):Promise<Array<any>>{
         if(start){
             this.start = start;
         }
@@ -43,11 +43,14 @@ class NativeQuery extends Query{
             this.limit = limit;
         }
         let results:any[] = await SqlExecutor.exec(this.entityManager.connection,this.execSql,this.paramArr,this.start,this.limit);
-        let arr = [];
-        for(let r of results){
-            arr.push(this.genOne(r));
+        if(results){
+            let arr = [];
+            for(let r of results){
+                arr.push(this.genOne(r));
+            }
+            return arr;
         }
-        return arr;
+        return null;
     }
 
     /**
