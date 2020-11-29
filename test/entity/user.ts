@@ -32,7 +32,7 @@ export class User extends BaseEntity{
 	})
 	private sexy:string;
 
-	@ManyToOne({entity:'UserType',eager:false})
+	@ManyToOne({entity:'UserType'})
 	@JoinColumn({name:'user_type_id',refName:'user_type_id'})
 	private userType:UserType;
 

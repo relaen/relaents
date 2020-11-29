@@ -60,7 +60,7 @@ class ConnectionManager{
      * @returns     连接对象，已连接
      * 
      */
-    public static async getConnection():Promise<Connection>{
+    public static async createConnection():Promise<Connection>{
         let conn:Connection;
         //把conn加入connectionMap
         let sid:number = ThreadStorage.getStore();
@@ -129,21 +129,22 @@ class ConnectionManager{
      * @param connection 数据库连接对象
      */
     public static async closeConnection(connection:Connection){
-        switch(RelaenManager.dialect){
-            case 'mysql':
-                return this.closeMysqlConnection(connection);
-            case 'oracledb':
-                break;
-            case 'mssql':
-                break;
-        }
-        //清理 connection map
         //获取threadId
         let sid:number = ThreadStorage.getStore();
         if(sid && this.connectionMap.has(sid)){
             let o = this.connectionMap.get(sid);
             if(--o.num <= 0){ //最后一个close，需要从map删除
+                //清理 connection map
                 this.connectionMap.delete(sid);
+                //关闭连接
+                switch(RelaenManager.dialect){
+                    case 'mysql':
+                        return this.closeMysqlConnection(connection);
+                    case 'oracledb':
+                        break;
+                    case 'mssql':
+                        break;
+                }
             }
         }
     }
@@ -204,7 +205,7 @@ class ConnectionManager{
 }
 
 async function getConnection():Promise<Connection>{
-    return await ConnectionManager.getConnection();
+    return await ConnectionManager.createConnection();
 }
 
 export{ConnectionManager,getConnection,IConnectionCfg,IConnectionPool}

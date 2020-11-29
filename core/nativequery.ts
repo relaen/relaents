@@ -1,7 +1,7 @@
 import { EntityManager } from "./entitymanager";
 import { SqlExecutor } from "./sqlexecutor";
 import { BaseEntity } from "./baseentity";
-import { IEntityCfg, IEntityColumn, IEntity } from "./entitydefine";
+import { IEntityCfg, IEntityColumn, IEntity, EEntityState } from "./entitydefine";
 import { EntityFactory } from "./entityfactory";
 import { Query } from "./query";
 
@@ -76,6 +76,8 @@ class NativeQuery extends Query{
                     }
                 }    
                 this.entityManager.addCache(entity,fkMap);
+                //改变状态
+                entity.__status = EEntityState.PERSIST;
                 return entity;
             }
         }

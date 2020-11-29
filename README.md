@@ -1,7 +1,30 @@
 # Relean
 relaen是[noomi](https://www.npmjs.com/package/noomi)团队打造的一套node环境下基于typescript的[ORM](https://baike.baidu.com/item/对象关系映射/311152?fromtitle=ORM&fromid=3583252&fr=aladdin)框架。
 
-## 概述
+## 使用限制
+relaen当前仅支持mysql数据库，其它数据库产品陆续加入中。
+
+## 配置文件
+relaen依赖配置文件进行初始化，配置内容如下：
+配置项|说明|类型|必填|可选值|默认值|备注
+-|-|-|-|-|-|-
+dialect|数据库产品|string|是|mysql,oracle,mssql|无|支持的数据库产品持续更新
+host|数据库服务器地址|string|是|无|无|数据库服务器网址或ip或localhost
+port|数据库服务器端口|number|否|无|如果是默认则不用，如mysql的3306
+username|用户名|string|是|无|无|
+password|密码|string|是|无|无|
+database|数据库|string|是|无|无|只支持单数据库
+entities|实体js目录|string array|是|无|无|如:["/dist/entity/**/*.js"]
+cache|是否开启一级缓存|boolean|否|无|true|
+debug|是否为debug模式|boolean|否|无|false|调试模式将在控制台输出每次执行的sql语句
+pool|连接池配置|object|否|无|无|如果配置，则开启数据库连接池，连接库配置如下
+
+**连接池配置**  
+如果pool为空对象，则max和min使用默认值。
+配置项|说明|类型|必填|默认值
+-|-|-|-|-|-|-
+max|最大连接数|number|否|10
+min|最小连接数|number|否|1
 
 ## 注解
 
@@ -21,7 +44,7 @@ relaen是[noomi](https://www.npmjs.com/package/noomi)团队打造的一套node�
 参数为对象，可选，包含以下项：
 参数名|说明|类型|必填|可选值|默认值|备注
 -|-|-|-|-|-|-
-generator|主键生成策略|string|否|identity(默认，需要数据库支持自增主键),table(需要在数据库中增加主键表)|identity|
+generator|主键生成策略|string|否|identity(默认，需要数据库支持自增主键),table(需要在数据库中增加主键表)|identity
 table|主键表|string|否|无|无|如果generator为'table'，则该项必填
 column|主键生成对应字段名|string|否|无|无|该字段属于主键表，如果generator为'table'，则该项不能为空
 
@@ -78,7 +101,7 @@ relaen提供了[relaen cli](https://www.npmjs.com/package/relaen-cli)工具，�
 
 ## 版本
 ### 0.0.2
-1. 修复引用包中缺少EntityProxy的bug。
+
 
 ## API
 api请参考[github文档](https://www.github.com/)
@@ -88,167 +111,140 @@ api请参考[github文档](https://www.github.com/)
 ### 实体类 User
 
 ```typescript
-import { Entity, Id, Column, ManyToOne, JoinColumn, OneToMany,BaseEntity,EFkConstraint } from 'relaen'
+import { Entity, BaseEntity, Id, Column, ManyToOne, JoinColumn, EntityProxy } from 'relaen';
 import {UserType} from './usertype'
 
-@Entity("t_user",'testdb')
+@Entity("t_user",'test')
 export class User extends BaseEntity{
-    @Id()
-    @Column({
-        name:'user_id',
-        type:'int',
-        nullable:false
-    })
-    private userId:number;
+	@Id()
+	@Column({
+		name:'user_id',
+		type:'int',
+		nullable:false
+	})
+	private userId:number;
 
-    @Column({
-        name:'user_name',
-        type:'string',
-        nullable:false
-    })
-    private userName:string;
-    
-    //设置了eager=true，则在获取user时，同时获取userType
-    @ManyToOne({entity:'UserType',eager:true})
-    @JoinColumn({name:'user_type_id',refName:'user_type_id',nullable:true})
-    private userType:UserType;
-    
-    public getUserId():number{
-        return this.userId;
+	@Column({
+		name:'user_name',
+		type:'string',
+		nullable:false
+	})
+	private userName:string;
+
+	@Column({
+		name:'age',
+		type:'int',
+		nullable:false
+	})
+	private age:number;
+
+	@Column({
+		name:'sexy',
+		type:'string',
+		nullable:false
+	})
+	private sexy:string;
+
+	@ManyToOne({entity:'UserType'})
+	@JoinColumn({name:'user_type_id',refName:'user_type_id'})
+	private userType:UserType;
+
+	constructor(idValue?:number){
+		super();
+		this.userId = idValue;
 	}
-    public setUserId(value:number){
-        this.userId = value;
-    }
+	public getUserId():number{
+		return this.userId;
+	}
+	public setUserId(value:number){
+		this.userId = value;
+	}
 
-    public getUserName():string{
-        return this.userName;
-    }
-    public setUserName(value:string){
-        this.userName = value;
-    }
-    
-    public getUserType():UserType{
-        return this.userType;
-    }
-    public setUserType(value:UserType){
-        this.userType = value;
-    }
+	public getUserName():string{
+		return this.userName;
+	}
+	public setUserName(value:string){
+		this.userName = value;
+	}
+
+	public getAge():number{
+		return this.age;
+	}
+	public setAge(value:number){
+		this.age = value;
+	}
+
+	public getSexy():string{
+		return this.sexy;
+	}
+	public setSexy(value:string){
+		this.sexy = value;
+	}
+
+	public async getUserType():Promise<UserType>{
+        //启用代理模式获取关联数据
+		return await EntityProxy.get(this,'userType');
+	}
+	public setUserType(value:UserType){
+		this.userType = value;
+	}
+
 }
 ```
 ### 实体类 UserType
 
 ```typescript
-import { Entity, Id, Column, ManyToOne, JoinColumn, OneToMany,BaseEntity,EFkConstraint } from 'relaen'
+import { BaseEntity, Entity, Id, Column, OneToMany, EFkConstraint, EntityProxy } from 'relaen';
 import {User} from './user'
 
-@Entity("t_user_type",'testdb')
+@Entity("t_user_type",'test')
 export class UserType extends BaseEntity{
-    @Id()
-    @Column({
-        name:'user_type_id',
-        type:'int',
-        nullable:false
-    })
-    private userTypeId:number;
+	@Id()
+	@Column({
+		name:'user_type_id',
+		type:'int',
+		nullable:false
+	})
+	private userTypeId:number;
 
-    @Column({
-        name:'user_type_name',
-        type:'string',
-        nullable:false
-    })
-    private userTypeName:string;
-    
-    //设置了eager=true，则在获取user时，同时获取userType
-    @OneToMany({entity:'User',onDelete:EFkConstraint.SETNULL,onUpdate:EFkConstraint.CASCADE,mappedBy:'userType',eager:false})
-    private users:Array<User>;
-	
-    public getUserTypeId():number{
-        return this.userTypeId;
-    }
-    public setUserTypeId(value:number){
-        this.userTypeId = value;
-    }
+	@Column({
+		name:'user_type_name',
+		type:'string',
+		nullable:false
+	})
+	private userTypeName:string;
 
-    public getUserTypeName():string{
-        return this.userTypeName;
-    }
-    public setUserTypeName(value:string){
-        this.userTypeName = value;
-    }
-    
-    public getUsers():Array<User>{
-        return this.users;
-    }
-    public setUsers(value:Array<User>){
-        this.users = value;
-    }
+	@OneToMany({entity:'User',onDelete:EFkConstraint.RESTRICT,onUpdate:EFkConstraint.RESTRICT,mappedBy:'userType'})
+	private users:Array<User>;
+
+	constructor(idValue?:number){
+		super();
+		this.userTypeId = idValue;
+	}
+	public getUserTypeId():number{
+		return this.userTypeId;
+	}
+	public setUserTypeId(value:number){
+		this.userTypeId = value;
+	}
+
+	public getUserTypeName():string{
+		return this.userTypeName;
+	}
+	public setUserTypeName(value:string){
+		this.userTypeName = value;
+	}
+
+	public async getUsers():Promise<Array<User>>{
+        //启用代理模式获取关联对象
+		return await EntityProxy.get(this,'users');
+	}
+	public setUsers(value:Array<User>){
+		this.users = value;
+	}
 }
 ```
-### 新增数据
+### 增删改查
 ```typescript
-    import { EntityManager,getConnection,EntityManagerFactory } from "relaen";
-    import {User} from './entity/user';
-    import {UserType} from './entity/usertype';
-    ...
-    //创建连接
-    let conn:Connection = await getConnection();
-    let em:EntityManager = EntityManagerFactory.createEntityManager(conn);
-    let user:User = new User();
-    user.setUserName('fieldyang');
-    let utype:UserType = new UserType();
-    utype.setUserTypeId(1);
-    user.setUserType(utype);
-    await user.persist(em);
-    em.close();
-    conn.close();
-```
-### 修改数据
-```typescript
-    import { EntityManager,getConnection,EntityManagerFactory } from "relaen";
-    import {User} from './entity/user';
-    
-    ...
-    //创建连接
-    let conn:Connection = await getConnection();
-    let em:EntityManager = EntityManagerFactory.createEntityManager(conn);
-    let user:User = new User();
-    user.setUserId(1);
-    user.setUserName('yangfield');
-    await user.merge(em);
-    em.close();
-    conn.close();
-```
-### 删除数据
-```typescript
-    import { EntityManager,getConnection,EntityManagerFactory } from "relaen";
-    import {User} from './entity/user';
-    ...
-    //创建连接
-    let conn:Connection = await getConnection();
-    let em:EntityManager = EntityManagerFactory.createEntityManager(conn);
-    let user:User = new User();
-    user.setUserId(1);
-    await user.delete(em);
-    em.close();
-    conn.close();
-```
-### 查询数据
-```typescript
-    import { EntityManager,getConnection,EntityManagerFactory } from "relaen";
-    import {User} from './entity/user';
-    import {UserType} from './entity/user';
-    ...
-    //创建连接
-    let conn:Connection = await getConnection();
-    let em:EntityManager = EntityManagerFactory.createEntityManager(conn);
-    let sql = "select m from  User m where m.userType=? order by m.userId";
-    let query = em.createQuery(sql,Agent);
-    let utype = new UserType();
-    utype.setUserTypeId(1);
-    query.setParameter(0,utype);
-    query.getResultList().then(r=>{
-        console.log(r);
-    });
-    em.close();
-    conn.close();
+
 ```

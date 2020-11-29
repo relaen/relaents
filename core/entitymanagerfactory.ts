@@ -19,9 +19,9 @@ class EntityManagerFactory{
      * @param conn  数据库连接对象
      * @returns     entitymanager
      */
-    public static async createEntityManager(conn?:Connection){
+    public static createEntityManager(conn:Connection){
         if(!conn){
-            conn = await getConnection();
+            throw ErrorFactory.getError("0250");
         }
         //获取threadId
         let sid:number = ThreadStorage.getStore();

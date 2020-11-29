@@ -18,7 +18,7 @@ export class UserType extends BaseEntity{
 	})
 	private userTypeName:string;
 
-	@OneToMany({entity:'User',onDelete:EFkConstraint.RESTRICT,onUpdate:EFkConstraint.RESTRICT,mappedBy:'userType',eager:false})
+	@OneToMany({entity:'User',onDelete:EFkConstraint.RESTRICT,onUpdate:EFkConstraint.RESTRICT,mappedBy:'userType'})
 	private users:Array<User>;
 
 	constructor(idValue?:number){

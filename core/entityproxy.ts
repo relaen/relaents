@@ -16,7 +16,6 @@ class EntityProxy{
      * @param propName  关联属性名
      */
     public static async get(entity:IEntity,propName:string):Promise<any>{
-        let em:EntityManager = await EntityManagerFactory.createEntityManager();
         if(!RelaenUtil.getIdValue(entity)){
             Logger.console(ErrorFactory.getError("0105").message);
             return null;
@@ -31,6 +30,8 @@ class EntityProxy{
                 
         //具备关联关系
         if(eo.relations.has(propName)){
+            let em:EntityManager = EntityManagerFactory.getCurrentEntityManager();
+        
             let rel:IEntityRelation = eo.relations.get(propName);
             //关联实体配置
             let eo1:IEntityCfg = EntityFactory.getClass(rel.entity);
@@ -39,18 +40,18 @@ class EntityProxy{
             //引用外键
             if(rel.type === ERelationType.ManyToOne || rel.type === ERelationType.OneToOne && !rel.mappedBy){
                 let enObj = em.getCache(entity);
-                let rql:string;
+                let sql:string;
                 let query:NativeQuery;
                 //查询外键对象
-                if(enObj && enObj.fk && enObj.fk.has(column.name)){ //外键存在
-                    rql = "select * from " + eo1.table + " m where " + column.refName + " = ?";
-                    query = em.createNativeQuery(rql,rel.entity);
+                if(enObj && enObj.fk && enObj.fk.get(column.name)){ //外键存在
+                    sql = "select * from " + eo1.table + " m where " + column.refName + " = ?";
+                    query = em.createNativeQuery(sql,rel.entity);
                     //设置外键id
                     query.setParameter(0,enObj.fk.get(column.name));
                 }else{
-                    rql = "select m.* from " + eo1.table + " m,"+ eo.table +" m1 where m." +
+                    sql = "select m.* from " + eo1.table + " m,"+ eo.table +" m1 where m." +
                                     column.refName + "= m1." +  column.name + " and m1." + eo.columns.get(eo.id.name).name + " = ?";
-                    query = em.createNativeQuery(rql,rel.entity);
+                    query = em.createNativeQuery(sql,rel.entity);
                     //设置外键id
                     query.setParameter(0,RelaenUtil.getIdValue(entity));                                    
                 }
@@ -72,7 +73,6 @@ class EntityProxy{
                 query.setParameter(0,RelaenUtil.getIdValue(entity));
                 entity[propName] = rel.type===ERelationType.OneToOne?await query.getResult():await query.getResultList();
             }
-
             return entity[propName];
         }
     }

@@ -1,4 +1,4 @@
-import {IEntityCfg, EEntityState, IEntity } from "./entitydefine";
+import {IEntityCfg, EEntityState, IEntity, IEntityRelation } from "./entitydefine";
 import { BaseEntity } from "./baseentity";
 import { Translator } from "./translator";
 import { SqlExecutor } from "./sqlexecutor";
@@ -21,7 +21,7 @@ class EntityManager{
     public connection:Connection;
 
     /**
-     * 实体缓存map {cacheId:{entity:Entity,fk:外键值map}
+     * 实体缓存map {cacheId:{entity:object,fk:外键值map}
      */
     public entityMap:Map<string,any>;
     
@@ -109,7 +109,7 @@ class EntityManager{
     public async find(entityClassName:string,id:any):Promise<IEntity>{
         let key:string = entityClassName + '@' + id;
         if(this.entityMap.has(key)){  //从缓存中获取
-            return this.entityMap.get(key).entity;
+            return this.genEntityFromObject(this.entityMap.get(key).entity);
         }else{  //从数据库获取
             let idName:string = RelaenUtil.getIdName(entityClassName);
             if(!idName){
@@ -120,12 +120,7 @@ class EntityManager{
             params[idName] = id;
             let query = this.createNativeQuery(Translator.genEntityQuery(entityClassName,params),entityClassName);
             query.setParameter(0,id);
-            let en = await query.getResult();
-            //加入cache
-            if(en !== null && RelaenManager.cache){
-                this.addCache(en);
-            }
-            return en;
+            return await query.getResult();
         }
     }
 
@@ -172,7 +167,7 @@ class EntityManager{
         if(!RelaenManager.cache){
             return;
         }
-        this.entityMap.set(this.genCacheId(entity),{entity:entity,fk:fk});
+        this.entityMap.set(this.genCacheId(entity),{entity:entity.clone(),fk:fk});
     }
 
     /**
@@ -218,6 +213,34 @@ class EntityManager{
             //设置主键值
             if(value){
                 RelaenUtil.setIdValue(entity,value);
+            }
+        }
+    }
+
+    /**
+     * 从对象生成实体
+     * @param obj   对象
+     * @returns     实体对象
+     */
+    private genEntityFromObject(obj:any):IEntity{
+        if(!obj.__entityClassName){
+            return null;
+        }
+        let ecfg:IEntityCfg = EntityFactory.getClass(obj.__entityClassName);
+        if(!ecfg){
+            throw ErrorFactory.getError("0020",[obj.__entityClassName]);
+        }
+        let en:IEntity = new ecfg.entity;
+        for(let col of ecfg.columns){
+            //字段属性名
+            let fn = col[0];
+            //字段对象
+            let fo = col[1];
+            if(!fo.refName){ //非外键
+                en[fn] = obj[fn];
+            }else if(obj[fn] && ecfg.relations.has(fn)){ //外键
+                let rel:IEntityRelation = ecfg.relations.get(fn);
+                en[fn] = this.find(rel.entity,obj[fn]);
             }
         }
     }

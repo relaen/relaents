@@ -10,31 +10,56 @@ import { Connection } from "../core/connection";
 import { EntityManagerFactory } from "../core/entitymanagerfactory";
 import { Transaction } from "../core/transaction/transaction";
 import { UserType } from "./entity/usertype";
+import { userInfo } from "os";
 
+/**
+ * 新建用户
+ */
 async function newUser(){
+    //获取连接
     let conn:Connection = await getConnection();
-    let em:EntityManager = await EntityManagerFactory.createEntityManager(conn);
+    //创建entity manager
+    let em:EntityManager = EntityManagerFactory.createEntityManager(conn);
     let user:User = new User();
     user.setUserName('relaen');
     user.setAge(1);
     user.setSexy('M');
     let userType:UserType = new UserType(1);
     user.setUserType(userType);
+    //保存new数据
     await user.save();
     em.close();
-    conn.close();
+    await conn.close();
 }
 
-async function updateUser(){
+/**
+ * 获取用户信息
+ * @param id    用户id
+ */
+async function getUser(id):Promise<User>{
     let conn:Connection = await getConnection();
-    let em:EntityManager = await EntityManagerFactory.createEntityManager(conn);
-    let user:User = new User();
-    user.setUserId(1);
-    user.setUserName('aaaa');
-    user.save(true);
-    // let r = await em.save(user);
+    let em:EntityManager = EntityManagerFactory.createEntityManager(conn);
+    let u:User = <User> await em.find(User.name,id);
+    //懒加载获取用户类别
+    await u.getUserType();
+    console.log(u);
     em.close();
-    conn.close();
+    await conn.close();
+    return u;
+}
+
+/**
+ * 更新数据
+ */
+async function updateUser(id){
+    let conn:Connection = await getConnection();
+    let em:EntityManager = EntityManagerFactory.createEntityManager(conn);
+    let user:User = await getUser(id);
+    user.setUserName('aaaa');
+    //参数为true，则表示只对不为undefined的值进行更新，否则所有undefined的属性都会更新成null
+    await user.save(true);
+    em.close();
+    await conn.close();
 }
 
 async function deleteUser(id:number){
@@ -42,15 +67,6 @@ async function deleteUser(id:number){
     let em:EntityManager = await EntityManagerFactory.createEntityManager(conn);
     let user:User = new User(id);
     let r = await em.delete(user);
-    em.close();
-    conn.close();
-}
-
-async function findOne(id:number){
-    let conn:Connection = await getConnection();
-    let em:EntityManager = await EntityManagerFactory.createEntityManager(conn);
-    let r = await em.find(User.name,id);
-    console.log(r);
     em.close();
     conn.close();
 }
@@ -78,13 +94,5 @@ async function testNativeQuery(){
     conn.close();
 }
 
-async function testGetOne(){
-    let conn:Connection = await getConnection();
-    let em:EntityManager = await EntityManagerFactory.createEntityManager(conn);
-    let u = await em.find('User',7);
-    em.close();
-    conn.close();
-}
-
 RelaenManager.init(process.cwd() + '/relaen.json');
-findOne(2);
+updateUser(3);

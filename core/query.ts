@@ -4,7 +4,7 @@ import { BaseEntity } from "./baseentity";
 import { SqlExecutor } from "./sqlexecutor";
 import { RelaenManager } from "./relaenmanager";
 import { EntityFactory } from "./entityfactory";
-import { IEntityCfg, IEntity } from "./entitydefine";
+import { IEntityCfg, IEntity, EEntityState } from "./entitydefine";
 import { ErrorFactory } from "./errorfactory";
 import { Logger } from "./logger";
 import { RelaenUtil } from "./relaenutil";
@@ -77,10 +77,6 @@ class Query{
         }
         
         this.paramArr = [];
-        //调试模式，输出执行的sql
-        if(RelaenManager.debug){
-            Logger.console("[Relaen Sql]:"+this.execSql);
-        }
     }
 
     /**
@@ -174,7 +170,7 @@ class Query{
      */
     private genEntity(r:any):IEntity{
         let ecfg:IEntityCfg = EntityFactory.getClass(this.entityClassName);
-        let entity:any = new ecfg.entity();
+        let entity:IEntity = new ecfg.entity();
         Object.getOwnPropertyNames(r).forEach((field)=>{
             let ind:number = field.indexOf('_');
             //别名
@@ -200,6 +196,7 @@ class Query{
             }
         }
         this.entityManager.addCache(entity,map);
+        entity.__status = EEntityState.PERSIST;
         return entity;
     }
 }

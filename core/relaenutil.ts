@@ -58,7 +58,6 @@ class RelaenUtil{
         //两端添加 '
         return "'" + value  + "'";
     }
-
 }
 
 export{RelaenUtil}
