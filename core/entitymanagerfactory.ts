@@ -1,7 +1,6 @@
 import { EntityManager } from "./entitymanager";
 import { Connection } from "./connection";
 import { ThreadStorage } from "./threadlocal";
-import { getConnection } from "./connectionmanager";
 import { ErrorFactory } from "./errorfactory";
 
 /**

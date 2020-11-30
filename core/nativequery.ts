@@ -1,6 +1,5 @@
 import { EntityManager } from "./entitymanager";
 import { SqlExecutor } from "./sqlexecutor";
-import { BaseEntity } from "./baseentity";
 import { IEntityCfg, IEntityColumn, IEntity, EEntityState } from "./entitydefine";
 import { EntityFactory } from "./entityfactory";
 import { Query } from "./query";

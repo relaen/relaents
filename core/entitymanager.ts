@@ -1,5 +1,4 @@
 import {IEntityCfg, EEntityState, IEntity, IEntityRelation } from "./entitydefine";
-import { BaseEntity } from "./baseentity";
 import { Translator } from "./translator";
 import { SqlExecutor } from "./sqlexecutor";
 import { EntityFactory } from "./entityfactory";

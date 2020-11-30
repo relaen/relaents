@@ -1,6 +1,5 @@
 import { ConnectionManager } from "./connectionmanager";
 import { EntityFactory } from "./entityfactory";
-import { Connection } from "./connection";
 
 /**
  * relaen 框架管理器

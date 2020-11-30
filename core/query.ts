@@ -2,11 +2,9 @@ import { EntityManager } from "./entitymanager";
 import { Translator } from "./translator";
 import { BaseEntity } from "./baseentity";
 import { SqlExecutor } from "./sqlexecutor";
-import { RelaenManager } from "./relaenmanager";
 import { EntityFactory } from "./entityfactory";
 import { IEntityCfg, IEntity, EEntityState } from "./entitydefine";
 import { ErrorFactory } from "./errorfactory";
-import { Logger } from "./logger";
 import { RelaenUtil } from "./relaenutil";
 
 /**

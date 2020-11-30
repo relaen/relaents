@@ -1,5 +1,6 @@
 import { RelaenManager } from "../relaenmanager";
 import { Connection } from "../connection";
+import { Logger } from "../logger";
 
 /**
  * 事务基类
@@ -25,7 +26,7 @@ class Transaction{
         if(!this.connection.connected){
             await this.connection.connect();
         }
-
+        Logger.console('[Relaen]:Transaction is beginning!');
         switch(RelaenManager.dialect){
             case 'mysql':
                 this.tr = new MysqlTransaction();
@@ -45,6 +46,7 @@ class Transaction{
         if(this.tr && this.connection.connected){
             await this.tr.commit(this.connection);
         }
+        Logger.console('[Relaen]:Transaction is commited!');
     }
 
     /**
@@ -54,6 +56,7 @@ class Transaction{
         if(this.tr && this.connection.connected){
             await this.tr.rollback(this.connection);
         }
+        Logger.console('[Relaen]:Transaction is rollback!');
     }
 }
 

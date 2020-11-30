@@ -1,5 +1,4 @@
 import { IEntityCfg, IEntityPKey, IEntityColumn, IEntityRelation, IEntity } from "./entitydefine";
-import { BaseEntity } from "./baseentity";
 
 /**
  * 实体工厂，管理所有实体类

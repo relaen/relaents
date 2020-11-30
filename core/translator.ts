@@ -1,10 +1,7 @@
-import {EntityManager} from "./entitymanager";
-import { IEntityCfg, IEntityRelation, ERelationType, IEntityColumn, IEntity } from "./entitydefine";
+import { IEntityCfg, IEntityColumn, IEntity } from "./entitydefine";
 import { BaseEntity } from "./baseentity";
 import { EntityFactory } from "./entityfactory";
 import { ErrorFactory } from "./errorfactory";
-import { RelaenManager } from "./relaenmanager";
-import { Logger } from "./logger";
 import { RelaenUtil } from "./relaenutil";
 
 /**

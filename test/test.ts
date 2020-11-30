@@ -1,17 +1,20 @@
 
 import { EntityManager } from "../core/entitymanager";
 import { RelaenManager } from "../core/relaenmanager";
-import { Translator } from "../core/translator";
 import { User } from "./entity/user";
-
-import { Query } from "../core/query";
 import { getConnection } from "../core/connectionmanager";
 import { Connection } from "../core/connection";
 import { EntityManagerFactory } from "../core/entitymanagerfactory";
-import { Transaction } from "../core/transaction/transaction";
 import { UserType } from "./entity/usertype";
-import { userInfo } from "os";
+import { Query } from "../core/query";
+import { NativeQuery } from "../core/nativequery";
 
+/**
+ * 与数据库相关的方法都采用async，使用时请使用await 关键字
+ * 包括 connection 相关操作 getConnection,connection.close
+ * 实体增删改方法 save, delete, 关联关系数据获取
+ * 事务方法 begin, commit, rollback
+ */
 /**
  * 新建用户
  */
@@ -24,11 +27,14 @@ async function newUser(){
     user.setUserName('relaen');
     user.setAge(1);
     user.setSexy('M');
+    //设置用户类别
     let userType:UserType = new UserType(1);
     user.setUserType(userType);
-    //保存new数据
+    //保存用户数据，必须先创建entitymanager，否则无法执行操作
     await user.save();
+    //关闭entitymanager，使用完毕后必须关闭
     em.close();
+    //关闭连接，使用完毕后必须关闭
     await conn.close();
 }
 
@@ -40,16 +46,30 @@ async function getUser(id):Promise<User>{
     let conn:Connection = await getConnection();
     let em:EntityManager = EntityManagerFactory.createEntityManager(conn);
     let u:User = <User> await em.find(User.name,id);
-    //懒加载获取用户类别
+    //懒加载获取用户类别(多对一)
     await u.getUserType();
-    console.log(u);
     em.close();
     await conn.close();
     return u;
 }
 
 /**
- * 更新数据
+ * 获取用户类型
+ * @param id    用户类型id
+ */
+async function getUserType(id):Promise<UserType>{
+    let conn:Connection = await getConnection();
+    let em:EntityManager = EntityManagerFactory.createEntityManager(conn);
+    let ut:UserType = <UserType> await em.find(UserType.name,id);
+    //懒加载获取关联用户(一对多)
+    await ut.getUsers();
+    em.close();
+    await conn.close();
+    return ut;
+}
+/**
+ * 更新用户
+ * @param id    用户id
  */
 async function updateUser(id){
     let conn:Connection = await getConnection();
@@ -62,37 +82,74 @@ async function updateUser(id){
     await conn.close();
 }
 
+/**
+ * 删除用户
+ * @param id    用户id 
+ */
 async function deleteUser(id:number){
     let conn:Connection = await getConnection();
-    let em:EntityManager = await EntityManagerFactory.createEntityManager(conn);
+    let em:EntityManager = EntityManagerFactory.createEntityManager(conn);
     let user:User = new User(id);
     let r = await em.delete(user);
     em.close();
-    conn.close();
+    await conn.close();
 }
 
+/**
+ * 查询
+ * rql采用对象方式进行书写，执行时需要翻译成原生sql执行，所以执行效率低于原生sql
+ */
 async function testQuery(){
     let conn:Connection = await getConnection();
-    let em:EntityManager = await EntityManagerFactory.createEntityManager(conn);
-    let sql = "select m.userName from  User m where m.userType=? order by m.userId";
-    let query = em.createQuery(sql,User.name);
+    let em:EntityManager = EntityManagerFactory.createEntityManager(conn);
+    let sql = "select m from  User m where m.userType=? order by m.userId";
+    let query:Query = em.createQuery(sql,User.name);
     query.setParameter(0,1);
     let u:User = <User> await query.getResult();
     await u.getUserType();
     em.close();
-    conn.close();
+    await conn.close();
 }
 
+/**
+ * 原生查询
+ * 原生sql执行效率高于rql，减少了rql翻译成sql的过程
+ */
 async function testNativeQuery(){
     let conn:Connection = await getConnection();
-    let em:EntityManager = await EntityManagerFactory.createEntityManager(conn);
-    let sql = "select a1.agent_id,a1.agent_name   from  t_agent a1";
-    // let em:EntityManager = new EntityManager();
-    let query = em.createNativeQuery(sql);
+    let em:EntityManager = EntityManagerFactory.createEntityManager(conn);
+    let sql = "select * from  t_user";
+    let query:NativeQuery = em.createNativeQuery(sql);
     let r = await query.getResultList();
     em.close();
-    conn.close();
+    await conn.close();
 }
 
+/**
+ * 事务测试
+ */
+async function testTransaction(){
+    let conn:Connection = await getConnection();
+    let em:EntityManager = EntityManagerFactory.createEntityManager(conn);
+    //创建事务
+    let tx = conn.createTransaction();
+    //事务开始
+    await tx.begin();
+    await newUser();
+    await deleteUser(4);
+    //事务回滚
+    await tx.rollback();
+    em.close();
+    await conn.close();
+}
+//初始化relaen配置
 RelaenManager.init(process.cwd() + '/relaen.json');
-updateUser(3);
+newUser();
+// getUser(1);
+// getUserType(1);
+// updateUser(1);
+// deleteUser(1);
+// testQuery();
+// testNativeQuery();
+// testTransaction();
+

@@ -1,5 +1,3 @@
-import { BaseEntity } from "./baseentity";
-
 /**
  * 实体接口
  */

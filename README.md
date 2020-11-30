@@ -4,6 +4,14 @@ relaen是[noomi](https://www.npmjs.com/package/noomi)团队打造的一套node�
 ## 使用限制
 relaen当前仅支持mysql数据库，其它数据库产品陆续加入中。
 
+## 实体对象生成
+relaen提供了[relaen cli](https://www.npmjs.com/package/relaen-cli)工具，该工具可自动生成relaen所需要的实体。
+
+## 版本
+### 0.0.5
+正式发布
+
+
 ## 配置文件
 relaen依赖配置文件进行初始化，配置内容如下：
 配置项|说明|类型|必填|可选值|默认值|备注
@@ -25,6 +33,33 @@ pool|连接池配置|object|否|无|无|如果配置，则开启数据库连接�
 -|-|-|-|-|-|-
 max|最大连接数|number|否|10
 min|最小连接数|number|否|1
+
+## 配置文件示例
+该文件命名为relaen.json
+### 初始化方式
+```ts
+	RelaenManager.init(process.cwd() + '/relaen.json');
+```
+### json文件
+```json
+{
+    "dialect":"mysql",
+    "host":"localhost",
+    "port":3306,
+    "username":"root",
+    "password":"field",
+	"database":"test",
+	"pool":{
+		"min":0,
+		"max":10
+	},
+    "entities": [
+        "/dist/test/entity/**/*.js"
+    ],
+    "cache":true,
+    "debug":true
+}
+```
 
 ## 注解
 
@@ -96,21 +131,11 @@ onUpdate|外键更新策略|string|否|EFkConstraint枚举类型的SETNULL,NONE,
 ### @OneToOne(一对一关系注解)
 请参考ManyToOne和OneToMany进行设置
 
-## 实体对象生成
-relaen提供了[relaen cli](https://www.npmjs.com/package/relaen-cli)工具，该工具可自动生成relaen所需要的实体。
-
-## 版本
-### 0.0.2
-
-
-## API
-api请参考[github文档](https://www.github.com/)
-
-## 用例
+## 例子
 实体定义，创建了2个实体"User"和"UserType"。  
 ### 实体类 User
 
-```typescript
+```ts
 import { Entity, BaseEntity, Id, Column, ManyToOne, JoinColumn, EntityProxy } from 'relaen';
 import {UserType} from './usertype'
 
@@ -193,7 +218,7 @@ export class User extends BaseEntity{
 ```
 ### 实体类 UserType
 
-```typescript
+```ts
 import { BaseEntity, Entity, Id, Column, OneToMany, EFkConstraint, EntityProxy } from 'relaen';
 import {User} from './user'
 
@@ -245,6 +270,152 @@ export class UserType extends BaseEntity{
 }
 ```
 ### 增删改查
-```typescript
+```ts
 
+import { EntityManager,RelaenManager,getConnection,Connection,EntityManagerFactory,Query,NativeQuery} from "relaen";
+import { User } from "./entity/user";
+import { UserType } from "./entity/usertype";
+/**
+ * 与数据库相关的方法都采用async，使用时请使用"await"关键字
+ * 包括 connection 相关操作 getConnection,connection.close
+ * 实体增删改方法 save, delete, 关联关系数据获取(懒加载)
+ * 事务方法 begin, commit, rollback
+ */
+/**
+ * 新建用户
+ */
+async function newUser(){
+    //获取连接
+    let conn:Connection = await getConnection();
+    //创建entity manager
+    let em:EntityManager = EntityManagerFactory.createEntityManager(conn);
+    let user:User = new User();
+    user.setUserName('relaen');
+    user.setAge(1);
+    user.setSexy('M');
+    //设置用户类别
+    let userType:UserType = new UserType(1);
+    user.setUserType(userType);
+    //保存用户数据，必须先创建entitymanager，否则无法执行操作
+    await user.save();
+    //关闭entitymanager，使用完毕后必须关闭
+    em.close();
+    //关闭连接，使用完毕后必须关闭
+    await conn.close();
+}
+
+/**
+ * 获取用户信息
+ * @param id    用户id
+ */
+async function getUser(id):Promise<User>{
+    let conn:Connection = await getConnection();
+    let em:EntityManager = EntityManagerFactory.createEntityManager(conn);
+    let u:User = <User> await em.find(User.name,id);
+    //懒加载获取用户类别(多对一)
+    await u.getUserType();
+    em.close();
+    await conn.close();
+    return u;
+}
+
+/**
+ * 获取用户类型
+ * @param id    用户类型id
+ */
+async function getUserType(id):Promise<UserType>{
+    let conn:Connection = await getConnection();
+    let em:EntityManager = EntityManagerFactory.createEntityManager(conn);
+    let ut:UserType = <UserType> await em.find(UserType.name,id);
+    //懒加载获取关联用户(一对多)
+    await ut.getUsers();
+    em.close();
+    await conn.close();
+    return ut;
+}
+/**
+ * 更新用户
+ * @param id    用户id
+ */
+async function updateUser(id){
+    let conn:Connection = await getConnection();
+    let em:EntityManager = EntityManagerFactory.createEntityManager(conn);
+    let user:User = await getUser(id);
+    user.setUserName('aaaa');
+    //参数为true，则表示只对不为undefined的值进行更新，否则所有undefined的属性都会更新成null
+    await user.save(true);
+    em.close();
+    await conn.close();
+}
+
+/**
+ * 删除用户
+ * @param id    用户id 
+ */
+async function deleteUser(id:number){
+    let conn:Connection = await getConnection();
+    let em:EntityManager = EntityManagerFactory.createEntityManager(conn);
+    let user:User = new User(id);
+    let r = await em.delete(user);
+    em.close();
+    await conn.close();
+}
+
+/**
+ * 查询
+ * rql采用对象方式进行书写，执行时需要翻译成原生sql执行，所以执行效率低于原生sql
+ */
+async function testQuery(){
+    let conn:Connection = await getConnection();
+    let em:EntityManager = EntityManagerFactory.createEntityManager(conn);
+    let sql = "select m from  User m where m.userType=? order by m.userId";
+    let query:Query = em.createQuery(sql,User.name);
+    query.setParameter(0,1);
+    let u:User = <User> await query.getResult();
+    await u.getUserType();
+    em.close();
+    await conn.close();
+}
+
+/**
+ * 原生查询
+ * 原生sql执行效率高于rql，减少了rql翻译成sql的过程
+ */
+async function testNativeQuery(){
+    let conn:Connection = await getConnection();
+    let em:EntityManager = EntityManagerFactory.createEntityManager(conn);
+    let sql = "select * from  t_user";
+    let query:NativeQuery = em.createNativeQuery(sql);
+    let r = await query.getResultList();
+    em.close();
+    await conn.close();
+}
+
+/**
+ * 事务测试
+ */
+async function testTransaction(){
+    let conn:Connection = await getConnection();
+    let em:EntityManager = EntityManagerFactory.createEntityManager(conn);
+    //创建事务
+    let tx = conn.createTransaction();
+    //事务开始
+    await tx.begin();
+    await newUser();
+    await deleteUser(4);
+    //事务回滚
+    await tx.rollback();
+    em.close();
+    await conn.close();
+}
+//初始化relaen配置
+RelaenManager.init(process.cwd() + '/relaen.json');
+newUser();
+// getUser(1);
+// getUserType(1);
+// updateUser(1);
+// deleteUser(1);
+// testQuery();
+// testNativeQuery();
+// testTransaction();
 ```
