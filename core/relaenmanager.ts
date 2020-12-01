@@ -1,5 +1,6 @@
 import { ConnectionManager } from "./connectionmanager";
 import { EntityFactory } from "./entityfactory";
+import { ErrorFactory } from "./errorfactory";
 
 /**
  * relaen 框架管理器
@@ -27,10 +28,16 @@ class RelaenManager{
     public static debug:boolean;
     /**
      * 初始化
-     * @param config 
+     * @param cfg   配置文件名或配置对象
      */
-    static init(path:string){
-        let cfg = this.parseFile(path);
+    static init(cfg:any){
+        if(typeof cfg === 'string'){
+            cfg = this.parseFile(cfg);
+        }
+        if(typeof cfg !== 'object'){
+            throw ErrorFactory.getError('0001')
+        }
+        
         this.dialect = cfg.dialect || 'mysql';
         this.debug = cfg.debug || false;
         this.cache = cfg.cache === false?false:true;

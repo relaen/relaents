@@ -3,7 +3,7 @@ const{AsyncLocalStorage} = require("async_hooks");
 /**
  * 线程存储
  */
-class ThreadStorage{
+class ThreadLocal{
     /**
      * 线程id
      */
@@ -15,22 +15,22 @@ class ThreadStorage{
     private static localStorage = new AsyncLocalStorage();
     
     /**
-     * 获取 async local storage
-     * @returns     当前threadId
+     * 新建thread id
+     * @returns     新threadId
      */
-    public static newStorage(){
+    public static newThreadId():number{
         let sid = this.threadId++;
         this.localStorage.enterWith(sid);
         return sid;
     }
 
     /**
-     * 获取存储值
+     * 获取当前thread id
      * @returns     当前threadId
      */
-    public static getStore():any{
+    public static getThreadId():number{
         return this.localStorage.getStore();
     }
 }
 
-export{ThreadStorage}
+export{ThreadLocal}

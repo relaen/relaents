@@ -35,13 +35,11 @@ class NativeQuery extends Query{
      * @param limit     记录数
      */
     public async getResultList(start?:number,limit?:number):Promise<Array<any>>{
-        if(start){
-            this.start = start;
-        }
-        if(limit){
-            this.limit = limit;
-        }
+        this.start = this.start || start;
+        this.limit = this.start || limit;
+        
         let results:any[] = await SqlExecutor.exec(this.entityManager.connection,this.execSql,this.paramArr,this.start,this.limit);
+        
         if(results){
             let arr = [];
             for(let r of results){

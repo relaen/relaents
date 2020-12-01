@@ -84,11 +84,7 @@ class Translator{
         }
         for(let key of orm.columns){
             let fo:any = key[1];
-            //关联对象不处理
-            if(fo.refName){
-                continue;
-            }
-
+            
             //字段值
             let v;
             if(fo.refName){ //外键，只取主键

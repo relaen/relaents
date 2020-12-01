@@ -26,7 +26,7 @@ class Transaction{
         if(!this.connection.connected){
             await this.connection.connect();
         }
-        Logger.console('[Relaen]:Transaction is beginning!');
+        Logger.console('[Relaen]:Transaction is started!');
         switch(RelaenManager.dialect){
             case 'mysql':
                 this.tr = new MysqlTransaction();
@@ -56,7 +56,7 @@ class Transaction{
         if(this.tr && this.connection.connected){
             await this.tr.rollback(this.connection);
         }
-        Logger.console('[Relaen]:Transaction is rollback!');
+        Logger.console('[Relaen]:Transaction is rollbacked!');
     }
 }
 

@@ -5,6 +5,10 @@
     "username":"root",
     "password":"field",
     "database":"test",
+    "pool":{
+        "min":0,
+        "max":10
+    },
     "entities": [
         "/dist/test/entity/**/*.js"
     ],

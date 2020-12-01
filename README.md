@@ -11,6 +11,14 @@ relaen提供了[relaen cli](https://www.npmjs.com/package/relaen-cli)工具，�
 ### 0.0.5
 正式发布
 
+### 0.0.6
+1. 增加RelaenManager.init方法传入对象参数；
+2. 抛出sql执行异常，便于第三方框架进行异常捕获。
+
+### 0.0.7
+1. 修复update时关联字段的存储bug；
+2. 修复Query.getResultList方法 start参数为0时查询结果问题
+
 
 ## 配置文件
 relaen依赖配置文件进行初始化，配置内容如下：
@@ -370,9 +378,15 @@ async function testQuery(){
     let em:EntityManager = EntityManagerFactory.createEntityManager(conn);
     let sql = "select m from  User m where m.userType=? order by m.userId";
     let query:Query = em.createQuery(sql,User.name);
+    //设置参数，按照sql中的"?"顺序来，索引从0开始，如果参数值是对象，会提取对象的主键
     query.setParameter(0,1);
+    //获取单个对象
     let u:User = <User> await query.getResult();
+    //懒加载获取用户类型
     await u.getUserType();
+
+    //提取第5-14记录，如果参数为空，则返回所有记录。第一个参数为记录起始索引号，第二个参数为记录数
+    let ul:User[] = <User[]> await query.getResultList(5,10);
     em.close();
     await conn.close();
 }
@@ -386,7 +400,9 @@ async function testNativeQuery(){
     let em:EntityManager = EntityManagerFactory.createEntityManager(conn);
     let sql = "select * from  t_user";
     let query:NativeQuery = em.createNativeQuery(sql);
-    let r = await query.getResultList();
+    //和Query一样，支持setParameter
+    //参数和Query一样，获取前5条数据
+    let r = await query.getResultList(0,5);
     em.close();
     await conn.close();
 }
@@ -409,7 +425,34 @@ async function testTransaction(){
     await conn.close();
 }
 //初始化relaen配置
-RelaenManager.init(process.cwd() + '/relaen.json');
+RelaenManager.init({
+    //数据库产品名
+    dialect:"mysql",
+    //数据库服务器地址
+    host:"localhost",
+    //端口
+    port:3306,
+    //用户名
+    username:"root",
+    //密码
+    password:"field",
+    //数据库名
+    database:"test",
+    //连接池，可选
+    pool:{
+        min:0,
+        max:10
+    },
+    //实体文件配置
+    entities: [
+        "/dist/test/entity/**/*.js"
+    ],
+    //开启以及缓存
+    cache:true,
+    //是否调试模式
+    debug:true
+});
+
 newUser();
 // getUser(1);
 // getUserType(1);

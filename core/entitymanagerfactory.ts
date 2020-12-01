@@ -1,6 +1,6 @@
 import { EntityManager } from "./entitymanager";
 import { Connection } from "./connection";
-import { ThreadStorage } from "./threadlocal";
+import { ThreadLocal } from "./threadlocal";
 import { ErrorFactory } from "./errorfactory";
 
 /**
@@ -23,9 +23,9 @@ class EntityManagerFactory{
             throw ErrorFactory.getError("0250");
         }
         //获取threadId
-        let sid:number = ThreadStorage.getStore();
+        let sid:number = ThreadLocal.getThreadId();
         if(!sid){
-            sid = ThreadStorage.newStorage();
+            sid = ThreadLocal.newThreadId();
         }
         let em:EntityManager;
         if(!this.entityManagerMap.has(sid)){ //
@@ -48,7 +48,7 @@ class EntityManagerFactory{
      */
     public static closeEntityManager(em:EntityManager){
         //获取threadId
-        let sid:number = ThreadStorage.getStore();
+        let sid:number = ThreadLocal.getThreadId();
         if(!sid || !this.entityManagerMap.has(sid)){
             return;
         }
@@ -63,7 +63,7 @@ class EntityManagerFactory{
      */
     public static getCurrentEntityManager(){
         //获取threadId
-        let sid:number = ThreadStorage.getStore();
+        let sid:number = ThreadLocal.getThreadId();
         let notExist:boolean = false;
         if(!sid || !this.entityManagerMap.has(sid)){
             notExist = true;

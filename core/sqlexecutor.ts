@@ -17,9 +17,10 @@ class SqlExecutor{
      */
     public static async exec(conn:Connection,sql:string,params?:any[],start?:number,limit?:number):Promise<any>{
         if(RelaenManager.debug){
-            Logger.console("[Execute relaen sql]:\"" + sql + "\"");
+            Logger.console("[Relaen execute sql]:\"" + sql + "\"");
         }
         let r:any;
+        
         try{
             switch(RelaenManager.dialect){
                 case 'mysql':
@@ -33,10 +34,12 @@ class SqlExecutor{
                     break;
             }
         }catch(e){
-            Logger.console("[Execute relaen sql error]:\"" + e + "\"");
-            return;
+            Logger.console("[Relaen execute sql] Error:\"" + e.message + "\"");
+            //只抛出异常信息
+            throw e.message;
         }
-        Logger.console("[Execute relaen sql]:\"OK\"");
+        
+        Logger.console("[Relaen execute sql]:\"OK\"");
         return r;
     }
 
@@ -52,7 +55,7 @@ class SqlExecutor{
         if(!connection.connected){
             await connection.connect();
         }
-        if(start && limit){
+        if(Number.isInteger(start) && start>=0 && Number.isInteger(limit) && limit>0){
             sql += ' limit ' + start + ',' + limit;
         }
         let r:any = await new Promise((resolve,reject)=>{

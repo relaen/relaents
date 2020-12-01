@@ -1,7 +1,7 @@
 import { RelaenManager } from "./relaenmanager";
 import { Connection } from "./connection";
 import { ErrorFactory } from "./errorfactory";
-import { ThreadStorage } from "./threadlocal";
+import { ThreadLocal } from "./threadlocal";
 
 /**
  * 连接池配置
@@ -63,10 +63,10 @@ class ConnectionManager{
     public static async createConnection():Promise<Connection>{
         let conn:Connection;
         //把conn加入connectionMap
-        let sid:number = ThreadStorage.getStore();
+        let sid:number = ThreadLocal.getThreadId();
 
         if(!sid){ //新建conn
-            sid = ThreadStorage.newStorage();
+            sid = ThreadLocal.newThreadId();
         }
         if(!this.connectionMap.has(sid)){ //线程id对应对象不存在
             switch(RelaenManager.dialect){
@@ -130,7 +130,7 @@ class ConnectionManager{
      */
     public static async closeConnection(connection:Connection){
         //获取threadId
-        let sid:number = ThreadStorage.getStore();
+        let sid:number = ThreadLocal.getThreadId();
         if(sid && this.connectionMap.has(sid)){
             let o = this.connectionMap.get(sid);
             if(--o.num <= 0){ //最后一个close，需要从map删除
