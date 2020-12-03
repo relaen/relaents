@@ -52,9 +52,9 @@ class EntityManager{
             }
             //修改状态
             entity.__status = EEntityState.PERSIST;
-            //针对单主键设置主键
+            //设置主键值
             if(!RelaenUtil.getIdValue(entity)){
-                RelaenUtil.setIdValue(entity,r.insertId);
+                RelaenUtil.setIdValue(entity,r);
             }
             
             //加入缓存
@@ -86,7 +86,7 @@ class EntityManager{
     /**
      * 删除实体
      * @param entity    待删除实体
-     * @returns         是否删除成功
+     * @returns         被删除实体
      */
     public async delete(entity:IEntity):Promise<IEntity>{
         let sql:string = Translator.entityToDelete(entity);

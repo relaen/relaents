@@ -100,16 +100,13 @@ class Query{
      * @param valueArr 值数组
      */
     public setParameters(valueArr:Array<any>){
-        if(this.paramArr.length< valueArr.length){
-            for(let i=this.paramArr.length-1;i<valueArr.length;i++){
-                this.paramArr.push(null);
-            }
-        }
         valueArr.forEach((value,i)=>{
-            if(value instanceof BaseEntity){
-                value = RelaenUtil.getIdValue(value);
+            let v =  value instanceof BaseEntity? RelaenUtil.getIdValue(value):value;
+            if(i >= this.paramArr.length){
+                this.paramArr.push(v);
+            }else{
+                this.paramArr[i] = v;
             }
-            this.paramArr[i] = value;
         });
     }
 
