@@ -40,7 +40,7 @@ class EntityManager{
      * @param ignoreUndefinedValue  忽略undefined值，针对update时有效
      * @returns                     保存后的实体  
      */
-    public async save(entity:IEntity,ignoreUndefinedValue?:boolean):Promise<any>{
+    public async save(entity:IEntity,ignoreUndefinedValue?:boolean):Promise<IEntity>{
         //无主键或状态为new
         if(entity.__status === EEntityState.NEW){
             //检查并生成主键

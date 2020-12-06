@@ -3,6 +3,9 @@ import { EntityFactory } from "./entityfactory";
 import { IEntityCfg, IEntity, EEntityState } from "./entitydefine";
 import { EntityManagerFactory } from "./entitymanagerfactory";
 import { RelaenUtil } from "./relaenutil";
+import { getConnection } from "./connectionmanager";
+import { Connection } from "./connection";
+import { ENGINE_METHOD_CIPHERS } from "constants";
 
 /**
  * 实体基类
@@ -27,16 +30,36 @@ export class BaseEntity extends Object implements IEntity{
      */
     public async save(ignoreUndefinedValue?:boolean):Promise<IEntity>{
         let em:EntityManager = EntityManagerFactory.getCurrentEntityManager();
-        return await em.save(this,ignoreUndefinedValue);
+        let conn:Connection;
+        if(em === null){
+            conn = await getConnection();
+            em = EntityManagerFactory.createEntityManager(conn);
+        }
+        await em.save(this,ignoreUndefinedValue);
+        if(conn){
+            em.close();
+            conn.close();
+        }
+        return this;
     }
 
     /**
      * 删除实体
      * @param em    entity manager
      */
-    public async delete(){
-        let em:EntityManager = await EntityManagerFactory.getCurrentEntityManager();
-        return em.delete(this);
+    public async delete():Promise<IEntity>{
+        let em:EntityManager = EntityManagerFactory.getCurrentEntityManager();
+        let conn:Connection;
+        if(em === null){
+            conn = await getConnection();
+            em = EntityManagerFactory.createEntityManager(conn);
+        }
+        em.delete(this);
+        if(conn){
+            em.close();
+            conn.close();
+        }
+        return this;
     }
 
     /**

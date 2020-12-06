@@ -104,17 +104,22 @@ async function deleteUser(id:number){
 async function testQuery(){
     let conn:Connection = await getConnection();
     let em:EntityManager = EntityManagerFactory.createEntityManager(conn);
-    let sql = "select m from  User m where m.userType=? order by m.userId";
+    // let sql = "select m from  User m where m.userType=? order by m.userId";
+    // let sql = "select m from  User m where m.userId in ? order by m.userId";
+    let sql = "select m from  User m order by m.userId";
     let query:Query = em.createQuery(sql,User.name);
     //设置参数，按照sql中的"?"顺序来，索引从0开始，如果参数值是对象，会提取对象的主键
+    // query.setParameter(0,[[3,4,5]]);
     query.setParameter(0,1);
+    query.setStart(0);
+    query.setLimit(5);
     //获取单个对象
-    let u:User = <User> await query.getResult();
+    // let u:User = <User> await query.getResult();
     //懒加载获取用户类型
-    await u.getUserType();
-
+    // await u.getUserType();
+    // let list = await query.getResultList();
     //提取第5-14记录，如果参数为空，则返回所有记录。第一个参数为记录起始索引号，第二个参数为记录数
-    let ul:User[] = <User[]> await query.getResultList(5,10);
+    let ul:User[] = <User[]> await query.getResultList();
     em.close();
     await conn.close();
 }
@@ -182,12 +187,14 @@ RelaenManager.init({
     //是否调试模式
     debug:true
 });
+
+
 // newUser();
 // getUser(1);
 // getUserType(1);
 // updateUser(4);
 // deleteUser(1);
-// testQuery();
-testNativeQuery();
+testQuery();
+// testNativeQuery();
 // testTransaction();
 

@@ -83,16 +83,14 @@ class Query{
      * @param value 
      */
     public setParameter(index:number,value:any){
+        //补全参数个数
         if(this.paramArr.length<=index){
-            for(let i=this.paramArr.length-1;i<index;i++){
+            for(let i=this.paramArr.length;i<=index;i++){
                 this.paramArr.push(null);
             }
         }
         //对于entity，只获取其主键
-        if(value instanceof BaseEntity){
-            value = RelaenUtil.getIdValue(value);
-        }
-        this.paramArr[index] = value;
+        this.paramArr[index] = value instanceof BaseEntity? RelaenUtil.getIdValue(value):value;
     }
 
     /**
@@ -101,6 +99,7 @@ class Query{
      */
     public setParameters(valueArr:Array<any>){
         valueArr.forEach((value,i)=>{
+            //对于entity，只获取其主键
             let v =  value instanceof BaseEntity? RelaenUtil.getIdValue(value):value;
             if(i >= this.paramArr.length){
                 this.paramArr.push(v);
@@ -143,9 +142,12 @@ class Query{
      * @param limit     记录数
      */
     public async getResultList(start?:number,limit?:number):Promise<Array<IEntity>>{
-        this.start = this.start || start;
-        this.limit = this.start || limit;
-        
+        if(start >= 0){
+            this.start = start;
+        }
+        if(limit > 0){
+            this.limit = limit;
+        }
         let results:any[] = await SqlExecutor.exec(this.entityManager.connection,this.execSql,this.paramArr,this.start,this.limit);
         let retArr:any[] = [];
 

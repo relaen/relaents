@@ -6,6 +6,8 @@ import { ErrorFactory } from "./errorfactory";
 import { NativeQuery } from "./nativequery";
 import { Logger } from "./logger";
 import { RelaenUtil } from "./relaenutil";
+import { getConnection } from "./connectionmanager";
+import { Connection } from "./connection";
 /**
  * 实体代理类
  */
@@ -31,6 +33,12 @@ class EntityProxy{
         //具备关联关系
         if(eo.relations.has(propName)){
             let em:EntityManager = EntityManagerFactory.getCurrentEntityManager();
+            let conn:Connection;
+            //不存在当前em，需要新建
+            if(em === null){
+                conn = await getConnection();
+                em = EntityManagerFactory.createEntityManager(conn);
+            }
         
             let rel:IEntityRelation = eo.relations.get(propName);
             //关联实体配置
@@ -72,6 +80,11 @@ class EntityProxy{
                 //设置查询值
                 query.setParameter(0,RelaenUtil.getIdValue(entity));
                 entity[propName] = rel.type===ERelationType.OneToOne?await query.getResult():await query.getResultList();
+            }
+            //新建的需要关闭
+            if(conn){
+                em.close();
+                conn.close();
             }
             return entity[propName];
         }

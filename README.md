@@ -27,6 +27,10 @@ relaen提供了[relaen cli](https://www.npmjs.com/package/relaen-cli)工具，�
 2. 修复insert后返回实体主键不正确的bug；
 3. 修复Query setParameter方法的bug。
 
+#### 0.1.0
+1. 修复EntityManagerFactory.getCurrentEntityManager返回null时的处理；
+2. 修复Query.getResultList的参数设置，当start为0时的异常。
+
 ## 配置文件
 relaen依赖配置文件进行初始化，配置内容如下：
 配置项|说明|类型|必填|可选值|默认值|备注

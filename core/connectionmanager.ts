@@ -7,25 +7,60 @@ import { ThreadLocal } from "./threadlocal";
  * 连接池配置
  */
 interface IConnectionPool{
+    /**
+     * 最大连接数
+     */
     max:number;
+    /**
+     * 最小连接数
+     */
     min:number;
-    acquire:number;
-    idle:number;
 }
 
 /**
  * 连接配置
  */
 interface IConnectionCfg{
+    /**
+     * 数据库产品
+     */
     dialect:string;
+    /**
+     * 服务器地址
+     */
     host:string;
+     /**
+      * 端口号
+      */
     port:number;
+    /**
+     * 用户名
+     */
     username:string;
+    /**
+     * 密码
+     */
     password:string;
+    /**
+     * 数据库
+     */
     database:string;
+    /**
+     * 连接池配置
+     */
     pool:IConnectionPool;
+    /**
+     * 是否cache
+     */
     cache:boolean;
+    /**
+     * 是否调试模式
+     */
     debug:boolean;
+
+    /**
+     * 实体配置数组 
+     */
     entities:Array<string>
 }
 
@@ -33,7 +68,6 @@ interface IConnectionCfg{
  * 连接管理器
  */
 class ConnectionManager{
-
     /**
      * 配置
      */

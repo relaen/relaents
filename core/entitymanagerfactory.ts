@@ -64,19 +64,13 @@ class EntityManagerFactory{
     public static getCurrentEntityManager(){
         //获取threadId
         let sid:number = ThreadLocal.getThreadId();
-        let notExist:boolean = false;
-        if(!sid || !this.entityManagerMap.has(sid)){
-            notExist = true;
+        if(sid && this.entityManagerMap.has(sid)){
+            let o = this.entityManagerMap.get(sid);
+            if(o.em){
+                return o.em;
+            }
         }
-
-        let o = this.entityManagerMap.get(sid);
-        if(!o.em){
-            notExist = true;
-        }
-        if(notExist){
-            throw ErrorFactory.getError("0250");
-        }
-        return o.em;
+        return null;
     }
 }
 
