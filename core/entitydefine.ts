@@ -169,9 +169,21 @@ interface IEntityRelation{
  * 外键约束
  */
 enum EFkConstraint{
+    /**
+     * 无操作
+     */
     NONE='none',
+    /**
+     * 限制修改和删除
+     */
     RESTRICT='restrict',
+    /**
+     * 级联操作
+     */
     CASCADE='cascade',
+    /**
+     * 外键置空
+     */
     SETNULL='set null'
 }
 
@@ -179,9 +191,21 @@ enum EFkConstraint{
  * 关系类型
  */
 enum ERelationType{
+    /**
+     * 一对一关系
+     */
     OneToOne = 1,
+    /**
+     * 一对多关系
+     */
     OneToMany = 2,
+    /**
+     * 多对一关系
+     */
     ManyToOne = 3,
+    /**
+     * 多对多关系
+     */
     ManyToMany = 4
 }
 
@@ -189,7 +213,14 @@ enum ERelationType{
  * 实体状态
  */
 enum EEntityState{
-    NEW = 1,        //新建状态
-    PERSIST = 2     //持久化状态
+    /**
+     * 新建状态
+     */
+    NEW = 1,   
+
+    /**
+     * 持久化状态
+     */
+    PERSIST = 2     
 }
 export {IEntity,IEntityCfg,IEntityColumn,IEntityRefColumn,IEntityPKey,IEntityRelation,EFkConstraint,ERelationType,EEntityState}

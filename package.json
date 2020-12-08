@@ -1,12 +1,15 @@
 {
   "name": "relaen",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "description": "一个node环境下基于typescript的ORM框架",
   "main": "dist/index.js",
   "types": "dist/types/index.d.ts",
   "files": [
     "dist/types/index.d.ts",
+    "dist/index.js",
+    "dist/index.js.map",
     "dist/core/**/*.js",
+    "dist/core/**/*.js.map",
     "dist/types/core/**/*.d.ts"
   ],
   "scripts": {
@@ -18,6 +21,7 @@
     "url": "git+https://github.com/relaen/relaents.git"
   },
   "keywords": [
+    "node",
     "relaen",
     "orm",
     "typescript"

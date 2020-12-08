@@ -7,6 +7,10 @@ relaen当前仅支持mysql数据库，其它数据库产品陆续加入中。
 ## 实体对象生成
 relaen提供了[relaen cli](https://www.npmjs.com/package/relaen-cli)工具，该工具可自动生成relaen所需要的实体。
 
+## 文档
+### API
+http://www.noomi.cn/relaen/api.html
+
 ## 版本
 ### 0.0.5
 正式发布
@@ -30,6 +34,12 @@ relaen提供了[relaen cli](https://www.npmjs.com/package/relaen-cli)工具，�
 #### 0.1.0
 1. 修复EntityManagerFactory.getCurrentEntityManager返回null时的处理；
 2. 修复Query.getResultList的参数设置，当start为0时的异常。
+
+#### 0.1.1
+1. 修改打包内容，解决找不到".map"文件的警告
+
+#### 0.1.2
+1. 增加api文档
 
 ## 配置文件
 relaen依赖配置文件进行初始化，配置内容如下：
