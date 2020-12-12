@@ -1,4 +1,3 @@
-
 import { EntityManager } from "../core/entitymanager";
 import { RelaenManager } from "../core/relaenmanager";
 import { User } from "./entity/user";
@@ -106,7 +105,7 @@ async function testQuery(){
     let em:EntityManager = EntityManagerFactory.createEntityManager(conn);
     // let sql = "select m from  User m where m.userType=? order by m.userId";
     // let sql = "select m from  User m where m.userId in ? order by m.userId";
-    let sql = "select m from  User m order by m.userId";
+    let sql = "select m from  User m where m.userType=? order by m.userType.userTypeName";
     let query:Query = em.createQuery(sql,User.name);
     //设置参数，按照sql中的"?"顺序来，索引从0开始，如果参数值是对象，会提取对象的主键
     // query.setParameter(0,[[3,4,5]]);
@@ -197,4 +196,3 @@ RelaenManager.init({
 testQuery();
 // testNativeQuery();
 // testTransaction();
-

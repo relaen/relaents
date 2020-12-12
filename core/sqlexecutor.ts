@@ -1,6 +1,7 @@
 import { RelaenManager } from "./relaenmanager";
 import { Connection } from "./connection";
 import { Logger } from "./logger";
+import { EntityManager } from "./entitymanager";
 
 /**
  * sql执行器
@@ -15,23 +16,25 @@ class SqlExecutor{
      * @param limit         最大记录行
      * @returns             执行结果或undefined
      */
-    public static async exec(conn:Connection,sql:string,params?:any[],start?:number,limit?:number):Promise<any>{
-        if(RelaenManager.debug){
-            Logger.console("[Relaen execute sql]:\"" + sql + "\"");
-        }
-        let r:any;
+    public static async exec(em:EntityManager,sql:string,params?:any[],start?:number,limit?:number):Promise<any>{
+        sql = sql.trim();
         
+        let r:any;
         try{
             switch(RelaenManager.dialect){
                 case 'mysql':
-                    r = await this.execMysql(conn,sql,params,start,limit);
+                    r = await this.execMysql(em.connection,sql,params,start,limit);
                     break;
                 case 'oracle':
-                    r = await this.execOracle(conn,sql,params,start,limit);
+                    r = await this.execOracle(em.connection,sql,params,start,limit);
                     break;
                 case 'mssql':
-                    r = await this.execMssql(conn,sql,params,start,limit);
+                    r = await this.execMssql(em.connection,sql,params,start,limit);
                     break;
+            }
+            //操作成功，且执行增删改，则清空cache
+            if(r && (sql.startsWith('insert') || sql.startsWith('update') || sql.startsWith('delete'))){
+                em.clearCache();
             }
         }catch(e){
             Logger.console("[Relaen execute sql] Error:\"" + e.message + "\"");
@@ -57,6 +60,12 @@ class SqlExecutor{
         }
         if(Number.isInteger(start) && start>=0 && Number.isInteger(limit) && limit>0){
             sql += ' limit ' + start + ',' + limit;
+        }
+        if(RelaenManager.debug){
+            Logger.console("[Relaen execute sql]:\"" + sql + "\"");
+            if(params){
+                Logger.console("Parameters is " + JSON.stringify(params));
+            }
         }
         let r:any = await new Promise((resolve,reject)=>{
             connection.conn.query(sql,params,(error,results,fields)=>{

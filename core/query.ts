@@ -148,7 +148,7 @@ class Query{
         if(limit > 0){
             this.limit = limit;
         }
-        let results:any[] = await SqlExecutor.exec(this.entityManager.connection,this.execSql,this.paramArr,this.start,this.limit);
+        let results:any[] = await SqlExecutor.exec(this.entityManager,this.execSql,this.paramArr,this.start,this.limit);
         let retArr:any[] = [];
 
         for(let r of results){

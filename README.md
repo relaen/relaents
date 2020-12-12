@@ -41,6 +41,10 @@ http://www.noomi.cn/relaen/api.html
 #### 0.1.2
 1. 增加api文档
 
+#### 0.1.3
+1. 修改cache更新策略：当执行 insert,update,delete 时清空entitymanager的cache；
+2. 修改实体类以自己作为外键时的query bug。
+
 ## 配置文件
 relaen依赖配置文件进行初始化，配置内容如下：
 配置项|说明|类型|必填|可选值|默认值|备注

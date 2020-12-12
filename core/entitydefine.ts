@@ -155,11 +155,6 @@ interface IEntityRelation{
     onUpdate?:string;
 
     /**
-     * 懒加载关联对象, false 懒加载，true 非懒加载
-     */
-    eager?:boolean;
-    
-    /**
      * 被引用时对应子表属性 
      */
     mappedBy?:string;

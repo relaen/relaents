@@ -55,6 +55,8 @@ class EntityManagerFactory{
         let o = this.entityManagerMap.get(sid);
         if(--o.num <= 0){
             this.entityManagerMap.delete(sid);
+            //清除缓存
+            em.clearCache();
         }
     }
 

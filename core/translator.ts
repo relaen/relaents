@@ -3,6 +3,7 @@ import { BaseEntity } from "./baseentity";
 import { EntityFactory } from "./entityfactory";
 import { ErrorFactory } from "./errorfactory";
 import { RelaenUtil } from "./relaenutil";
+import { Entity } from "./decorator/decorator";
 
 /**
  * 翻译器
@@ -254,9 +255,9 @@ class Translator{
         let fkArray:string[] = [];
 
         // select 字段集合 {column:true}
-        let selectFieldMap:Map<string,boolean> = new Map();
-
+        // let selectFieldMap:Map<string,boolean> = new Map();
         handleTable(tableArr);
+        
         handleSelectFields(columnArr);
         if(whereArr){
             handleWhere(whereArr);
@@ -355,11 +356,11 @@ class Translator{
                     }
                 }else if(isField){ //
                     isField = false;
-                    arr[i] = handleField(arr[i],3);
+                    arr[i] = handleCondField(arr[i]);
                     if(arr[i+1] !== '=' || i+2>=arr.length){
                         throw ErrorFactory.getError('0101');
                     }
-                    arr[i+2] = handleField(arr[i+2],3);
+                    arr[i+2] = handleCondField(arr[i+2]);
                     i+=2;
                 }
             }
@@ -400,20 +401,37 @@ class Translator{
          */
         function handleSelectFields(arr:string[]){
             for(let i=0;i<arr.length;i++){
-                let fn:string = arr[i];
+                let fn:string = arr[i].trim();
                 let ind1:number = fn.indexOf('(');
                 if(ind1 !== -1){ //函数内
                     let foo:string = fn.substr(0,ind1).toLowerCase();
                     fn = fn.substring(ind1+1,fn.length-1);
-                    arr[i] = foo + '(' + handleField(fn,2) + ')';
+                    arr[i] = foo + '(' + handleCondField(fn) + ')';
                 }else{ //普通字段
-                    let cn:string = handleField(fn,1,true);
-                    //单字段已在选择集中，不需要
-                    if(cn.indexOf(',') === -1 && selectFieldMap.has(cn)){
-                        arr.splice(i--,1);
-                    }else{ //加入选择集
-                        arr[i] = cn;
-                        selectFieldMap.set(cn,true);
+                    let fa = fn.split('.');
+                    let entityName:string = oldAliasEnMap.get(fa[0]);
+                    if(!entityName){
+                        throw ErrorFactory.getError("0106",[rql]);
+                    }
+                    let alias:string = newEnAliasMap.get(entityName);
+                    let tblObj:IEntityCfg = EntityFactory.getClass(entityName);
+                    
+                    if(fa.length === 1){  //为模型
+                        let f:string[] = [];
+                        for(let co of tblObj.columns){
+                            if(!co[1].refName){
+                                f.push(alias + '.' + co[1].name + ' as ' + alias+ '_' + co[0]);
+                            }
+                        }
+                        arr[i] = f.join(',');
+                    }else if(fa.length === 1){ //为字段
+                        let co = tblObj.columns.get(fa[1]);
+                        if(!co){
+                            throw ErrorFactory.getError("0022",[entityName,fa[1]]);
+                        }
+                        arr[i] = alias + '.' + co.name + ' as ' + alias+ '_' + fa[1];
+                    }else{
+                        throw ErrorFactory.getError("0106",[rql]);
                     }
                 }
             }
@@ -438,7 +456,7 @@ class Translator{
                 if(!fieldReg.test(arr[i])){
                     continue;
                 }
-                arr[i] = handleField(arr[i],2);
+                arr[i] = handleCondField(arr[i]);
             }
         }
 
@@ -461,134 +479,71 @@ class Translator{
                 if(!fieldReg.test(arr[i])){
                     continue;
                 }
-                arr[i] = handleField(arr[i],3);
+                arr[i] = handleCondField(arr[i]);
             }
         }
 
         /**
-         * 处理字段
-         * @param fieldStr          字段串 
-         * @param entityStrategy    实体策略 如果字段最终为实体类型，采集的转化策略，1:获取实体所有属性 2:到最后entity id 3:到上一级entity id(作为条件时)
-         * @param useAs             返回该字段是否需要 as 
+         * 处理条件字段(where、order等)
+         * @param fieldStr  字段串
          */
-        function handleField(fieldStr:string,entityStrategy?:number,useAs?:boolean):string{
+        function handleCondField(fieldStr:string){
             //如a.area.areaId
             let fa:string[] = fieldStr.split('.');
-            let tblObj:IEntityCfg;
+            let entityName = oldAliasEnMap.get(fa[0]);
+            fa.shift();
+            return handleOneEntity(entityName,fa);
 
-            let alias:string = aliasMap.get(fa[0]);
-            // 引用字段（带alias）
-            let refName:string;
-            //通过别名获取实体名
-            let entityName:string = oldAliasEnMap.get(fa[0]);
-            if(!entityName){
-                throw ErrorFactory.getError('0011',[fa[0]]);
-            }
-            tblObj = EntityFactory.getClass(entityName);
-            if(!tblObj){
-                throw ErrorFactory.getError('0010',[entityName]);
-            }
-
-            for(let i=1;i<fa.length;i++){
-                let co:IEntityColumn = tblObj.columns.get(fa[i]);
+            /**
+             * 处理一个实体
+             * @param entityName    实体名
+             * @param fieldArr      字段数组
+             */
+            function handleOneEntity(entityName:string,fieldArr:string[]){
+                if(fa.length === 0){
+                    return null;
+                }
+                //获取实体配置
+                let tblObj:IEntityCfg = EntityFactory.getClass(entityName);
+                if(!tblObj){
+                    throw ErrorFactory.getError('0010',[entityName]);
+                }
+                //获取字段对象
+                let co:IEntityColumn = tblObj.columns.get(fieldArr[0]);
                 if(!co){
-                    throw ErrorFactory.getError('0022',[entityName,fa[i]]);
+                    throw ErrorFactory.getError('0022',[entityName,fieldArr[0]]);
                 }
+                let alias:string = newEnAliasMap.get(entityName);
+                let len = fieldArr.length;
                 if(co.refName){  //外键
-                    let rel = tblObj.relations.get(fa[i]);
-                    refName = alias + '.' + co.refName;
-                    if(rel){
-                        //实体尚未存在table map中
-                        if(!oldEnAliasMap.has(rel.entity)){
-                            let al:string = 't' + aliasIndex++;
-                            oldEnAliasMap.set(rel.entity,al);
-                            oldAliasEnMap.set(al,rel.entity);
-                            newEnAliasMap.set(rel.entity,al);
-                            //加入主表 join 
-                            joinTbls.push({
-                                entity:entityName,
-                                refEntity:rel.entity,
-                                column:co
-                            });
-
-                            //加入返回alias map
-                            retAliasMap.set(al,{
-                                entity:rel.entity,
-                                from:alias,
-                                propName:fa[i]
-                            });
-                        }
-                        
-                        entityName = rel.entity;
-                        tblObj = EntityFactory.getClass(entityName);
-                        alias = newEnAliasMap.get(rel.entity);
-                        if(!tblObj){
-                            throw ErrorFactory.getError('0010',[entityName]);
-                        }
-                    }
-                }else{ //普通字段
-                    let f:string = alias + '.' + co.name;
-                    if(useAs){
-                        f += ' as ' + alias + '_' + fa[i];
-                    }
-                    return f;
-                }
-            }
-            //最终定位到实体或关联实体
-            switch(entityStrategy){
-                case 1://获取整个entity 属性及关联属性
-                    let fa1 = [];
-                    getEntityField(entityName,fa1);
-                    return fa1.join(',');    
-                case 2://定位到entity id
-                    if(tblObj.id){
-                        let co:IEntityColumn = tblObj.columns.get(tblObj.id.name);
+                    //最后一级或 倒数第二级，判断最后一级是否为id name
+                    if(len === 1 || len === 2 && tblObj.id && fieldArr[1] === tblObj.id.name){
                         return alias + '.' + co.name;
                     }
-                    break;
-                case 3: //定位到前一个实体或主实体的id
-                    if(refName){
-                        return refName;
-                    }else if(tblObj.id){
-                        let co:IEntityColumn = tblObj.columns.get(tblObj.id.name);
-                        return alias + '.' + co.name;
+                    let rel = tblObj.relations.get(fieldArr[0]);
+                    if(!rel){
+                        throw ErrorFactory.getError('0023',[entityName,fieldArr[0]]);
+                    }
                     
+                    if(!oldEnAliasMap.has(rel.entity)){
+                        let al:string = 't' + aliasIndex++;
+                        oldEnAliasMap.set(rel.entity,al);
+                        oldAliasEnMap.set(al,rel.entity);
+                        newEnAliasMap.set(rel.entity,al);
+                        //加入主表 join 
+                        joinTbls.push({
+                            entity:entityName,
+                            refEntity:rel.entity,
+                            column:co
+                        });
                     }
-                    break;
-            }
-        }
-
-        /**
-         * 获取实体字段（含eager=true的关联实体）,一律懒加载
-         * @param entityName    实体名
-         * @param fieldArr      操作的字段数组
-         */
-        function getEntityField(entityName:string,fieldArr:string[]){
-            let to:IEntityCfg = EntityFactory.getClass(entityName);
-            if(!to){
-                throw ErrorFactory.getError('0010',[entityName]);
-            }
-            let orm:IEntityCfg = EntityFactory.getClass(entityName);
-            if(!orm){
-                throw ErrorFactory.getError('0010',[entityName]);
-            }
-            //旧别名
-            for(let fo of orm.columns){
-                let alias:string;
-                let co:IEntityColumn = orm.columns.get(fo[0]);
-                alias = newEnAliasMap.get(entityName);
-                //查询结果别名
-                let alfn:string = alias + '_' + fo[0];
-                //拼接字段
-                let cn:string = alias + '.' + co.name + ' as ' + alfn;
-                //如果不存在，则加入选择集
-                if(!selectFieldMap.has(cn)){
-                    fieldArr.push(cn);
-                    selectFieldMap.set(cn,true);
-                }
-                //添加到外键数组
-                if(co.refName && !fkArray.includes(alfn)){
-                    fkArray.push(alfn);
+                    //当前实体这一级出队列
+                    fieldArr.shift();
+                    return handleOneEntity(rel.entity,fieldArr);
+                }else if(len === 1){  //最后一个非关系型字段
+                    return alias + '.' + co.name;
+                }else{ // 非关联字段，后续还有字段，则抛异常
+                    throw ErrorFactory.getError('0023',[entityName,fieldArr[0]]);
                 }
             }
         }

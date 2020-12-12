@@ -38,7 +38,7 @@ class NativeQuery extends Query{
         this.start = this.start || start;
         this.limit = this.start || limit;
         
-        let results:any[] = await SqlExecutor.exec(this.entityManager.connection,this.execSql,this.paramArr,this.start,this.limit);
+        let results:any[] = await SqlExecutor.exec(this.entityManager,this.execSql,this.paramArr,this.start,this.limit);
         
         if(results){
             let arr = [];

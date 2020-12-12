@@ -46,7 +46,7 @@ class EntityManager{
             //检查并生成主键
             await this.genKey(entity);
             let sql:string = Translator.entityToInsert(entity);
-            let r = await SqlExecutor.exec(this.connection,sql);
+            let r = await SqlExecutor.exec(this,sql);
             if(r === null){
                 return;
             }
@@ -56,26 +56,19 @@ class EntityManager{
             if(!RelaenUtil.getIdValue(entity)){
                 RelaenUtil.setIdValue(entity,r);
             }
-            
-            //加入缓存
-            if(RelaenManager.cache){
-                this.addCache(entity);
-            }
         }else{ //update
             let cacheId = this.genCacheId(entity);
             if(cacheId){
                 if(this.entityMap.has(cacheId)){
                     let entity1:IEntity = this.entityMap.get(cacheId).entity;
-                    //对比有差别
+                    //对比有差别才进行更新
                     if(entity1 && !entity.compare(entity1)){
                         //更新到数据库
                         let sql:string = Translator.entityToUpdate(entity,ignoreUndefinedValue);
-                        let r = await SqlExecutor.exec(this.connection,sql);
+                        let r = await SqlExecutor.exec(this,sql);
                         if(r === null){
                             return null;
                         }
-                        //更新缓存
-                        this.addCache(entity);
                     }    
                 }
             }
@@ -90,12 +83,10 @@ class EntityManager{
      */
     public async delete(entity:IEntity):Promise<IEntity>{
         let sql:string = Translator.entityToDelete(entity);
-        let r = await SqlExecutor.exec(this.connection,sql);
+        let r = await SqlExecutor.exec(this,sql);
         if(r === null){
             return null;
         }
-        //从实体map移除
-        this.entityMap.delete(this.genCacheId(entity));
         return entity;
     }
 
@@ -180,6 +171,13 @@ class EntityManager{
             return this.entityMap.get(cacheId);
         }
     }
+
+    /**
+     * 清除缓存
+     */
+    public clearCache(){
+        this.entityMap.clear();
+    }
     /**
      * 生成主键
      * @param entity 
@@ -203,7 +201,7 @@ class EntityManager{
                     }
                     
                     //主键值+1并写回数据库
-                    await SqlExecutor.exec(this.connection,"update " + orm.id.table + " set id_value=" + value + " where id_name='" + fn + "'");
+                    await SqlExecutor.exec(this,"update " + orm.id.table + " set id_value=" + value + " where id_name='" + fn + "'");
                     break;
                 case 'uuid':
                     value = require('uuid').v1();
