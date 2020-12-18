@@ -418,13 +418,14 @@ class Translator{
                     
                     if(fa.length === 1){  //为模型
                         let f:string[] = [];
+                        //获取所有字段
                         for(let co of tblObj.columns){
                             if(!co[1].refName){
                                 f.push(alias + '.' + co[1].name + ' as ' + alias+ '_' + co[0]);
                             }
                         }
                         arr[i] = f.join(',');
-                    }else if(fa.length === 1){ //为字段
+                    }else if(fa.length === 2){ //为字段
                         let co = tblObj.columns.get(fa[1]);
                         if(!co){
                             throw ErrorFactory.getError("0022",[entityName,fa[1]]);
@@ -500,14 +501,20 @@ class Translator{
              * @param fieldArr      字段数组
              */
             function handleOneEntity(entityName:string,fieldArr:string[]){
-                if(fa.length === 0){
-                    return null;
-                }
                 //获取实体配置
                 let tblObj:IEntityCfg = EntityFactory.getClass(entityName);
                 if(!tblObj){
                     throw ErrorFactory.getError('0010',[entityName]);
                 }
+                //处理为主键
+                if(fieldArr.length === 0){
+                    if(tblObj.id && tblObj.id.name){
+                        fieldArr.push(tblObj.id.name);
+                    }else{
+                        return null;
+                    }
+                }
+                
                 //获取字段对象
                 let co:IEntityColumn = tblObj.columns.get(fieldArr[0]);
                 if(!co){

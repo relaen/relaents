@@ -58,9 +58,11 @@ class SqlExecutor{
         if(!connection.connected){
             await connection.connect();
         }
-        if(Number.isInteger(start) && start>=0 && Number.isInteger(limit) && limit>0){
+        // select才需要看start和limit
+        if(sql.startsWith('select') && Number.isInteger(start) && start>=0 && Number.isInteger(limit) && limit>0){
             sql += ' limit ' + start + ',' + limit;
         }
+        
         if(RelaenManager.debug){
             Logger.console("[Relaen execute sql]:\"" + sql + "\"");
             if(params){

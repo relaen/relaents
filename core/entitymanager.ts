@@ -44,8 +44,15 @@ class EntityManager{
         //无主键或状态为new
         if(entity.__status === EEntityState.NEW){
             //检查并生成主键
-            await this.genKey(entity);
-            let sql:string = Translator.entityToInsert(entity);
+            
+            let sql:string;
+            if(RelaenUtil.getIdValue(entity)){ //存在主键
+                sql = Translator.entityToUpdate(entity);
+            }else{ //无主键
+                //根据策略生成主键
+                await this.genKey(entity);
+                sql = Translator.entityToInsert(entity);
+            }
             let r = await SqlExecutor.exec(this,sql);
             if(r === null){
                 return;
@@ -119,7 +126,7 @@ class EntityManager{
      * @param rql               relean ql
      * @param entityClassName   实体类名
      */
-    public createQuery(rql:string,entityClassName:string):Query{
+    public createQuery(rql:string,entityClassName?:string):Query{
         return new Query(rql,this,entityClassName);
     }
 

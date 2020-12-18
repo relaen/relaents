@@ -126,22 +126,33 @@ class Query{
     }
 
     /**
-     * 获取单个实体
+     * 获取单个查询结果
+     * 如果类型不为实体且只有一个属性值，则直接返回属性值，否则返回对象
      */
-    public async getResult():Promise<IEntity>{
+    public async getResult():Promise<any>{
         let r = await this.getResultList(0,1);
-        if(r.length>0){
+        if(r && r.length>0){
+            if(r instanceof BaseEntity){
+                return r[0];
+            }
+            let props = Object.getOwnPropertyNames(r[0]);
+            //如果只有一个属性，则只返回属性值
+            if(props.length === 1){
+                return r[0][props[0]];
+            }
             return r[0];
         }
         return null;
     }
+
+
 
     /**
      * 获取结果列表
      * @param start     开始索引
      * @param limit     记录数
      */
-    public async getResultList(start?:number,limit?:number):Promise<Array<IEntity>>{
+    public async getResultList(start?:number,limit?:number):Promise<Array<any>>{
         if(start >= 0){
             this.start = start;
         }
@@ -149,12 +160,14 @@ class Query{
             this.limit = limit;
         }
         let results:any[] = await SqlExecutor.exec(this.entityManager,this.execSql,this.paramArr,this.start,this.limit);
-        let retArr:any[] = [];
-
-        for(let r of results){
-            retArr.push(this.genEntity(r));
+        if(this.entityClassName && Array.isArray(results)){
+            let retArr:any[] = [];
+            for(let r of results){
+                retArr.push(this.genEntity(r));
+            }
+            return retArr;
         }
-        return retArr;
+        return results;
     }
 
     /**

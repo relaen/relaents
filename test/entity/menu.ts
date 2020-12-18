@@ -1,5 +1,6 @@
 import { Entity, BaseEntity, Id, Column, ManyToOne, JoinColumn, OneToMany, EFkConstraint, EntityProxy } from "../..";
 
+
 @Entity("t_menu",'tunnel')
 export class Menu extends BaseEntity{
 	@Id()
@@ -69,4 +70,5 @@ export class Menu extends BaseEntity{
 	public setMenus(value:Array<Menu>){
 		this.menus = value;
 	}
+
 }

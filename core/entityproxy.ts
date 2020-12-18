@@ -74,7 +74,7 @@ class EntityProxy{
                     throw ErrorFactory.getError('0022',[rel.entity,column1]);
                 }
                 
-                let rql:string = "select * from " + eo1.table + " where " + column1.refName + " = ?";
+                let rql:string = "select * from " + eo1.table + " where " + column1.name + " = ?";
                 //查询外键对象
                 let query:NativeQuery = em.createNativeQuery(rql,rel.entity);
                 //设置查询值

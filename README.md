@@ -43,7 +43,11 @@ http://www.noomi.cn/relaen/api.html
 
 #### 0.1.3
 1. 修改cache更新策略：当执行 insert,update,delete 时清空entitymanager的cache；
-2. 修改实体类以自己作为外键时的query bug。
+2. 修改实体类以自己作为外键时的query bug；
+3. 修改一对多条件下，字段名和引用字段名不一致时，获取关联对象时不正确的bug；
+4. 增加getResult时获取单个属性值操作，如count(m)获取记录数；
+5. 修改状态为NEW时，拥有主键的对象执行save方法时为insert的bug；
+6. Query和NativeQuery的getResult加上insert、delete、update类语句执行功能。
 
 ## 配置文件
 relaen依赖配置文件进行初始化，配置内容如下：

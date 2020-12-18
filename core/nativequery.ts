@@ -19,11 +19,16 @@ class NativeQuery extends Query{
     }
 
     /**
-     * 获取单个实体
+     * 获取单个实体或单个属性值
      */
     public async getResult():Promise<any>{
         let results:any[] = await this.getResultList(0,1);
         if(results && results.length>0){
+            let props = Object.getOwnPropertyNames(results[0]);
+            //如果只有一个属性，则只返回属性值
+            if(props.length === 1){
+                return results[0][props[0]];
+            }
             return results[0];
         }
         return null;
@@ -34,20 +39,18 @@ class NativeQuery extends Query{
      * @param start     开始索引
      * @param limit     记录数
      */
-    public async getResultList(start?:number,limit?:number):Promise<Array<any>>{
+    public async getResultList(start?:number,limit?:number):Promise<any>{
         this.start = this.start || start;
         this.limit = this.start || limit;
-        
         let results:any[] = await SqlExecutor.exec(this.entityManager,this.execSql,this.paramArr,this.start,this.limit);
-        
-        if(results){
+        if(results && Array.isArray(results)){
             let arr = [];
             for(let r of results){
                 arr.push(this.genOne(r));
             }
             return arr;
         }
-        return null;
+        return results;
     }
 
     /**

@@ -105,7 +105,7 @@ async function testQuery(){
     let em:EntityManager = EntityManagerFactory.createEntityManager(conn);
     // let sql = "select m from  User m where m.userType=? order by m.userId";
     // let sql = "select m from  User m where m.userId in ? order by m.userId";
-    let sql = "select m from  User m where m.userType=? order by m.userType.userTypeName";
+    let sql = "select m.userName from  User m where m.userType=? order by m.userType.userTypeName";
     let query:Query = em.createQuery(sql,User.name);
     //设置参数，按照sql中的"?"顺序来，索引从0开始，如果参数值是对象，会提取对象的主键
     // query.setParameter(0,[[3,4,5]]);
@@ -135,6 +135,36 @@ async function testNativeQuery(){
     //和Query一样，支持setParameter
     //参数和Query一样，获取前5条数据
     let r = await query.getResultList(0,5);
+    em.close();
+    await conn.close();
+}
+
+/**
+ * 获取数量
+ */
+async function testGetCount(){
+    let conn:Connection = await getConnection();
+    let em:EntityManager = EntityManagerFactory.createEntityManager(conn);
+    let sql = "select m.userName from  User m order by m.userId";
+    // let sql = "select m from  User m where m.userId in ? order by m.userId";
+    // let sql = "select count(m) from  User m";
+    let query:Query = em.createQuery(sql);
+    let count = await query.getResult();
+    em.close();
+    await conn.close();
+}
+
+/**
+ * 原生删除
+ */
+async function testNativeDelete(){
+    let conn:Connection = await getConnection();
+    let em:EntityManager = EntityManagerFactory.createEntityManager(conn);
+    let sql = "delete from  t_user where user_id>100";
+    // let sql = "select m from  User m where m.userId in ? order by m.userId";
+    // let sql = "select count(m) from  User m";
+    let query:Query = em.createNativeQuery(sql);
+    let count = await query.getResult();
     em.close();
     await conn.close();
 }
@@ -189,10 +219,12 @@ RelaenManager.init({
 
 
 // newUser();
-// getUser(1);
+getUser(4);
 // getUserType(1);
 // updateUser(4);
 // deleteUser(1);
-testQuery();
+// testQuery();
+// testGetCount();
 // testNativeQuery();
 // testTransaction();
+// testNativeDelete();
