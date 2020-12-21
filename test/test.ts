@@ -23,7 +23,7 @@ async function newUser(){
     let conn:Connection = await getConnection();
     //创建entity manager
     let em:EntityManager = EntityManagerFactory.createEntityManager(conn);
-    let user:User = new User(100);
+    let user:User = new User();
     user.setUserName('field');
     user.setAge(1);
     user.setSexy('M');
@@ -54,6 +54,19 @@ async function getUser(id):Promise<User>{
 }
 
 /**
+ * 通过类型获取用户，采用em的findMany方法
+ * @param id    用户类型id
+ */
+async function getUserByType(id){
+    let conn:Connection = await getConnection();
+    let em:EntityManager = EntityManagerFactory.createEntityManager(conn);
+
+    let lst:User[] = await em.findOne(User.name,{userType:id});
+    em.close();
+    await conn.close();
+}
+
+/**
  * 获取用户类型
  * @param id    用户类型id
  */
@@ -75,6 +88,8 @@ async function updateUser(id){
     let conn:Connection = await getConnection();
     let em:EntityManager = EntityManagerFactory.createEntityManager(conn);
     let user:User = await getUser(id);
+    user.setUserId(null);
+    user.__status = 1;
     user.setUserName('relaen');
     user.setUserType(new UserType(2));
     //参数为true，则表示只对不为undefined的值进行更新，否则所有undefined的属性都会更新成null
@@ -219,7 +234,8 @@ RelaenManager.init({
 
 
 // newUser();
-getUser(4);
+// getUser(31);
+getUserByType(1);
 // getUserType(1);
 // updateUser(4);
 // deleteUser(1);

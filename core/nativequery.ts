@@ -66,7 +66,7 @@ class NativeQuery extends Query{
                 for(let col of ecfg.columns){
                     let c:IEntityColumn = col[1];
                     //该字段无值
-                    if(r[c.name] === undefined){
+                    if(r[c.name] === null){
                         continue;
                     }
                     if(c.refName){ //外键 需要保存到外键map

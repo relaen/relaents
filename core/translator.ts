@@ -37,19 +37,21 @@ class Translator{
                 v = entity[key[0]];
             }
             
-            //值不存在，则下一个
-            if(v === undefined){
+            //如果绑定字段名不存在，则用属性名
+            let fn = fo.name?fo.name:key[0];
+            if(v === null || v === undefined){
+                if(!fo.nullable){//null 判断
+                    if(key[0] !== orm.id.name){//如果与主键不同且不能为空，则抛出异常 
+                        throw ErrorFactory.getError('0021',[key[0]]);
+                    }
+                }
                 continue;
-            }
-            
-            fields.push(fo.name);
-            
-            //值
-            if(v !== null && (fo.type === 'date' || fo.type === 'string')){
+            }else if(fo.type === 'date' || fo.type === 'string'){
                 v = RelaenUtil.valueToString(v);
             }
+
+            fields.push(fn);
             values.push(v);
-            
         }
         arr.push(fields.join(','));
         arr.push(') values (');
@@ -79,13 +81,19 @@ class Translator{
         let idValue:any;
         //id名
         let idName:string;
-        let cfg:IEntityCfg = EntityFactory.getClass(entity.constructor.name);
-        if(!cfg.id){
+        if(!orm.id){
             throw ErrorFactory.getError('0103');
         }
+        let fields:string[] = [];
         for(let key of orm.columns){
             let fo:any = key[1];
-            
+            //如果绑定字段名不存在，则用属性名
+            let fn = fo.name?fo.name:key[0];
+            //保存已添加字段，不重复添加
+            if(fields.includes(fn)){
+                continue;
+            }
+            fields.push(fn);
             //字段值
             let v;
             if(fo.refName){ //外键，只取主键
@@ -96,25 +104,24 @@ class Translator{
                 v = entity[key[0]];
             }
 
-            //如果绑定字段名不存在，则用属性名
-            let fn = fo.name?fo.name:key;
             if(v === null || v === undefined){
                 if(ignoreUndefinedValue){
                     continue;
-                }else{
-                    if(!fo.nullable){
-                        throw ErrorFactory.getError('0021',[key]);
-                    }
+                }else if(!fo.nullable){
+                    throw ErrorFactory.getError('0021',[key[0]]);
                 }
                 v = null;
             }else if(fo.type === 'date' || fo.type === 'string'){
                 v = RelaenUtil.valueToString(v);
             }
             fv.push(fn + '=' + v);
-            if(key[0] === cfg.id.name){
+            if(key[0] === orm.id.name){
                 idValue = v;
                 idName = key[1].name;
             }
+        }
+        if(!idValue){
+            throw ErrorFactory.getError('0021',[orm.id.name]);
         }
         arr.push(fv.join(','));
         //where

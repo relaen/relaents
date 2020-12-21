@@ -122,6 +122,69 @@ class EntityManager{
     }
 
     /**
+     * 根据条件查找一个对象
+     * @param entityClassName   实体类名 
+     * @param params            参数对象{paramName1:paramValue1,paramName2:{value:paramValue2,rel:'>'}...}
+     *                          参数值有两种方式，一种是直接在参数名后给值，一种是给对象，对象中包括 value:值和rel:关系，
+     *                          关系包括 >,<,>=,<=,<>,is,like等
+     */
+    public async findOne(entityClassName:string,params:object):Promise<any>{
+        let lst = await this.findMany(entityClassName,params,0,1);
+        if(lst && lst.length>0){
+            return lst[0];
+        }
+        return null;
+    }
+
+    /**
+     * 根据条件查找多个对象
+     * @param entityClassName   实体类名 
+     * @param params            参数对象，参考findOne注释
+     * @param start             开始记录行
+     * @param limit             获取记录数
+     */
+    public async findMany(entityClassName:string,params?:object,start?:number,limit?:number):Promise<Array<any>>{
+        let rql = "select m from " + entityClassName + " m ";
+        let pValues = [];
+
+        //条件参数名
+        if (params && typeof params === 'object') {
+            let pn = [];
+            Object.getOwnPropertyNames(params).forEach(item => {
+                let v = params[item];
+                let rel: string = '=';
+                //参数值为对象
+                if ( v !== null && typeof v === 'object') {
+                    if (v.rel) {
+                        rel = v.rel;
+                    }
+                    v = v.value;
+                }
+
+                //如果值为null且关系为“=”，则需要改为“is”
+                if (params[item] === null && rel === '=') {
+                    rel = 'is';
+                }
+                //like 添加%
+                if (rel === 'like') {
+                    v = '%' + v + '%';
+                }
+                pn.push('m.' + item + ' ' + rel + ' ?');
+                pValues.push(v);
+            });
+            if (pn.length > 0) {
+                rql += ' where ' + pn.join(' and ');
+            }
+        }
+
+        let query: Query = this.createQuery(rql, entityClassName);
+        if (pValues.length > 0) {
+            query.setParameters(pValues);
+        }
+        return await query.getResultList(start,limit);
+    }
+
+    /**
      * 创建查询对象
      * @param rql               relean ql
      * @param entityClassName   实体类名
