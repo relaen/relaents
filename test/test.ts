@@ -24,7 +24,7 @@ async function newUser(){
     //创建entity manager
     let em:EntityManager = EntityManagerFactory.createEntityManager(conn);
     let user:User = new User();
-    user.setUserName('field');
+    user.setUserName('fieldfieldfieldfieldfieldfieldfieldfieldfieldfield');
     user.setAge(1);
     user.setSexy('M');
     //设置用户类别
@@ -60,8 +60,10 @@ async function getUser(id):Promise<User>{
 async function getUserByType(id){
     let conn:Connection = await getConnection();
     let em:EntityManager = EntityManagerFactory.createEntityManager(conn);
-
-    let lst:User[] = await em.findOne(User.name,{userType:id});
+    //获取单个
+    let user:User = await em.findOne(User.name,{userType:id});
+    //获取多个用户
+    let lst:User[] = await em.findMany(User.name,{userType:id});
     em.close();
     await conn.close();
 }
@@ -160,9 +162,7 @@ async function testNativeQuery(){
 async function testGetCount(){
     let conn:Connection = await getConnection();
     let em:EntityManager = EntityManagerFactory.createEntityManager(conn);
-    let sql = "select m.userName from  User m order by m.userId";
-    // let sql = "select m from  User m where m.userId in ? order by m.userId";
-    // let sql = "select count(m) from  User m";
+    let sql = "select count(m) from  User m";
     let query:Query = em.createQuery(sql);
     let count = await query.getResult();
     em.close();
@@ -170,16 +170,22 @@ async function testGetCount(){
 }
 
 /**
- * 原生删除
+ * 删除
+ * @param ids 
  */
-async function testNativeDelete(){
+async function testDelete(ids:number[]){
     let conn:Connection = await getConnection();
     let em:EntityManager = EntityManagerFactory.createEntityManager(conn);
-    let sql = "delete from  t_user where user_id>100";
-    // let sql = "select m from  User m where m.userId in ? order by m.userId";
-    // let sql = "select count(m) from  User m";
-    let query:Query = em.createNativeQuery(sql);
-    let count = await query.getResult();
+    //参数值为对象，after和or请查看api
+    // await em.deleteMany(User.name,{
+    //     userName:{value:'field',rel:'like',after:'or'},
+    //     userType:2
+    // });
+    //参数值为简单值
+    await em.deleteMany(User.name,{
+        userName:'field',
+        userType:2
+    });
     em.close();
     await conn.close();
 }
@@ -233,9 +239,9 @@ RelaenManager.init({
 });
 
 
-// newUser();
+newUser();
 // getUser(31);
-getUserByType(1);
+// getUserByType(1);
 // getUserType(1);
 // updateUser(4);
 // deleteUser(1);
@@ -244,3 +250,4 @@ getUserByType(1);
 // testNativeQuery();
 // testTransaction();
 // testNativeDelete();
+// testDelete([107,108]);

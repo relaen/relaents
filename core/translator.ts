@@ -37,19 +37,12 @@ class Translator{
                 v = entity[key[0]];
             }
             
-            //如果绑定字段名不存在，则用属性名
+            // //如果绑定字段名不存在，则用属性名
             let fn = fo.name?fo.name:key[0];
-            if(v === null || v === undefined){
-                if(!fo.nullable){//null 判断
-                    if(key[0] !== orm.id.name){//如果与主键不同且不能为空，则抛出异常 
-                        throw ErrorFactory.getError('0021',[key[0]]);
-                    }
-                }
+            if(v === null){
                 continue;
-            }else if(fo.type === 'date' || fo.type === 'string'){
-                v = RelaenUtil.valueToString(v);
             }
-
+            
             fields.push(fn);
             values.push(v);
         }
@@ -104,16 +97,14 @@ class Translator{
                 v = entity[key[0]];
             }
 
-            if(v === null || v === undefined){
-                if(ignoreUndefinedValue){
-                    continue;
-                }else if(!fo.nullable){
-                    throw ErrorFactory.getError('0021',[key[0]]);
-                }
-                v = null;
-            }else if(fo.type === 'date' || fo.type === 'string'){
+            if(v === null && ignoreUndefinedValue){
+                continue;
+            }
+            
+            if(v!==null && (fo.type === 'date' || fo.type === 'string')){
                 v = RelaenUtil.valueToString(v);
             }
+
             fv.push(fn + '=' + v);
             if(key[0] === orm.id.name){
                 idValue = v;
@@ -190,22 +181,32 @@ class Translator{
             });
             sql += ' where ' + whereArr.join(' and ');
         }
-
         return sql;
     }
     
     /**
-     * 获取sql 字符串
-     * @param rql 
+     * 获取查询sql 字符串
+     * @param rql   源rql
      * @returns     {sql:string,fk:外键字段数组,map:{aliasName:{entity:对应实体类,from:来源别名,propName:属性名}}}
      */
     public static getQuerySql(rql:string):any{
         //删除多余的空格
         rql = rql.trim().replace(/\s+/g,' ');
         let rql1:string = rql.toLowerCase();
-
+        //sql 类型 0:select 1:insert 2:update 3:delete
+        let sqlType:number = 0;
+        if(rql.startsWith('select')){
+            sqlType = 0;
+        }else if(rql.startsWith('insert')){
+            sqlType = 1;
+        }else if(rql.startsWith('update')){
+            sqlType = 2;
+        }else if(rql.startsWith('delete')){
+            sqlType = 3;
+        }
+        
         //select 位置
-        let indSelect:number = rql1.indexOf('select ')?0:-1;
+        let indSelect:number = 0;
         // from 位置
         let indFrom:number = rql1.indexOf(' from ');
         // where 位置
@@ -264,8 +265,9 @@ class Translator{
         // select 字段集合 {column:true}
         // let selectFieldMap:Map<string,boolean> = new Map();
         handleTable(tableArr);
-        
-        handleSelectFields(columnArr);
+        if(sqlType===0){
+            handleSelectFields(columnArr);
+        }
         if(whereArr){
             handleWhere(whereArr);
         }
@@ -291,12 +293,21 @@ class Translator{
             }
         }
 
-        let sql:string = 'select ' + columnArr.join(',') + ' from ' + tableArr.join(' ');
+        let sql:string;
+        switch(sqlType){
+            case 0:
+                sql = 'SELECT ' + columnArr.join(',') + ' FROM ' + tableArr.join(' ');
+                break;
+            case 3:
+                sql = 'DELETE t0 FROM ' + tableArr.join(' ');
+                break;
+        }
+        
         if(whereArr){
-            sql += ' where ' + whereArr.join(' ');
+            sql += ' WHERE ' + whereArr.join(' ');
         }
         if(orderByArr){
-            sql += ' order by ' + orderByArr.join(' ');
+            sql += ' ORDER BY ' + orderByArr.join(' ');
         }
         return {sql:sql,map:retAliasMap,fk:fkArray};
         /**

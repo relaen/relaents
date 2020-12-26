@@ -49,7 +49,9 @@ http://www.noomi.cn/relaen/api.html
 5. 修改状态为NEW时，拥有主键的对象执行save方法时为insert的bug；
 6. Query和NativeQuery的getResult加上insert、delete、update类语句执行功能；
 7. 修复entity nullable字段在insert时的处理；
-8. 修复外键作为主键时的update sql 不正确的bug。
+8. 修复外键作为主键时的update sql 不正确的bug；
+9. 给EntityManager增加了 findOne,findMany,deleteMany方法；
+10. 保存数据时，增加字段长度检查。
 
 ## 配置文件
 relaen依赖配置文件进行初始化，配置内容如下：
@@ -310,14 +312,21 @@ export class UserType extends BaseEntity{
 ```
 ### 增删改查
 ```ts
-
-import { EntityManager,RelaenManager,getConnection,Connection,EntityManagerFactory,Query,NativeQuery} from "relaen";
+import { EntityManager } from "../core/entitymanager";
+import { RelaenManager } from "../core/relaenmanager";
 import { User } from "./entity/user";
+import { getConnection } from "../core/connectionmanager";
+import { Connection } from "../core/connection";
+import { EntityManagerFactory } from "../core/entitymanagerfactory";
 import { UserType } from "./entity/usertype";
+import { Query } from "../core/query";
+import { NativeQuery } from "../core/nativequery";
+import { Transaction } from "../core/transaction/transaction";
+
 /**
- * 与数据库相关的方法都采用async，使用时请使用"await"关键字
+ * 与数据库相关的方法都采用async，使用时请使用await 关键字
  * 包括 connection 相关操作 getConnection,connection.close
- * 实体增删改方法 save, delete, 关联关系数据获取(懒加载)
+ * 实体增删改方法 save, delete, 关联关系数据获取
  * 事务方法 begin, commit, rollback
  */
 /**
@@ -329,7 +338,7 @@ async function newUser(){
     //创建entity manager
     let em:EntityManager = EntityManagerFactory.createEntityManager(conn);
     let user:User = new User();
-    user.setUserName('relaen');
+    user.setUserName('fieldfieldfieldfieldfieldfieldfieldfieldfieldfield');
     user.setAge(1);
     user.setSexy('M');
     //设置用户类别
@@ -359,6 +368,21 @@ async function getUser(id):Promise<User>{
 }
 
 /**
+ * 通过类型获取用户，采用em的findMany方法
+ * @param id    用户类型id
+ */
+async function getUserByType(id){
+    let conn:Connection = await getConnection();
+    let em:EntityManager = EntityManagerFactory.createEntityManager(conn);
+    //获取单个
+    let user:User = await em.findOne(User.name,{userType:id});
+    //获取多个用户
+    let lst:User[] = await em.findMany(User.name,{userType:id});
+    em.close();
+    await conn.close();
+}
+
+/**
  * 获取用户类型
  * @param id    用户类型id
  */
@@ -380,7 +404,10 @@ async function updateUser(id){
     let conn:Connection = await getConnection();
     let em:EntityManager = EntityManagerFactory.createEntityManager(conn);
     let user:User = await getUser(id);
-    user.setUserName('aaaa');
+    user.setUserId(null);
+    user.__status = 1;
+    user.setUserName('relaen');
+    user.setUserType(new UserType(2));
     //参数为true，则表示只对不为undefined的值进行更新，否则所有undefined的属性都会更新成null
     await user.save(true);
     em.close();
@@ -407,17 +434,22 @@ async function deleteUser(id:number){
 async function testQuery(){
     let conn:Connection = await getConnection();
     let em:EntityManager = EntityManagerFactory.createEntityManager(conn);
-    let sql = "select m from  User m where m.userType=? order by m.userId";
+    // let sql = "select m from  User m where m.userType=? order by m.userId";
+    // let sql = "select m from  User m where m.userId in ? order by m.userId";
+    let sql = "select m.userName from  User m where m.userType=? order by m.userType.userTypeName";
     let query:Query = em.createQuery(sql,User.name);
     //设置参数，按照sql中的"?"顺序来，索引从0开始，如果参数值是对象，会提取对象的主键
+    // query.setParameter(0,[[3,4,5]]);
     query.setParameter(0,1);
+    query.setStart(0);
+    query.setLimit(5);
     //获取单个对象
-    let u:User = <User> await query.getResult();
+    // let u:User = <User> await query.getResult();
     //懒加载获取用户类型
-    await u.getUserType();
-
+    // await u.getUserType();
+    // let list = await query.getResultList();
     //提取第5-14记录，如果参数为空，则返回所有记录。第一个参数为记录起始索引号，第二个参数为记录数
-    let ul:User[] = <User[]> await query.getResultList(5,10);
+    let ul:User[] = <User[]> await query.getResultList();
     em.close();
     await conn.close();
 }
@@ -439,6 +471,40 @@ async function testNativeQuery(){
 }
 
 /**
+ * 获取数量
+ */
+async function testGetCount(){
+    let conn:Connection = await getConnection();
+    let em:EntityManager = EntityManagerFactory.createEntityManager(conn);
+    let sql = "select count(m) from  User m";
+    let query:Query = em.createQuery(sql);
+    let count = await query.getResult();
+    em.close();
+    await conn.close();
+}
+
+/**
+ * 删除
+ * @param ids 
+ */
+async function testDelete(ids:number[]){
+    let conn:Connection = await getConnection();
+    let em:EntityManager = EntityManagerFactory.createEntityManager(conn);
+    //参数值为对象，after和or请查看api
+    // await em.deleteMany(User.name,{
+    //     userName:{value:'field',rel:'like',after:'or'},
+    //     userType:2
+    // });
+    //参数值为简单值
+    await em.deleteMany(User.name,{
+        userName:'field',
+        userType:2
+    });
+    em.close();
+    await conn.close();
+}
+
+/**
  * 事务测试
  */
 async function testTransaction(){
@@ -450,7 +516,9 @@ async function testTransaction(){
     await tx.begin();
     await newUser();
     await deleteUser(4);
-    //事务回滚
+    // 事务提交
+    // await tx.commit();
+    // 事务回滚
     await tx.rollback();
     em.close();
     await conn.close();
@@ -484,12 +552,17 @@ RelaenManager.init({
     debug:true
 });
 
+
 newUser();
-// getUser(1);
+// getUser(31);
+// getUserByType(1);
 // getUserType(1);
-// updateUser(1);
+// updateUser(4);
 // deleteUser(1);
 // testQuery();
+// testGetCount();
 // testNativeQuery();
 // testTransaction();
+// testNativeDelete();
+// testDelete([107,108]);
 ```

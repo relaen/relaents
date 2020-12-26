@@ -1,4 +1,4 @@
-import {IEntityCfg, EEntityState, IEntity, IEntityRelation } from "./entitydefine";
+import {IEntityCfg, EEntityState, IEntity, IEntityRelation, IEntityColumn } from "./entitydefine";
 import { Translator } from "./translator";
 import { SqlExecutor } from "./sqlexecutor";
 import { EntityFactory } from "./entityfactory";
@@ -9,6 +9,8 @@ import { ErrorFactory } from "./errorfactory";
 import { NativeQuery } from "./nativequery";
 import { EntityManagerFactory } from "./entitymanagerfactory";
 import { RelaenUtil } from "./relaenutil";
+import { BaseEntity } from "..";
+import { Logger } from "./logger";
 
 /**
  * 实体管理器
@@ -41,13 +43,17 @@ class EntityManager{
      * @returns                     保存后的实体  
      */
     public async save(entity:IEntity,ignoreUndefinedValue?:boolean):Promise<IEntity>{
+        //先进行预处理
+        if(!this.preHandleEntity(entity,ignoreUndefinedValue)){
+            return null;
+        }
         //无主键或状态为new
         if(entity.__status === EEntityState.NEW){
             //检查并生成主键
             
             let sql:string;
             if(RelaenUtil.getIdValue(entity)){ //存在主键
-                sql = Translator.entityToUpdate(entity);
+                sql = Translator.entityToUpdate(entity,ignoreUndefinedValue);
             }else{ //无主键
                 //根据策略生成主键
                 await this.genKey(entity);
@@ -76,7 +82,7 @@ class EntityManager{
                         if(r === null){
                             return null;
                         }
-                    }    
+                    }
                 }
             }
         }
@@ -124,11 +130,13 @@ class EntityManager{
     /**
      * 根据条件查找一个对象
      * @param entityClassName   实体类名 
-     * @param params            参数对象{paramName1:paramValue1,paramName2:{value:paramValue2,rel:'>'}...}
-     *                          参数值有两种方式，一种是直接在参数名后给值，一种是给对象，对象中包括 value:值和rel:关系，
+     * @param params            参数对象{paramName1:paramValue1,paramName2:{value:paramValue2,rel:'>',before:'(',after:'and'}...}
+     *                          参数值有两种方式，一种是直接在参数名后给值，一种是给对象，对象中包括:
+     *                          value:值,rel:关系,before:字段前字符串(通常为"("),after:值后字符串(通常为"and","or",")")
      *                          关系包括 >,<,>=,<=,<>,is,like等
+     * @since 0.1.3
      */
-    public async findOne(entityClassName:string,params:object):Promise<any>{
+    public async findOne(entityClassName:string,params?:object,logics?:string[]):Promise<any>{
         let lst = await this.findMany(entityClassName,params,0,1);
         if(lst && lst.length>0){
             return lst[0];
@@ -142,6 +150,7 @@ class EntityManager{
      * @param params            参数对象，参考findOne注释
      * @param start             开始记录行
      * @param limit             获取记录数
+     * @since 0.1.3                 
      */
     public async findMany(entityClassName:string,params?:object,start?:number,limit?:number):Promise<Array<any>>{
         let rql = "select m from " + entityClassName + " m ";
@@ -149,32 +158,11 @@ class EntityManager{
 
         //条件参数名
         if (params && typeof params === 'object') {
-            let pn = [];
-            Object.getOwnPropertyNames(params).forEach(item => {
-                let v = params[item];
-                let rel: string = '=';
-                //参数值为对象
-                if ( v !== null && typeof v === 'object') {
-                    if (v.rel) {
-                        rel = v.rel;
-                    }
-                    v = v.value;
-                }
-
-                //如果值为null且关系为“=”，则需要改为“is”
-                if (params[item] === null && rel === '=') {
-                    rel = 'is';
-                }
-                //like 添加%
-                if (rel === 'like') {
-                    v = '%' + v + '%';
-                }
-                pn.push('m.' + item + ' ' + rel + ' ?');
-                pValues.push(v);
-            });
-            if (pn.length > 0) {
-                rql += ' where ' + pn.join(' and ');
+            let re = this.handleConds(entityClassName,params);
+            if (re[0]!=='') {
+                rql += ' where ' + re[0];
             }
+            pValues = re[1];
         }
 
         let query: Query = this.createQuery(rql, entityClassName);
@@ -184,6 +172,33 @@ class EntityManager{
         return await query.getResultList(start,limit);
     }
 
+    /**
+     * 删除多个
+     * @param entityClassName   实体类名
+     * @param params            条件参数，参考findOne
+     * @returns                 成功:true，失败:false
+     * @since 0.1.3
+     */
+    public async deleteMany(entityClassName:string,params?:object):Promise<boolean>{
+        let rql = "delete m from " + entityClassName + " m ";
+        let pValues = [];
+        //条件参数名
+        if (params && typeof params === 'object') {
+            let re = this.handleConds(entityClassName,params);
+            if (re[0]!=='') {
+                rql += ' where ' + re[0];
+            }
+            pValues = re[1];
+        }
+
+        let query: Query = this.createQuery(rql, entityClassName);
+        if (pValues.length > 0) {
+            query.setParameters(pValues);
+        }
+        await query.getResult();
+        return true;
+        
+    }
     /**
      * 创建查询对象
      * @param rql               relean ql
@@ -310,6 +325,118 @@ class EntityManager{
                 en[fn] = this.find(rel.entity,obj[fn]);
             }
         }
+    }
+
+    /**
+     * 预处理实体对象
+     * @param entity                实体对象
+     * @param ignoreUndefinedValue  忽略undefined值
+     */
+    private preHandleEntity(entity:IEntity,ignoreUndefinedValue?:boolean):boolean{
+        let className:string = entity.constructor.name;
+        let orm:IEntityCfg = EntityFactory.getClass(className);
+        if(!orm){
+            throw ErrorFactory.getError("0010",[className]);
+        }
+        for(let key of orm.columns){
+            let fo:IEntityColumn = key[1];
+            let v:any;
+            if(fo.refName){ //外键，只取主键
+                if(entity[key[0]] instanceof BaseEntity){
+                    v = RelaenUtil.getIdValue(entity[key[0]]);
+                }
+            }else{
+                v = entity[key[0]];
+            }
+            if((v === null || v === undefined)){
+                if(!ignoreUndefinedValue && !fo.nullable){//null 判断
+                    if(key[0] !== orm.id.name){//如果与主键不同且不能为空，则抛出异常 
+                        throw ErrorFactory.getError('0021',[key[0]]);
+                    }
+                }
+                entity[key[0]] = null;
+            }else if(key[1].length && v.length>key[1].length){ //长度检测
+                throw ErrorFactory.getError('0024',[className,key[0],key[1].length]);
+            }else{
+                if(key[1].type === 'date' || key[1].type === 'string'){
+                    entity[key[0]] = "'" + entity[key[0]] + "'";
+                }
+            }
+        }
+        return true;
+    }
+
+    /**
+     * 处理条件
+     * @param columns   字段集合
+     * @param params    参数对象{paramName1:paramValue1,paramName2:{value:paramValue2,rel:'>',before:'(',after:'and'}...}
+     *                  参数值有两种方式，一种是直接在参数名后给值，一种是给对象，对象中包括:
+     *                  value:值,rel:关系,before:字段前字符串(通常为"("),after:值后字符串(通常为"and","or",")")
+     *                  关系包括 >,<,>=,<=,<>,is,like等
+     * @returns      数组，第一个where后的条件语句，第二个元素为值数组，如: [where 语句,[1,2]]
+     */
+    private handleConds(className:string,params:object):any{
+        let orm:IEntityCfg = EntityFactory.getClass(className);
+        if(!orm){
+            throw ErrorFactory.getError("0010",[className]);
+        }
+        let pValues:any[] = [];
+        let whereStr:string = '';
+        let index:number = 0;
+        let lastLogic:boolean = false;
+        Object.getOwnPropertyNames(params).forEach((item,ii) => {
+            //可能字段名带“.”
+            let fa:string[] = item.split('.');
+            //不是字段，则跳过
+            if(!orm.columns.has(fa[0])){
+                return;
+            }
+            index++;
+            let vobj = params[item];
+            let rel: string = '=';
+            let v:any;
+            //参数值为对象
+            if ( vobj !== null && typeof vobj === 'object') {
+                if (vobj.rel) {
+                    rel = vobj.rel.toUpperCase();
+                }
+                v = vobj.value;
+            }else{
+                v = vobj;
+            }
+
+            //如果值为null且关系为“=”，则需要改为“is”
+            if (params[item] === null && rel === '=') {
+                rel = 'IS';
+            }
+            //like 添加%
+            if (rel === 'LIKE') {
+                v = '%' + v + '%';
+            }
+            //默认 and 关系
+            if(index>1 && !lastLogic){
+                whereStr += ' AND ';
+            }
+            //置为false
+            lastLogic = false;
+
+            //前置字符串，通常为'('
+            if(vobj.before){
+                whereStr += ' ' + v.before + ' ';
+            }
+            //字段和值
+            whereStr += 'm.' + item + ' ' + rel + ' ?';
+            //后置字符串，通常为 'and','or',')'
+            if(vobj.after){
+                let be:string = vobj.after.trim().toUpperCase();
+                whereStr += ' ' + be + ' ';
+                if(be === 'AND' || be === 'OR'){
+                    lastLogic = true;
+                }
+            }
+            pValues.push(v);
+        });
+        return [whereStr,pValues];
     }
 }
 

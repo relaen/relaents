@@ -14,7 +14,8 @@ export class User extends BaseEntity{
 	@Column({
 		name:'user_name',
 		type:'string',
-		nullable:false
+		nullable:false,
+		length:32
 	})
 	private userName:string;
 
