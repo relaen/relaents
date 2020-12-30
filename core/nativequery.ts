@@ -61,6 +61,7 @@ class NativeQuery extends Query{
         if(this.entityClassName){
             let ecfg:IEntityCfg = EntityFactory.getClass(this.entityClassName);
             if(ecfg){  //具备该实体类，则处理为实体
+                //外键map
                 let fkMap:Map<string,any> = new Map();
                 let entity:IEntity = new ecfg.entity();
                 for(let col of ecfg.columns){

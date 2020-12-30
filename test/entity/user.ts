@@ -34,7 +34,7 @@ export class User extends BaseEntity{
 	private sexy:string;
 
 	@ManyToOne({entity:'UserType'})
-	@JoinColumn({name:'user_type_id',refName:'user_type_id'})
+	@JoinColumn({name:'user_type_id',refName:'user_type_id',nullable:true})
 	private userType:UserType;
 
 	constructor(idValue?:number){

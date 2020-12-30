@@ -1,6 +1,8 @@
 import { RelaenManager } from "../relaenmanager";
 import { Connection } from "../connection";
 import { Logger } from "../logger";
+import { MysqlTransaction } from "./mysqltransaction";
+import { BaseTransaction } from "./basetransaction";
 
 /**
  * 事务基类
@@ -60,68 +62,5 @@ class Transaction{
     }
 }
 
-
-class BaseTransaction{
-    /**
-     * 事务开始
-     */
-    async begin(connection:Connection){}
-    /**
-     * 事务提交,继承类需要重载
-     */
-    async commit(connection:Connection){}
-
-    /**
-     * 事务回滚,继承类需要重载
-     */
-    async rollback(connection:Connection){}
-}
-
-/**
- * mysql 事务类
- */
-class MysqlTransaction extends BaseTransaction{
-    /**
-     * 开始事务
-     */
-    async begin(connection:Connection){
-        await new Promise((resolve,reject)=>{
-            connection.conn.beginTransaction((err,conn)=>{
-                if(err){
-                    reject(err);
-                }
-                resolve(null);
-            });
-        });
-    }
-
-    /**
-     * 事务提交
-     */
-    async commit(connection:Connection){
-        await new Promise((resolve,reject)=>{
-            connection.conn.commit((err)=>{
-                if(err){
-                    reject(err);
-                }
-                resolve(null);
-            });
-        });
-    }
-
-    /**
-     * 事务回滚
-     */
-    async rollback(connection:Connection){
-        await new Promise((resolve,reject)=>{
-            connection.conn.rollback((err)=>{
-                if(err){
-                    reject(err);
-                }
-                resolve(null);
-            });
-        });
-    }
-}
 
 export {Transaction}

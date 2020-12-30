@@ -30,9 +30,8 @@ class Translator{
             let fo:IEntityColumn = key[1];
             let v:any;
             if(fo.refName){ //外键，只取主键
-                if(entity[key[0]] instanceof BaseEntity){
-                    v = RelaenUtil.getIdValue(entity[key[0]]);
-                }
+                let refEn = entity[key[0]];
+                v =  refEn && refEn instanceof BaseEntity? RelaenUtil.getIdValue(refEn):null;
             }else{
                 v = entity[key[0]];
             }
@@ -90,9 +89,8 @@ class Translator{
             //字段值
             let v;
             if(fo.refName){ //外键，只取主键
-                if(entity[key[0]] instanceof BaseEntity){
-                    v = RelaenUtil.getIdValue(entity[key[0]]);
-                }
+                let refEn = entity[key[0]];
+                v =  refEn && refEn instanceof BaseEntity? RelaenUtil.getIdValue(refEn):null;
             }else{
                 v = entity[key[0]];
             }
@@ -187,9 +185,9 @@ class Translator{
     /**
      * 获取查询sql 字符串
      * @param rql   源rql
-     * @returns     {sql:string,fk:外键字段数组,map:{aliasName:{entity:对应实体类,from:来源别名,propName:属性名}}}
+     * @returns     sql
      */
-    public static getQuerySql(rql:string):any{
+    public static getQuerySql(rql:string):string{
         //删除多余的空格
         rql = rql.trim().replace(/\s+/g,' ');
         let rql1:string = rql.toLowerCase();
@@ -259,11 +257,7 @@ class Translator{
         // 隐含join main table 的tables{entity:实体名,refEntity:join 右侧实体名,column:column对象}
         let joinTbls:any[] = [];
 
-        // 外键查询别名数组
-        let fkArray:string[] = [];
-
         // select 字段集合 {column:true}
-        // let selectFieldMap:Map<string,boolean> = new Map();
         handleTable(tableArr);
         if(sqlType===0){
             handleSelectFields(columnArr);
@@ -309,7 +303,7 @@ class Translator{
         if(orderByArr){
             sql += ' ORDER BY ' + orderByArr.join(' ');
         }
-        return {sql:sql,map:retAliasMap,fk:fkArray};
+        return sql;
         /**
          * 处理表串
          * @param tblArr    表名数组
@@ -438,9 +432,7 @@ class Translator{
                         let f:string[] = [];
                         //获取所有字段
                         for(let co of tblObj.columns){
-                            if(!co[1].refName){
-                                f.push(alias + '.' + co[1].name + ' as ' + alias+ '_' + co[0]);
-                            }
+                            f.push(alias + '.' + co[1].name + ' as ' + alias+ '_' + co[0]);
                         }
                         arr[i] = f.join(',');
                     }else if(fa.length === 2){ //为字段

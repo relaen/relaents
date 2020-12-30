@@ -90,44 +90,6 @@ class ConnectionManager{
     private static connectionMap:Map<number,any> = new Map();
 
     /**
-     * 获取连接对象
-     * @returns     连接对象，已连接
-     * 
-     */
-    public static async createConnection():Promise<Connection>{
-        let conn:Connection;
-        //把conn加入connectionMap
-        let sid:number = ThreadLocal.getThreadId();
-
-        if(!sid){ //新建conn
-            sid = ThreadLocal.newThreadId();
-        }
-        if(!this.connectionMap.has(sid)){ //线程id对应对象不存在
-            switch(RelaenManager.dialect){
-                case 'mysql':
-                    conn = new Connection(await this.getMysqlConnection());
-                    conn.connected = true;
-                    break;
-                case 'oracle':
-                    // conn = await this.getOracleConnection();
-                    break;
-                case 'mssql':
-                    // conn = await this.getMssqlConnection();
-                    break;
-            }
-            this.connectionMap.set(sid,{
-                num:1,
-                conn:conn
-            });
-        }else{ //已存在，则只修改conn的创建数，不新建conn
-            let o = this.connectionMap.get(sid);
-            o.num++;
-            conn = o.conn;
-        }
-        return conn;
-    }
-
-    /**
      * 初始化连接管理器
      * @param cfg relaen配置文件的数据库配置对象
      */
@@ -159,12 +121,51 @@ class ConnectionManager{
     }
 
     /**
+     * 获取连接对象
+     * @returns     连接对象，已连接
+     * 
+     */
+    public static async createConnection():Promise<Connection>{
+        let conn:Connection;
+        //把conn加入connectionMap
+        let sid:number = ThreadLocal.getThreadId();
+
+        if(!sid){ //新建conn
+            sid = ThreadLocal.newThreadId();
+        }
+        if(!this.connectionMap.has(sid)){ //线程id对应对象不存在
+            switch(RelaenManager.dialect){
+                case 'mysql':
+                    conn = new Connection(await this.getMysqlConnection());
+                    conn.connected = true;
+                    break;
+                case 'oracle':
+                    // conn = await this.getOracleConnection();
+                    break;
+                case 'mssql':
+                    // conn = await this.getMssqlConnection();
+                    break;
+            }
+            conn.threadId = sid;
+            this.connectionMap.set(sid,{
+                num:1,
+                conn:conn
+            });
+        }else{ //已存在，则只修改conn的创建数，不新建conn
+            let o = this.connectionMap.get(sid);
+            o.num++;
+            conn = o.conn;
+        }
+        return conn;
+    }
+
+    /**
      * 关闭连接
      * @param connection 数据库连接对象
      */
     public static async closeConnection(connection:Connection){
         //获取threadId
-        let sid:number = ThreadLocal.getThreadId();
+        let sid:number = connection.threadId;
         if(sid && this.connectionMap.has(sid)){
             let o = this.connectionMap.get(sid);
             if(--o.num <= 0){ //最后一个close，需要从map删除
@@ -173,7 +174,7 @@ class ConnectionManager{
                 //关闭连接
                 switch(RelaenManager.dialect){
                     case 'mysql':
-                        return this.closeMysqlConnection(connection);
+                        return await this.closeMysqlConnection(connection);
                     case 'oracledb':
                         break;
                     case 'mssql':
@@ -209,14 +210,18 @@ class ConnectionManager{
      */
     private static async closeMysqlConnection(connection:Connection){
         if(this.pool){
-            return new Promise((res,rej)=>{
-                connection.conn.release(err=>{
-                    if(err){
-                        rej(ErrorFactory.getError('0201',[err]));
-                    }
-                    res(null);
-                })
-            });
+            // return new Promise((res,rej)=>{
+                // connection.conn.release(err=>{
+                //     if(err){
+                //         rej(ErrorFactory.getError('0201',[err]));
+                //     }
+                //     res(null);
+                // });
+                // connection.conn.release();
+                
+            // });
+            connection.conn.release();
+            return null;
         }else{
             return new Promise((res,rej)=>{
                 connection.conn.end(err=>{

@@ -44,7 +44,7 @@ class Query{
     /**
      * 别名关联map {aliasName:{entity:对应实体类,fromEntity:来源实体,propName:属性名}}
      */
-    aliasMap:Map<string,object>;
+    // aliasMap:Map<string,object>;
 
     /**
      * 外键数组
@@ -66,10 +66,11 @@ class Query{
         
         //需要转换rql
         if(!notTransate){
-            let obj = Translator.getQuerySql(rql);
-            this.execSql = obj.sql;
-            this.aliasMap = obj.map;
-            this.fkArray = obj.fk;
+            // let obj = Translator.getQuerySql(rql);
+            // this.execSql = obj.sql;
+            // this.aliasMap = obj.map;
+            // this.fkArray = obj.fk;
+            this.execSql = Translator.getQuerySql(rql);
         }else{
             this.execSql = rql;
         }
@@ -178,6 +179,8 @@ class Query{
     private genEntity(r:any):IEntity{
         let ecfg:IEntityCfg = EntityFactory.getClass(this.entityClassName);
         let entity:IEntity = new ecfg.entity();
+        //存储外键值
+        let map:Map<string,any> = new Map();
         Object.getOwnPropertyNames(r).forEach((field)=>{
             let ind:number = field.indexOf('_');
             //别名
@@ -187,21 +190,16 @@ class Query{
             }
             //属性名
             let propName:string = field.substr(ind+1);
-            if(ecfg.columns.has(propName) && !ecfg.columns.get(propName).refName){ //属性
+            if(!ecfg.columns.has(propName)){
+                return;
+            }
+            if(!ecfg.columns.get(propName).refName){ //属性
                 entity[propName] = r[field];
+            }else{ //外键
+                map.set(ecfg.columns.get(propName).name,r[field]);
             }
         });
         
-        //存储外键值
-        let map:Map<string,any> = new Map();
-        
-        if(this.fkArray.length>0){
-            for(let fk of this.fkArray){
-                let fn = fk.substr(fk.indexOf('_')+1);
-                //去掉表别名再存储
-                map.set(ecfg.columns.get(fn).name,r[fk]);
-            }
-        }
         this.entityManager.addCache(entity,map);
         entity.__status = EEntityState.PERSIST;
         return entity;

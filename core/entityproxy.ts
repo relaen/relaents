@@ -1,4 +1,4 @@
-import { IEntityCfg, IEntityRelation, ERelationType, IEntityColumn, IEntity } from "./entitydefine";
+import { IEntityCfg, IEntityRelation, ERelationType, IEntityColumn, IEntity, EEntityState } from "./entitydefine";
 import { EntityFactory } from "./entityfactory";
 import { EntityManager } from "./entitymanager";
 import { EntityManagerFactory } from "./entitymanagerfactory";
@@ -47,15 +47,17 @@ class EntityProxy{
             let column:IEntityColumn = eo.columns.get(propName);
             //引用外键
             if(rel.type === ERelationType.ManyToOne || rel.type === ERelationType.OneToOne && !rel.mappedBy){
-                let enObj = em.getCache(entity);
                 let sql:string;
                 let query:NativeQuery;
-                //查询外键对象
-                if(enObj && enObj.fk && enObj.fk.get(column.name)){ //外键存在
-                    sql = "select * from " + eo1.table + " m where " + column.refName + " = ?";
-                    query = em.createNativeQuery(sql,rel.entity);
-                    //设置外键id
-                    query.setParameter(0,enObj.fk.get(column.name));
+                //查询外键对象，如果为persist，则从cache取外键id进行查询，否则采用关联查询
+                if(entity.__status === EEntityState.PERSIST){
+                    let enObj = em.getCache(entity);
+                    if(enObj && enObj.fk && enObj.fk.get(column.name)){
+                        sql = "select * from " + eo1.table + " m where " + column.refName + " = ?";
+                        query = em.createNativeQuery(sql,rel.entity);
+                        //设置外键id
+                        query.setParameter(0,enObj.fk.get(column.name));
+                    }
                 }else{
                     sql = "select m.* from " + eo1.table + " m,"+ eo.table +" m1 where m." +
                                     column.refName + "= m1." +  column.name + " and m1." + eo.columns.get(eo.id.name).name + " = ?";
@@ -63,7 +65,10 @@ class EntityProxy{
                     //设置外键id
                     query.setParameter(0,RelaenUtil.getIdValue(entity));                                    
                 }
-                entity[propName] = await query.getResult();
+                //当state=2时，可能不存在外键，则query不存在
+                if(query){
+                    entity[propName] = await query.getResult();
+                }
             }else if(rel.mappedBy && (rel.type === ERelationType.OneToMany || rel.type === ERelationType.OneToOne)){ //被引用
                 if(!eo1){
                     throw ErrorFactory.getError('0020',[rel.entity]);

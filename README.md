@@ -51,7 +51,8 @@ http://www.noomi.cn/relaen/api.html
 7. 修复entity nullable字段在insert时的处理；
 8. 修复外键作为主键时的update sql 不正确的bug；
 9. 给EntityManager增加了 findOne,findMany,deleteMany方法；
-10. 保存数据时，增加字段长度检查。
+10. 保存数据时，增加字段长度检查;
+11. 修复connection close时未添加await关键字的bug。
 
 ## 配置文件
 relaen依赖配置文件进行初始化，配置内容如下：

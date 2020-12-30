@@ -24,12 +24,12 @@ async function newUser(){
     //创建entity manager
     let em:EntityManager = EntityManagerFactory.createEntityManager(conn);
     let user:User = new User();
-    user.setUserName('fieldfieldfieldfieldfieldfieldfieldfieldfieldfield');
+    user.setUserName('test');
     user.setAge(1);
     user.setSexy('M');
     //设置用户类别
-    let userType:UserType = new UserType(1);
-    user.setUserType(userType);
+    // let userType:UserType = new UserType(1);
+    // user.setUserType(userType);
     //保存用户数据，必须先创建entitymanager，否则无法执行操作
     await user.save();
     //关闭entitymanager，使用完毕后必须关闭
@@ -51,6 +51,23 @@ async function getUser(id):Promise<User>{
     em.close();
     await conn.close();
     return u;
+}
+
+/**
+ * 获取用户信息
+ * @param id    用户id
+ */
+async function getUserList(){
+    let conn:Connection = await getConnection();
+    let em:EntityManager = EntityManagerFactory.createEntityManager(conn);
+    let ul:User[] = await em.findMany(User.name,{});
+    for(let u of ul){
+        //懒加载获取用户类别(多对一)
+        await u.getUserType();
+    }
+    
+    em.close();
+    await conn.close();
 }
 
 /**
@@ -238,9 +255,16 @@ RelaenManager.init({
     debug:true
 });
 
+async function foo1(){
+    for(let i=0;i<100;i++){
+        await newUser();
+        console.log(i);
+    }
+}
 
-newUser();
+// newUser();
 // getUser(31);
+getUserList();
 // getUserByType(1);
 // getUserType(1);
 // updateUser(4);
@@ -251,3 +275,4 @@ newUser();
 // testTransaction();
 // testNativeDelete();
 // testDelete([107,108]);
+

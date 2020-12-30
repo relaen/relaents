@@ -4,7 +4,17 @@ import { ConnectionManager } from "./connectionmanager";
  * 数据库连接类
  */
 class Connection{
+    /**
+     * 真实连接对象
+     */
     conn:any;
+    /**
+     * 线程id
+     */
+    threadId:number;
+    /**
+     * 连接状态
+     */
     connected:boolean;
     constructor(conn){
         this.conn = conn;
@@ -27,7 +37,7 @@ class Connection{
         if(!this.connected){
             return;
         }
-        ConnectionManager.closeConnection(this);
+        await ConnectionManager.closeConnection(this);
     }
     
     /**
