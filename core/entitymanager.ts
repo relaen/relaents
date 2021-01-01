@@ -50,10 +50,16 @@ class EntityManager{
         //无主键或状态为new
         if(entity.__status === EEntityState.NEW){
             //检查并生成主键
-            
             let sql:string;
-            if(RelaenUtil.getIdValue(entity)){ //存在主键
-                sql = Translator.entityToUpdate(entity,ignoreUndefinedValue);
+            let idValue:any = RelaenUtil.getIdValue(entity);
+            if(idValue){ //存在主键
+                //如果有主键，则查询是否存在对应实体
+                let en:IEntity = await this.find(entity.constructor.name,idValue);
+                if(en){ //如果该实体已存在，则执行update
+                    sql = Translator.entityToUpdate(entity,ignoreUndefinedValue);
+                }else{  //实体不存在，则执行insert
+                    sql = Translator.entityToInsert(entity);
+                }
             }else{ //无主键
                 //根据策略生成主键
                 await this.genKey(entity);
