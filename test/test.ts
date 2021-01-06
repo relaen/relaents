@@ -24,7 +24,7 @@ async function newUser(){
     //创建entity manager
     let em:EntityManager = EntityManagerFactory.createEntityManager(conn);
     let user:User = new User();
-    user.setUserName('test');
+    user.setUserName('test123');
     user.setAge(1);
     user.setSexy('M');
     //设置用户类别
@@ -81,6 +81,21 @@ async function getUserByType(id){
     let user:User = await em.findOne(User.name,{userType:id});
     //获取多个用户
     let lst:User[] = await em.findMany(User.name,{userType:id});
+    em.close();
+    await conn.close();
+}
+
+/**
+ * 通过类型名获取用户，采用em的findMany方法
+ * @param id    用户类型id
+ */
+async function getUserByTypeName(name){
+    let conn:Connection = await getConnection();
+    let em:EntityManager = EntityManagerFactory.createEntityManager(conn);
+    //获取单个
+    // let user:User = await em.findOne(User.name,{"userType.userTypeName":name});
+    //获取多个用户
+    let ul:User[] = await em.findMany(User.name,{"userType.userTypeName":name});
     em.close();
     await conn.close();
 }
@@ -264,9 +279,10 @@ async function foo1(){
 
 // newUser();
 // getUser(31);
-getUserList();
+// getUserList();
 // getUserByType(1);
 // getUserType(1);
+getUserByTypeName('管理员');
 // updateUser(4);
 // deleteUser(1);
 // testQuery();

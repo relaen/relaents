@@ -50,22 +50,22 @@ class EntityManager{
         //无主键或状态为new
         if(entity.__status === EEntityState.NEW){
             //检查并生成主键
-            let sql:string;
             let idValue:any = RelaenUtil.getIdValue(entity);
+            let sqlAndValue:any[];
             if(idValue){ //存在主键
                 //如果有主键，则查询是否存在对应实体
                 let en:IEntity = await this.find(entity.constructor.name,idValue);
                 if(en){ //如果该实体已存在，则执行update
-                    sql = Translator.entityToUpdate(entity,ignoreUndefinedValue);
+                    sqlAndValue = Translator.entityToUpdate(entity,ignoreUndefinedValue);
                 }else{  //实体不存在，则执行insert
-                    sql = Translator.entityToInsert(entity);
+                    sqlAndValue = Translator.entityToInsert(entity);
                 }
             }else{ //无主键
                 //根据策略生成主键
                 await this.genKey(entity);
-                sql = Translator.entityToInsert(entity);
+                sqlAndValue = Translator.entityToInsert(entity);
             }
-            let r = await SqlExecutor.exec(this,sql);
+            let r = await SqlExecutor.exec(this,sqlAndValue[0],sqlAndValue[1]);
             if(r === null){
                 return;
             }
@@ -83,8 +83,8 @@ class EntityManager{
                     //对比有差别才进行更新
                     if(entity1 && !entity.compare(entity1)){
                         //更新到数据库
-                        let sql:string = Translator.entityToUpdate(entity,ignoreUndefinedValue);
-                        let r = await SqlExecutor.exec(this,sql);
+                        let sqlAndValue:any[] = Translator.entityToUpdate(entity,ignoreUndefinedValue);
+                        let r = await SqlExecutor.exec(this,sqlAndValue[0],sqlAndValue[1]);
                         if(r === null){
                             return null;
                         }
@@ -363,11 +363,11 @@ class EntityManager{
                 entity[key[0]] = null;
             }else if(key[1].length && v.length>key[1].length){ //长度检测
                 throw ErrorFactory.getError('0024',[className,key[0],key[1].length]);
-            }else{
+            }/*else{
                 if(key[1].type === 'date' || key[1].type === 'string'){
                     entity[key[0]] = "'" + entity[key[0]] + "'";
                 }
-            }
+            }*/
         }
         return true;
     }

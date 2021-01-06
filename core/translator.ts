@@ -3,7 +3,6 @@ import { BaseEntity } from "./baseentity";
 import { EntityFactory } from "./entityfactory";
 import { ErrorFactory } from "./errorfactory";
 import { RelaenUtil } from "./relaenutil";
-import { Entity } from "./decorator/decorator";
 
 /**
  * 翻译器
@@ -13,7 +12,7 @@ class Translator{
      * entity转insert sql
      * @param entity 
      */
-    public static entityToInsert(entity:any):string{
+    public static entityToInsert(entity:any):any[]{
         let orm:IEntityCfg = EntityFactory.getClass(entity.constructor.name);
         if(!orm){
             throw ErrorFactory.getError("0010",[entity.constructor.name]);
@@ -26,6 +25,8 @@ class Translator{
         let fields:string[] = [];
         //值组合
         let values:string[] = [];
+        //占位符
+        let qArr:string[] = [];
         for(let key of orm.columns){
             let fo:IEntityColumn = key[1];
             let v:any;
@@ -44,13 +45,14 @@ class Translator{
             
             fields.push(fn);
             values.push(v);
+            qArr.push('?');
         }
         arr.push(fields.join(','));
         arr.push(') values (');
-        arr.push(values.join(','));
+        arr.push(qArr.join(','));
         arr.push(')');
         let sql = arr.join(' ');
-        return sql;
+        return [sql,values];
     }
 
     /**
@@ -58,7 +60,7 @@ class Translator{
      * @param entity                待更新entity
      * @param ignoreUndefinedValue  忽略undefined值
      */
-    public static entityToUpdate(entity:IEntity,ignoreUndefinedValue?:boolean):string{
+    public static entityToUpdate(entity:IEntity,ignoreUndefinedValue?:boolean):any[]{
         let orm:IEntityCfg = EntityFactory.getClass(entity.constructor.name);
         if(!orm){
             throw ErrorFactory.getError("0010",[entity.constructor.name]);
@@ -77,6 +79,7 @@ class Translator{
             throw ErrorFactory.getError('0103');
         }
         let fields:string[] = [];
+        let values:any[] = [];
         for(let key of orm.columns){
             let fo:any = key[1];
             //如果绑定字段名不存在，则用属性名
@@ -99,11 +102,8 @@ class Translator{
                 continue;
             }
             
-            if(v!==null && (fo.type === 'date' || fo.type === 'string')){
-                v = RelaenUtil.valueToString(v);
-            }
-
-            fv.push(fn + '=' + v);
+            fv.push(fn + '=?');
+            values.push(v);
             if(key[0] === orm.id.name){
                 idValue = v;
                 idName = key[1].name;
@@ -117,7 +117,7 @@ class Translator{
         arr.push('where');
         arr.push(idName + '=' + idValue);
         let sql = arr.join(' ');
-        return sql;
+        return [sql,values];
     }
 
     /**

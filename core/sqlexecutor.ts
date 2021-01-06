@@ -58,8 +58,10 @@ class SqlExecutor{
         if(!connection.connected){
             await connection.connect();
         }
+        //找前6个
+        let sqlBegin = sql.substr(0,6).toLowerCase();
         // select才需要看start和limit
-        if(sql.startsWith('select') && Number.isInteger(start) && start>=0 && Number.isInteger(limit) && limit>0){
+        if(sqlBegin === 'select' && Number.isInteger(start) && start>=0 && Number.isInteger(limit) && limit>0){
             sql += ' limit ' + start + ',' + limit;
         }
         
