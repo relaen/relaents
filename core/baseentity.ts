@@ -1,11 +1,10 @@
 import { EntityManager } from "./entitymanager";
 import { EntityFactory } from "./entityfactory";
-import { IEntityCfg, IEntity, EEntityState } from "./entitydefine";
-import { EntityManagerFactory } from "./entitymanagerfactory";
+import { IEntityCfg, IEntity, EEntityState } from "./types";
+import { EntityManagerFactory, getEntityManager } from "./entitymanagerfactory";
 import { RelaenUtil } from "./relaenutil";
 import { getConnection } from "./connectionmanager";
 import { Connection } from "./connection";
-import { ENGINE_METHOD_CIPHERS } from "constants";
 
 /**
  * 实体基类
@@ -29,17 +28,9 @@ export class BaseEntity extends Object implements IEntity{
      * @returns                     保存后的实体
      */
     public async save(ignoreUndefinedValue?:boolean):Promise<IEntity>{
-        let em:EntityManager = EntityManagerFactory.getCurrentEntityManager();
-        let conn:Connection;
-        if(em === null){
-            conn = await getConnection();
-            em = EntityManagerFactory.createEntityManager(conn);
-        }
+        let em = await getEntityManager();
         await em.save(this,ignoreUndefinedValue);
-        if(conn){
-            em.close();
-            conn.close();
-        }
+        await em.close();
         return this;
     }
 
@@ -48,19 +39,84 @@ export class BaseEntity extends Object implements IEntity{
      * @param em    entity manager
      */
     public async delete():Promise<IEntity>{
-        let em:EntityManager = EntityManagerFactory.getCurrentEntityManager();
-        let conn:Connection;
-        if(em === null){
-            conn = await getConnection();
-            em = EntityManagerFactory.createEntityManager(conn);
-        }
-        em.delete(this);
-        if(conn){
-            em.close();
-            conn.close();
-        }
+        let em = await getEntityManager();
+        await em.delete(this);
+        await em.close();
         return this;
     }
+
+    public static async find(id:any):Promise<IEntity>{
+        let em = await getEntityManager();
+        let entity =  await em.find(this.name,id);
+        await em.close();
+        return entity;
+    }
+
+    /**
+     * 根据条件查询单个实体
+     * @param params            参数对象，参考EntityManager.findOne
+     * @since 0.1.4
+     */
+    public static async findOne(params?:object):Promise<IEntity>{
+        let em = await getEntityManager();
+        let entity =  await em.findOne(this.name,params);
+        await em.close();
+        return entity;
+    }
+
+    /**
+     * 根据条件查找多个对象
+     * @param params            参数对象，参考EntityManager.findOne
+     * @param start             开始记录行
+     * @param limit             获取记录数
+     * @since 0.1.4                 
+     */
+    public static async findMany(params?:object,start?:number,limit?:number):Promise<Array<IEntity>>{
+        let em = await getEntityManager();
+        let list =  await em.findMany(this.name,params,start,limit);
+        await em.close();
+        return list;
+    }
+
+    /**
+     * 获取记录数
+     * @param params    参数对象，参考EntityManager.findOne
+     * @since 0.1.4
+     */
+    public static async getCount(params?:object):Promise<number>{
+        let em = await getEntityManager();
+        let count =  await em.getCount(this.name,params);
+        await em.close();
+        return count;
+    }
+
+    /**
+     * 删除对象
+     * @param id    实体id值
+     * @returns     删除的实体
+     * @since       0.1.4
+     */
+    public static async delete(id:any):Promise<IEntity>{
+        let em = await getEntityManager();
+        let entity:IEntity = await em.find(this.name,id);
+        await em.delete(entity);
+        await em.close();
+        return entity;
+    }
+
+    /**
+     * 删除对象
+     * @param params    参数对象，参考EntityManager.findOne
+     * @returns         true/false
+     */
+    public static async deleteMany(params?:object):Promise<boolean>{
+        let em = await getEntityManager();
+        await em.deleteMany(this.name,params);
+        await em.close();
+        return true;
+    }
+
+
 
     /**
      * 对比

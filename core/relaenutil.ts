@@ -1,8 +1,19 @@
-import { IEntityCfg, IEntity } from "./entitydefine";
+import { IEntityCfg, IEntity } from "./types";
 import { EntityFactory } from "./entityfactory";
 import { BaseEntity } from "./baseentity";
 
 class RelaenUtil{
+    /**
+     * 对象id计数器
+     */
+    private static idGenerator = 0;
+
+    /**
+     * 生成对象id，提供 entitymanager 和connection使用
+     */
+    public static genId(){
+        return ++this.idGenerator;
+    }
     /**
      * 获取id名 
      * @param entity 实体对象或实体类名

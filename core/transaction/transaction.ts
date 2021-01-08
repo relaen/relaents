@@ -25,10 +25,8 @@ class Transaction{
      * 事务开始
      */
     async begin(){
-        if(!this.connection.connected){
-            await this.connection.connect();
-        }
         Logger.console('[Relaen]:Transaction is started!');
+        
         switch(RelaenManager.dialect){
             case 'mysql':
                 this.tr = new MysqlTransaction();

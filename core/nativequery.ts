@@ -1,6 +1,6 @@
 import { EntityManager } from "./entitymanager";
 import { SqlExecutor } from "./sqlexecutor";
-import { IEntityCfg, IEntityColumn, IEntity, EEntityState } from "./entitydefine";
+import { IEntityCfg, IEntityColumn, IEntity, EEntityState } from "./types";
 import { EntityFactory } from "./entityfactory";
 import { Query } from "./query";
 
@@ -15,7 +15,8 @@ class NativeQuery extends Query{
      * @param entityClassName   实体类名
      */
     constructor(sql:string,em:EntityManager,entityClassName?:string){
-        super(sql,em,entityClassName,true);
+        super(em,entityClassName);
+        this.execSql = sql;
     }
 
     /**

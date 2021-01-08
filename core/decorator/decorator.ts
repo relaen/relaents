@@ -1,4 +1,4 @@
-import { IEntityPKey, IEntityColumn, IEntityRelation, IEntityRefColumn, ERelationType } from "../entitydefine";
+import { IEntityPKey, IEntityColumn, IEntityRelation, IEntityRefColumn, ERelationType } from "../types";
 import { EntityFactory } from "../entityfactory";
 
 /**

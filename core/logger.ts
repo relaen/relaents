@@ -1,3 +1,4 @@
+import { RelaenManager } from "./relaenmanager";
 
 /**
  * 日志类
@@ -8,7 +9,9 @@ class Logger{
      * @param msg   待写消息
      */
     public static console(msg:string){
-        console.log(msg);
+        if(RelaenManager.debug){
+            console.log(msg);
+        }
     }
 }
 

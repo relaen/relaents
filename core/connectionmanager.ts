@@ -2,67 +2,8 @@ import { RelaenManager } from "./relaenmanager";
 import { Connection } from "./connection";
 import { ErrorFactory } from "./errorfactory";
 import { ThreadLocal } from "./threadlocal";
+import { IConnectionCfg } from "./types";
 
-/**
- * 连接池配置
- */
-interface IConnectionPool{
-    /**
-     * 最大连接数
-     */
-    max:number;
-    /**
-     * 最小连接数
-     */
-    min:number;
-}
-
-/**
- * 连接配置
- */
-interface IConnectionCfg{
-    /**
-     * 数据库产品
-     */
-    dialect:string;
-    /**
-     * 服务器地址
-     */
-    host:string;
-     /**
-      * 端口号
-      */
-    port:number;
-    /**
-     * 用户名
-     */
-    username:string;
-    /**
-     * 密码
-     */
-    password:string;
-    /**
-     * 数据库
-     */
-    database:string;
-    /**
-     * 连接池配置
-     */
-    pool:IConnectionPool;
-    /**
-     * 是否cache
-     */
-    cache:boolean;
-    /**
-     * 是否调试模式
-     */
-    debug:boolean;
-
-    /**
-     * 实体配置数组 
-     */
-    entities:Array<string>
-}
 
 /**
  * 连接管理器
@@ -122,21 +63,27 @@ class ConnectionManager{
 
     /**
      * 获取连接对象
-     * @returns     连接对象，已连接
-     * 
+     * @param id   创建者id，直接使用时，不需要设置该值
+     * @returns    connection对象  
      */
-    public static async createConnection():Promise<Connection>{
+    public static async createConnection(id?:number):Promise<Connection>{
         let conn:Connection;
         //把conn加入connectionMap
         let sid:number = ThreadLocal.getThreadId();
 
         if(!sid){ //新建conn
             sid = ThreadLocal.newThreadId();
+        }else{
+            id = undefined;
         }
         if(!this.connectionMap.has(sid)){ //线程id对应对象不存在
             switch(RelaenManager.dialect){
                 case 'mysql':
                     conn = new Connection(await this.getMysqlConnection());
+                    //记录创建者id
+                    if(id){
+                        conn.fromId = id;
+                    }
                     conn.connected = true;
                     break;
                 case 'oracle':
@@ -161,25 +108,33 @@ class ConnectionManager{
 
     /**
      * 关闭连接
-     * @param connection 数据库连接对象
+     * @param connection    数据库连接对象
+     * @param force         是否强制释放
      */
-    public static async closeConnection(connection:Connection){
-        //获取threadId
-        let sid:number = connection.threadId;
-        if(sid && this.connectionMap.has(sid)){
-            let o = this.connectionMap.get(sid);
-            if(--o.num <= 0){ //最后一个close，需要从map删除
-                //清理 connection map
-                this.connectionMap.delete(sid);
-                //关闭连接
-                switch(RelaenManager.dialect){
-                    case 'mysql':
-                        return await this.closeMysqlConnection(connection);
-                    case 'oracledb':
-                        break;
-                    case 'mssql':
-                        break;
+    public static async closeConnection(connection:Connection,force?:boolean){
+        //强制释放，不检查计数器，否则检查计数器
+        if(!force){
+            //获取threadId
+            let sid:number = connection.threadId;
+            if(sid && this.connectionMap.has(sid)){
+                let o = this.connectionMap.get(sid);
+                if(--o.num <= 0){ //最后一个close，需要从map删除
+                    //清理 connection map
+                    this.connectionMap.delete(sid);
+                    force = true;       
                 }
+            }
+        }
+        
+        //需要释放
+        if(force){
+            switch(RelaenManager.dialect){
+                case 'mysql':
+                    return await this.closeMysqlConnection(connection);
+                case 'oracledb':
+                    break;
+                case 'mssql':
+                    break;
             }
         }
     }
@@ -210,16 +165,6 @@ class ConnectionManager{
      */
     private static async closeMysqlConnection(connection:Connection){
         if(this.pool){
-            // return new Promise((res,rej)=>{
-                // connection.conn.release(err=>{
-                //     if(err){
-                //         rej(ErrorFactory.getError('0201',[err]));
-                //     }
-                //     res(null);
-                // });
-                // connection.conn.release();
-                
-            // });
             connection.conn.release();
             return null;
         }else{
@@ -243,8 +188,13 @@ class ConnectionManager{
     }
 }
 
-async function getConnection():Promise<Connection>{
-    return await ConnectionManager.createConnection();
+/**
+ * 获取连接对象
+ * @param id   创建者id，直接使用时，不需要设置该值
+ * @returns    connection对象  
+ */
+async function getConnection(id?:number):Promise<Connection>{
+    return await ConnectionManager.createConnection(id);
 }
 
-export{ConnectionManager,getConnection,IConnectionCfg,IConnectionPool}
+export{ConnectionManager,getConnection}

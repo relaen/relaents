@@ -16,28 +16,25 @@ class Connection{
      * 连接状态
      */
     connected:boolean;
+
+    /**
+     * 创建者对象id
+     */
+    fromId:number;
+
     constructor(conn){
         this.conn = conn;
     }
 
     /**
-     * 连接
-     */
-    public async connect(){
-        if(this.connected){
-            return;
-        }
-        this.connected = true;
-    }
-
-    /**
      * 关闭连接
+     * @param force     是否强制关闭
      */
-    public async close(){
+    public async close(force?:boolean){
         if(!this.connected){
             return;
         }
-        await ConnectionManager.closeConnection(this);
+        await ConnectionManager.closeConnection(this,force);
     }
     
     /**

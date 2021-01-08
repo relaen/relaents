@@ -2,6 +2,7 @@ import { RelaenManager } from "./relaenmanager";
 import { Connection } from "./connection";
 import { Logger } from "./logger";
 import { EntityManager } from "./entitymanager";
+import { ErrorFactory } from "./errorfactory";
 
 /**
  * sql执行器
@@ -37,11 +38,8 @@ class SqlExecutor{
                 em.clearCache();
             }
         }catch(e){
-            Logger.console("[Relaen execute sql] Error:\"" + e.message + "\"");
-            //只抛出异常信息
-            throw e.message;
+            throw ("[Relaen execute sql] Error:\"" + e.message + "\"");
         }
-        
         Logger.console("[Relaen execute sql]:\"OK\"");
         return r;
     }
@@ -55,21 +53,19 @@ class SqlExecutor{
      * @param limit         最大记录行
      */
     private static async execMysql(connection:Connection,sql:string,params?:any[],start?:number,limit?:number){
-        if(!connection.connected){
-            await connection.connect();
+        if(sql.length<6){
+            throw ErrorFactory.getError("0002",[sql]);
         }
-        //找前6个
+        //找前6个字符
         let sqlBegin = sql.substr(0,6).toLowerCase();
         // select才需要看start和limit
         if(sqlBegin === 'select' && Number.isInteger(start) && start>=0 && Number.isInteger(limit) && limit>0){
             sql += ' limit ' + start + ',' + limit;
         }
         
-        if(RelaenManager.debug){
-            Logger.console("[Relaen execute sql]:\"" + sql + "\"");
-            if(params){
-                Logger.console("Parameters is " + JSON.stringify(params));
-            }
+        Logger.console("[Relaen execute sql]:\"" + sql + "\"");
+        if(params){
+            Logger.console("Parameters is " + JSON.stringify(params));
         }
         let r:any = await new Promise((resolve,reject)=>{
             connection.conn.query(sql,params,(error,results,fields)=>{

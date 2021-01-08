@@ -1,4 +1,65 @@
 /**
+ * 连接池配置
+ */
+interface IConnectionPool{
+    /**
+     * 最大连接数
+     */
+    max:number;
+    /**
+     * 最小连接数
+     */
+    min:number;
+}
+
+/**
+ * 连接配置
+ */
+interface IConnectionCfg{
+    /**
+     * 数据库产品
+     */
+    dialect:string;
+    /**
+     * 服务器地址
+     */
+    host:string;
+     /**
+      * 端口号
+      */
+    port:number;
+    /**
+     * 用户名
+     */
+    username:string;
+    /**
+     * 密码
+     */
+    password:string;
+    /**
+     * 数据库
+     */
+    database:string;
+    /**
+     * 连接池配置
+     */
+    pool:IConnectionPool;
+    /**
+     * 是否cache
+     */
+    cache:boolean;
+    /**
+     * 是否调试模式
+     */
+    debug:boolean;
+
+    /**
+     * 实体配置数组 
+     */
+    entities:Array<string>
+}
+
+/**
  * 实体接口
  */
 interface IEntity{
@@ -218,4 +279,29 @@ enum EEntityState{
      */
     PERSIST = 2     
 }
-export {IEntity,IEntityCfg,IEntityColumn,IEntityRefColumn,IEntityPKey,IEntityRelation,EFkConstraint,ERelationType,EEntityState}
+
+/**
+ * query类型
+ */
+enum EQueryType{
+    /**
+     * select
+     */
+    SELECT = 0,
+    /**
+     * insert
+     */
+    INSERT = 1,
+
+    /**
+     * update
+     */
+    UPDATE = 2,
+
+    /**
+     * delete
+     */
+    DELETE = 3
+
+}
+export {IConnectionCfg,IConnectionPool,IEntity,IEntityCfg,IEntityColumn,IEntityRefColumn,IEntityPKey,IEntityRelation,EFkConstraint,ERelationType,EEntityState,EQueryType}

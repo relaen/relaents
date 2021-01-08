@@ -1,4 +1,4 @@
-import {IEntityCfg, EEntityState, IEntity, IEntityRelation, IEntityColumn } from "./entitydefine";
+import {IEntityCfg, EEntityState, IEntity, IEntityRelation, IEntityColumn } from "./types";
 import { Translator } from "./translator";
 import { SqlExecutor } from "./sqlexecutor";
 import { EntityFactory } from "./entityfactory";
@@ -17,6 +17,10 @@ import { Logger } from "./logger";
  */
 class EntityManager{
     /**
+     * 对象id
+     */
+    public id:number;
+    /**
      * 连接
      */
     public connection:Connection;
@@ -25,12 +29,14 @@ class EntityManager{
      * 实体缓存map {cacheId:{entity:object,fk:外键值map}
      */
     public entityMap:Map<string,any>;
-    
+
     /**
      * 构造函数
      * @param conn  连接对象
+     * @param id    entity manager id
      */
-    constructor(conn:Connection){
+    constructor(conn:Connection,id?:number){
+        this.id = id;
         this.connection = conn;
         this.entityMap = new Map();
     }
@@ -120,14 +126,15 @@ class EntityManager{
         if(this.entityMap.has(key)){  //从缓存中获取
             return this.genEntityFromObject(this.entityMap.get(key).entity);
         }else{  //从数据库获取
+            let orm:IEntityCfg = EntityFactory.getClass(entityClassName);
+            if(!orm){
+                throw ErrorFactory.getError("0020",[entityClassName]);
+            }
             let idName:string = RelaenUtil.getIdName(entityClassName);
             if(!idName){
                 throw ErrorFactory.getError("0103");
             }
-            
-            let params = {};
-            params[idName] = id;
-            let query = this.createNativeQuery(Translator.genEntityQuery(entityClassName,params),entityClassName);
+            let query = this.createNativeQuery("select * from " + orm.table + " where " + idName + '=?',entityClassName);
             query.setParameter(0,id);
             return await query.getResult();
         }
@@ -136,14 +143,15 @@ class EntityManager{
     /**
      * 根据条件查找一个对象
      * @param entityClassName   实体类名 
-     * @param params            参数对象{paramName1:paramValue1,paramName2:{value:paramValue2,rel:'>',before:'(',after:'and'}...}
+     * @param params            参数对象{propName1:propValue1,propName2:{value:propValue2,rel:'>',before:'(',after:'and'}...}
      *                          参数值有两种方式，一种是直接在参数名后给值，一种是给对象，对象中包括:
      *                          value:值,rel:关系,before:字段前字符串(通常为"("),after:值后字符串(通常为"and","or",")")
      *                          关系包括 >,<,>=,<=,<>,is,like等
+     * @param order             排序对象 {propName1:asc,propName2:desc,...}
      * @since 0.1.3
      */
-    public async findOne(entityClassName:string,params?:object,logics?:string[]):Promise<any>{
-        let lst = await this.findMany(entityClassName,params,0,1);
+    public async findOne(entityClassName:string,params?:object,order?:object):Promise<any>{
+        let lst = await this.findMany(entityClassName,params,0,1,order);
         if(lst && lst.length>0){
             return lst[0];
         }
@@ -153,29 +161,30 @@ class EntityManager{
     /**
      * 根据条件查找多个对象
      * @param entityClassName   实体类名 
-     * @param params            参数对象，参考findOne注释
+     * @param params            参数对象，参考findOne
      * @param start             开始记录行
      * @param limit             获取记录数
+     * @param order             排序对象，参考findOne
      * @since 0.1.3                 
      */
-    public async findMany(entityClassName:string,params?:object,start?:number,limit?:number):Promise<Array<any>>{
-        let rql = "select m from " + entityClassName + " m ";
-        let pValues = [];
+    public async findMany(entityClassName:string,params?:object,start?:number,limit?:number,order?:object):Promise<Array<any>>{
+        let query:Query = this.createQuery(entityClassName);
+        return await query.select('*')
+                    .where(params)
+                    .orderBy(order)
+                    .getResultList(start,limit);
+    }
 
-        //条件参数名
-        if (params && typeof params === 'object') {
-            let re = this.handleConds(entityClassName,params);
-            if (re[0]!=='') {
-                rql += ' where ' + re[0];
-            }
-            pValues = re[1];
-        }
-
-        let query: Query = this.createQuery(rql, entityClassName);
-        if (pValues.length > 0) {
-            query.setParameters(pValues);
-        }
-        return await query.getResultList(start,limit);
+    /**
+     * 获取记录数
+     * @param entityClassName   实体类名
+     * @param params            参数对象，参考findOne
+     */
+    public async getCount(entityClassName:string,params?:object){
+        let query:Query = this.createQuery(entityClassName);
+        return await query.select('count(*)')
+                          .where(params)
+                          .getResult(true);
     }
 
     /**
@@ -186,32 +195,15 @@ class EntityManager{
      * @since 0.1.3
      */
     public async deleteMany(entityClassName:string,params?:object):Promise<boolean>{
-        let rql = "delete m from " + entityClassName + " m ";
-        let pValues = [];
-        //条件参数名
-        if (params && typeof params === 'object') {
-            let re = this.handleConds(entityClassName,params);
-            if (re[0]!=='') {
-                rql += ' where ' + re[0];
-            }
-            pValues = re[1];
-        }
-
-        let query: Query = this.createQuery(rql, entityClassName);
-        if (pValues.length > 0) {
-            query.setParameters(pValues);
-        }
-        await query.getResult();
-        return true;
-        
+        return await this.createQuery(entityClassName).delete().where(params).getResult();
     }
     /**
      * 创建查询对象
      * @param rql               relean ql
      * @param entityClassName   实体类名
      */
-    public createQuery(rql:string,entityClassName?:string):Query{
-        return new Query(rql,this,entityClassName);
+    public createQuery(entityClassName?:string):Query{
+        return new Query(this,entityClassName);
     }
 
     /**
@@ -223,10 +215,11 @@ class EntityManager{
     }
 
     /**
-     * 关闭
+     * 关闭entity manager
+     * @param force     是否强制关闭
      */
-    public close(){
-        EntityManagerFactory.closeEntityManager(this);
+    public async close(force?:boolean){
+        EntityManagerFactory.closeEntityManager(this,force);
     }
 
     /**
@@ -276,7 +269,6 @@ class EntityManager{
     private async genKey(entity:IEntity){
         //如果generator为table，则从指定主键生成表中获取主键，并赋予entity
         let orm:IEntityCfg = EntityFactory.getClass(entity.constructor.name);
-        
         if(orm && orm.id){
             let value;
             switch(orm.id.generator){
@@ -363,18 +355,14 @@ class EntityManager{
                 entity[key[0]] = null;
             }else if(key[1].length && v.length>key[1].length){ //长度检测
                 throw ErrorFactory.getError('0024',[className,key[0],key[1].length]);
-            }/*else{
-                if(key[1].type === 'date' || key[1].type === 'string'){
-                    entity[key[0]] = "'" + entity[key[0]] + "'";
-                }
-            }*/
+            }
         }
         return true;
     }
 
     /**
      * 处理条件
-     * @param columns   字段集合
+     * @param className 实体类名
      * @param params    参数对象{paramName1:paramValue1,paramName2:{value:paramValue2,rel:'>',before:'(',after:'and'}...}
      *                  参数值有两种方式，一种是直接在参数名后给值，一种是给对象，对象中包括:
      *                  value:值,rel:关系,before:字段前字符串(通常为"("),after:值后字符串(通常为"and","or",")")
@@ -385,6 +373,9 @@ class EntityManager{
         let orm:IEntityCfg = EntityFactory.getClass(className);
         if(!orm){
             throw ErrorFactory.getError("0010",[className]);
+        }
+        if(!params || typeof params !== 'object'){
+            return null;
         }
         let pValues:any[] = [];
         let whereStr:string = '';
@@ -442,7 +433,29 @@ class EntityManager{
             }
             pValues.push(v);
         });
-        return [whereStr,pValues];
+        if(whereStr !== ''){
+            return [whereStr,pValues];
+        }
+        return null;
+    }
+
+    /**
+     * 处理排序对象
+     * @param className 
+     * @param params 
+     */
+    private handleOrder(params:object):string{
+        if(!params || typeof params !== 'object'){
+            return null;
+        }
+        let arr = [];
+        Object.getOwnPropertyNames(params).forEach((item) => {
+            arr.push('m.' + item + ' ' + (params[item] === 'asc'?'asc':'desc'));
+        });
+        if(arr.length>0){
+            return arr.join(',');
+        }
+        return null;
     }
 }
 

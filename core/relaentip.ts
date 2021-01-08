@@ -1,6 +1,7 @@
 var RelaenTip ={
     "0000":"Unknown error",
     "0001":"Relaen config is wrong",
+    "0002":"Wrong sql:${0}",
     "0010":"Entity class '${0}' is not exist",
     "0011":"Alias '${0}' is not exist",
     "0020":"Entity class '${0}' has no id property",

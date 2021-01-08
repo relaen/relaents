@@ -1,4 +1,4 @@
-import { IEntityCfg, IEntityRelation, ERelationType, IEntityColumn, IEntity, EEntityState } from "./entitydefine";
+import { IEntityCfg, IEntityRelation, ERelationType, IEntityColumn, IEntity, EEntityState } from "./types";
 import { EntityFactory } from "./entityfactory";
 import { EntityManager } from "./entitymanager";
 import { EntityManagerFactory } from "./entitymanagerfactory";
@@ -19,7 +19,7 @@ class EntityProxy{
      */
     public static async get(entity:IEntity,propName:string):Promise<any>{
         if(!RelaenUtil.getIdValue(entity)){
-            Logger.console(ErrorFactory.getError("0105").message);
+            console.log(ErrorFactory.getError("0105").message);
             return null;
         }
 
@@ -37,7 +37,7 @@ class EntityProxy{
             //不存在当前em，需要新建
             if(em === null){
                 conn = await getConnection();
-                em = EntityManagerFactory.createEntityManager(conn);
+                em = await EntityManagerFactory.createEntityManager(conn);
             }
         
             let rel:IEntityRelation = eo.relations.get(propName);

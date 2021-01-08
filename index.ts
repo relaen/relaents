@@ -3,7 +3,6 @@ export * from './core/transaction/transaction';
 export * from './core/baseentity';
 export * from './core/connection';
 export * from './core/connectionmanager';
-export * from './core/entitydefine';
 export * from './core/entityfactory';
 export * from './core/entitymanager';
 export * from './core/entitymanagerfactory';
@@ -18,4 +17,4 @@ export * from './core/relaenutil';
 export * from './core/sqlexecutor';
 export * from './core/threadlocal';
 export * from './core/translator';
-
+export * from './core/types';
