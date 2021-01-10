@@ -63,21 +63,16 @@ class NativeQuery extends Query{
             let ecfg:IEntityCfg = EntityFactory.getClass(this.entityClassName);
             if(ecfg){  //具备该实体类，则处理为实体
                 //外键map
-                let fkMap:Map<string,any> = new Map();
                 let entity:IEntity = new ecfg.entity();
                 for(let col of ecfg.columns){
                     let c:IEntityColumn = col[1];
-                    //该字段无值
-                    if(r[c.name] === null){
+                    //该字段无值或是外键
+                    if(r[c.name] === null || c.refName){
                         continue;
                     }
-                    if(c.refName){ //外键 需要保存到外键map
-                        fkMap.set(c.name,r[c.name]);
-                    }else{      //自有属性
-                        entity[col[0]] = r[c.name];
-                    }
+                    entity[col[0]] = r[c.name];
                 }    
-                this.entityManager.addCache(entity,fkMap);
+                
                 //改变状态
                 entity.__status = EEntityState.PERSIST;
                 return entity;

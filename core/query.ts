@@ -126,27 +126,34 @@ class Query{
     /**
      * 获取单个查询结果
      * @param notEntity     不返回实体，如果类为true且只有一个属性值，则直接返回属性值，否则返回对象
-     * @returns             实体或object
+     * @returns             select:实体|object|值
+     *                      delete:true/false
      */
     public async getResult(notEntity?:boolean):Promise<any>{
-        let r = await this.getResultList(0,1,notEntity);
-        if(r && r.length>0){
-            //返回实体
-            if(!notEntity){
-                return r[0];
-            }
-            let props = Object.getOwnPropertyNames(r[0]);
-            //如果只有一个属性，则只返回属性值
-            if(props.length === 1){
-                return r[0][props[0]];
-            }
-            return r[0];
+        this.preHandle();
+        let r;
+        switch(this.type){
+            case EQueryType.SELECT:
+                r = await this.getResultList(0,1,notEntity);
+                if(r && r.length>0){
+                    //返回实体
+                    if(!notEntity){
+                        return r[0];
+                    }
+                    let props = Object.getOwnPropertyNames(r[0]);
+                    //如果只有一个属性，则只返回属性值
+                    if(props.length === 1){
+                        return r[0][props[0]];
+                    }
+                    return r[0];
+                }
+                return null;
+            case EQueryType.DELETE:
+                r = await SqlExecutor.exec(this.entityManager,this.execSql,this.paramArr);
+                return r?true:false;
         }
-        return null;
     }
-
-
-
+    
     /**
      * 获取结果列表
      * @param start         开始索引
@@ -154,21 +161,12 @@ class Query{
      * @param notEntity     是否不转成为实体
      * @returns             实体或对象数组
      */
-    public async getResultList(start?:number,limit?:number,notEntity?:boolean):Promise<Array<any>>{
-        if(!this.execSql){
-            let r = this.translator.getQuerySql();
-            this.execSql = r[0];
-            if(r[1]){
-                this.aliasMap = new Map();
-                for(let o of r[1]){
-                    this.aliasMap.set(o[1]['alias'],{
-                        entity:o[1]['entity'],
-                        linkName:o[0]
-                    });
-                }
-            }
-            this.paramArr = r[2];
+    public async getResultList(start?:number,limit?:number,notEntity?:boolean):Promise<any>{
+        //查询时才可调用
+        if(this.type !== EQueryType.SELECT){
+            return null;
         }
+        this.preHandle();
         if(start >= 0){
             this.start = start;
         }
@@ -187,6 +185,26 @@ class Query{
     }
 
     /**
+     * 预处理
+     */
+    private preHandle(){
+        if(!this.execSql){
+            let r = this.translator.getQuerySql();
+            this.execSql = r[0];
+            this.aliasMap = new Map();
+            
+            for(let o of r[1]){
+                this.aliasMap.set(o[1]['alias'],{
+                    entity:o[1]['entity'],
+                    linkName:o[0]
+                });
+            }
+            this.paramArr = r[2];
+        }
+    }
+    
+
+    /**
      * 生成实体
      * @param r     查询结果
      * @returns     实体对象
@@ -195,13 +213,13 @@ class Query{
         let ecfg:IEntityCfg = EntityFactory.getClass(this.entityClassName);
         let entity:IEntity = new ecfg.entity();
         //存储外键值
-        let map:Map<string,any> = new Map();
         Object.getOwnPropertyNames(r).forEach((field)=>{
             let ind:number = field.indexOf('_');
             //别名
             let alias:string = field.substr(0,ind);
             let propName:string = field.substr(ind+1);
                 
+            //主表
             if(alias === 't0'){
                 //属性名
                 if(!ecfg.columns.has(propName)){
@@ -209,10 +227,8 @@ class Query{
                 }
                 if(!ecfg.columns.get(propName).refName){ //属性
                     entity[propName] = r[field];
-                }else{ //外键
-                    map.set(ecfg.columns.get(propName).name,r[field]);
                 }    
-            }else{
+            }else{ //关联表
                 if(!this.aliasMap.has(alias)){
                     return;
                 }
@@ -223,11 +239,7 @@ class Query{
                 }
                 handleSubEntity(entity,arr.slice(1),propName,r[field]);
             }
-            
-            
         });
-        
-        this.entityManager.addCache(entity,map);
         entity.__status = EEntityState.PERSIST;
         return entity;
 
@@ -259,10 +271,11 @@ class Query{
     /**
      * 构造查询 字段集
      * @param fields    属性或属性数组
-     * @since 0.1.4
+     * @since 0.2.0
      */
     select(fields:string|Array<string>):Query{
         this.type = EQueryType.SELECT;
+        this.translator.sqlType = this.type;
         if(!fields){
             return;
         }
@@ -274,9 +287,10 @@ class Query{
     }
 
     /**
-     * 构造查询 表集
+     * 添加查询 表集
+     * @description     主表的关联表会自动处理，此处不需要加入
      * @param tables    实体类名或实体类名数组 
-     * @since 0.1.4
+     * @since 0.2.0
      */
     from(tables:string|Array<string>):Query{
         if(!tables){
@@ -289,12 +303,13 @@ class Query{
         return this;
     }
     /**
+     * 添加where条件
      * @param params    参数对象{paramName1:paramValue1,paramName2:{value:paramValue2,rel:'>',before:'(',after:'and'}...}
      *                  参数值有两种方式，一种是直接在参数名后给值，一种是给对象，对象中包括:
      *                  value:值,rel:关系,before:字段前字符串(通常为"("),after:值后字符串(通常为"and","or",")")
      *                  关系包括 >,<,>=,<=,<>,is,like等
      * @returns      数组，第一个where后的条件语句，第二个元素为值数组，如: [where 语句,[1,2]]
-     * @since 0.1.4
+     * @since 0.2.0
      */
     where(params:object):Query{
         this.translator.handleWhere(params);
@@ -302,10 +317,10 @@ class Query{
     }
 
     /**
-     * 处理排序对象
+     * 添加排序对象
      * @param className 
      * @param params 
-     * @since 0.1.4
+     * @since 0.2.0
      */
     orderBy(params:object){
         this.translator.handleOrder(params);
@@ -313,11 +328,24 @@ class Query{
     }
 
     /**
+     * 添加distinct
+     * @since 0.2.0
+     */
+    distinct(){
+        if(!this.translator.modifiers){
+            this.translator.modifiers = [];
+        }
+        this.translator.modifiers.push('DISTINCT');
+        return this;
+    }
+
+    /**
      * 构造删除
-     * @since 0.1.4
+     * @since 0.2.0
      */
     delete(){
         this.type = EQueryType.DELETE;
+        this.translator.sqlType = this.type;
         return this;
     }
 }

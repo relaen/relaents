@@ -1,4 +1,4 @@
-import { IEntityCfg, IEntityColumn, IEntity, IEntityRelation } from "./types";
+import { IEntityCfg, IEntityColumn, IEntity, IEntityRelation, EQueryType, ICondValueObj } from "./types";
 import { BaseEntity } from "./baseentity";
 import { EntityFactory } from "./entityfactory";
 import { ErrorFactory } from "./errorfactory";
@@ -9,17 +9,7 @@ import { RelaenUtil } from "./relaenutil";
  */
 class Translator{
     /**
-     * 实体别名 map {entityName:aliasName}
-     */
-    // public entityAliasMap:Map<string,string> = new Map();
-
-    /**
-     * 关联表 {entityName: joinedEntityName}
-     */
-    public joinTbls:Map<string,object> = new Map();
-
-    /**
-     * 链式map {linkName:{entity:entityName,alias:aliasName,co:column object}}
+     * 链式map {linkName:{entity:实体类名,alias:别名,co:字段对象}}
      * linkName为 实体类名[_外键引用名1_外键引用名2_...]
      * 如: Shop_owner
      */
@@ -51,9 +41,19 @@ class Translator{
     private whereObject:any[];
 
     /**
+     * 修饰符 如distince
+     */
+    public modifiers:string[];
+
+    /**
      * order by string
      */
     private orderString:string;
+
+    /**
+     * sql 类型
+     */
+    public sqlType:EQueryType;
 
     constructor(entityName?:string){
         this.mainEntityName = entityName;
@@ -172,45 +172,40 @@ class Translator{
 
     /**
      * entity转update sql
-     * @param entity    实体对象
+     * @param entity        实体对象
+     * @param className     实体类名
+     * 
      */
-    public static entityToDelete(entity:any):string{
-        let orm:IEntityCfg = EntityFactory.getClass(entity.constructor.name);
-        if(!orm){
-            throw ErrorFactory.getError("0010",[entity.constructor.name]);
-        }
-        if(!orm.id){
-            throw ErrorFactory.getError('0102');
-        }
-        let arr:string[] = [];
-        arr.push('delete from');
-        arr.push(orm.table);
-        arr.push('where');
-        //id值
-        let idValue:any;
-        //id名
+    public static toDelete(entity:any,className?:string):any[]{
+        className = className || entity.constructor.name;
         let idName:string;
-        if(orm.id){
-            idValue = entity[orm.id.name];
-            if(idValue === undefined || idValue === null){
-                throw ErrorFactory.getError('0102');
-            }
-            let co:IEntityColumn = orm.columns.get(orm.id.name); 
-            idName = co.name;
+        let idValue:any;
+        let orm:IEntityCfg = EntityFactory.getClass(className);
+        if(!orm){
+            throw ErrorFactory.getError("0010",[className]);
         }
-        
-        //字符串
-        let field:IEntityColumn = orm.columns.get(orm.id.name);
-        if(field.type === 'date' || field.type === 'string'){
-            idValue = "'" + idValue + "'";
+        if(entity instanceof BaseEntity){
+            idName = RelaenUtil.getIdName(entity);
+            idValue = RelaenUtil.getIdValue(entity);
+        }else if(className){
+            idValue = entity;
+            idName = orm.id?orm.id.name:null;
         }
-        arr.push(idName + " = " + idValue);
-        let sql = arr.join(' ');
-        
-        return sql;
+        if(!idName || !idValue){
+            throw ErrorFactory.getError("0025");
+        }
+        return ["delete from " + orm.table + ' where ' + orm.columns.get(idName).name + '=?',idValue];
     }
 
-    
+    /**
+     * 处理前置修饰符
+     */
+    public handleModifer(modifier:string){
+        if(!this.modifiers.includes(modifier)){
+            this.modifiers.push(modifier);
+        }
+    }
+
     /**
      * 处理select字段集合
      * @param arr   字段集合
@@ -225,7 +220,13 @@ class Translator{
                 fn = fn.substring(ind1+1,fn.length-1);
                 arr[i] = foo + '(' + this.handleOneField(fn,entityName,null,true) + ')';
             }else{ //普通字段
-                arr[i] = this.handleOneField(fn,entityName);   
+                let r = this.handleOneField(fn,entityName);
+                if(r !== null){
+                    arr[i] = r;
+                }else{ //移除
+                    arr.splice(i,1);
+                }
+                
             }
         }
         this.selectedFields = arr;
@@ -265,11 +266,14 @@ class Translator{
                     }else{
                         aliasName = this.linkNameMap.get(linkName)['alias'];
                     }
-                    arr.push(aliasName + '.' + o[1].name + ' as ' + aliasName + '_' + o[0]);
+                    //不查询外键
+                    if(!o[1].refName){ 
+                        arr.push(aliasName + '.' + o[1].name + ' as ' + aliasName + '_' + o[0]);
+                    }
                 }
                 return arr.join(',');
             }else{
-                return '';
+                return null;
             }
         }
         //字段分割
@@ -314,7 +318,6 @@ class Translator{
                 let rel:IEntityRelation = orm.relations.get(arr[i]);
                 let a1 = arr.slice(i+1);
                 //添加到join map
-                this.joinTbls.set(rel.entity,{entity:entityName,co:co});
                 let oldLink = linkName;
                 linkName += '.' + arr[i];
                 if(!this.linkNameMap.has(linkName)){
@@ -325,7 +328,16 @@ class Translator{
                         from:oldLink
                     });
                 }
+                //关联对象后无多余字段
+                if(i === arr.length-1){
+                    if(isCond){ //如果为条件，则转换为主键
+                        a1.push(RelaenUtil.getIdName(rel.entity));
+                    }else{ //查询字段，则添加*
+                        a1.push('*');
+                    }
+                }
                 return this.handleOneField(a1.join('.'),rel.entity,linkName,isCond);
+                
             }else{
                 if(isCond){
                     return aliasName + '.' + co.name;
@@ -341,10 +353,6 @@ class Translator{
      */
     public handleFrom(arr:string[]){
         for(let t of arr){
-            //从jointable移除重复的实体
-            if(this.joinTbls.has(t)){
-                this.joinTbls.delete(t);
-            }
             //加入entity alias map
             if(!this.linkNameMap.has(t)){
                 this.linkNameMap.set(t,{
@@ -358,26 +366,30 @@ class Translator{
 
     /**
      * 处理where条件
-     * @param params 
-     * @param entityName 
+     * @param params        参数对象，每个参数值参考ICondValueObj接口
+     * @param entityName    实体类名
      */
     public handleWhere(params:object,entityName?:string){
         if(!params || typeof params !== 'object'){
             return null;
         }
+        //值数组
         let pValues:any[] = [];
+        //where字符串
         let whereStr:string = '';
-        let index:number = 0;
-        let lastLogic:boolean = false;
+
         Object.getOwnPropertyNames(params).forEach((item,ii) => {
             //字段名
             let fn = this.handleOneField(item,entityName,null,true);
-            index++;
-            let vobj = params[item];
+            //值对象
+            let vobj:ICondValueObj = params[item];
+
+            //默认关系符
             let rel: string = '=';
+            //值
             let v:any;
-            //参数值为对象
-            if ( vobj !== null && typeof vobj === 'object') {
+            //参数值为对象且不为实体对象
+            if (vobj !== null && typeof vobj === 'object' && !(vobj instanceof BaseEntity)){
                 if (vobj.rel) {
                     rel = vobj.rel.toUpperCase();
                 }
@@ -394,32 +406,25 @@ class Translator{
             if (rel === 'LIKE') {
                 v = '%' + v + '%';
             }
-            
-            //置为false
-            lastLogic = false;
+
+            // 如果值为实体对象，则获取实体对象的主键值
+            if(v instanceof BaseEntity){
+                v = RelaenUtil.getIdValue(v);
+            }
 
             //前置字符串，通常为'('
             if(vobj.before){
-                let be:string = vobj.before.trim().toUpperCase();
-                whereStr += ' ' + be + ' ';
-                if(be === 'AND' || be === 'OR'){
-                    lastLogic = true;
-                }
+                whereStr += ' ' + vobj.before + ' ';
             }
-            //默认 and 关系
-            if(index>1 && !lastLogic){
-                whereStr += ' AND ';
+            //逻辑关系
+            if(ii>0){
+                whereStr += ' ' +  (vobj.logic || 'AND') + ' ';
             }
-            
             //字段和值
             whereStr += fn + ' ' + rel + ' ?';
             //后置字符串，通常为 'and','or',')'
             if(vobj.after){
-                let be:string = vobj.after.trim().toUpperCase();
-                whereStr += ' ' + be + ' ';
-                if(be === 'AND' || be === 'OR'){
-                    lastLogic = true;
-                }
+                whereStr += ' ' + vobj.after + ' ';
             }
 
             pValues.push(v);
@@ -451,20 +456,44 @@ class Translator{
 
     /**
      * 产生查询sql
+     * @returns     数组[sql,linkMap,values]
+     *              其中：linkMap为该translator的linkNameMap，values为查询参数值
      */
-    public getQuerySql(){
+    public getQuerySql():any[]{
+        switch(this.sqlType){
+            case EQueryType.SELECT:
+                return this.getSelectSql();
+            case EQueryType.DELETE:
+                return this.getDeleteSql();
+        }
+    }
+
+    /**
+     * 获取select sql
+     * @param mainOrm   主表类对象
+     * @returns 数组[sql,linkMap,values]
+     *          其中：linkMap为该translator的linkNameMap，values为查询参数值
+     */
+    private getSelectSql():any[]{
+        let orm:IEntityCfg = EntityFactory.getClass(this.mainEntityName);
+        //linkName不存在主表，则需要设置主表
+        if(!this.linkNameMap.has(this.mainEntityName)){
+            this.linkNameMap.set(this.mainEntityName,{alias:'t0',entity:this.mainEntityName});
+        }
+
+        let sql:string = 'SELECT ';
         let fields:string;
         if(!this.selectedFields || this.selectedFields.length===0){
             fields = this.handleOneField('*',this.mainEntityName);
         }else{
             fields = this.selectedFields.join(',')
         }
-        //linkName不存在主表，则需要设置主表
-        if(!this.linkNameMap.has(this.mainEntityName)){
-            this.linkNameMap.set(this.mainEntityName,{alias:'t0',entity:this.mainEntityName});
+        
+        //前置修饰符
+        if(this.modifiers && this.modifiers.length>0){
+            sql += ' ' + this.modifiers.join(',') + ' ';
         }
-        let orm:IEntityCfg = EntityFactory.getClass(this.mainEntityName);
-        let sql = 'SELECT ' + fields + ' FROM ' + orm.table + ' ' + this.linkNameMap.get(this.mainEntityName)['alias'];
+        sql += fields + ' FROM ' + orm.table + ' ' + this.linkNameMap.get(this.mainEntityName)['alias'];
         
         let entities:string[] = [];
         //处理主表和join表
@@ -496,6 +525,31 @@ class Translator{
 
         if(this.orderString){
             sql += ' ORDER BY ' + this.orderString;
+        }
+        return [sql,this.linkNameMap,this.whereObject?this.whereObject[1]:undefined];
+    }
+    /**
+     * 生成增删改sql
+     * @returns 数组[sql,linkMap,values]
+     *          其中：linkMap为该translator的linkNameMap，values为查询参数值
+     */
+    private getDeleteSql(){
+        let orm:IEntityCfg = EntityFactory.getClass(this.mainEntityName);
+        let sql = "delete t0 from " + orm.table + ' t0 ' ;
+        //处理主表和join表
+        for(let o of this.linkNameMap){
+            if(!o[1]['from']){
+                continue;
+            }
+            orm = EntityFactory.getClass(o[1]['entity']);
+            let al1:string = o[1]['alias'];
+            let al2:string = this.linkNameMap.get(o[1]['from'])['alias'];
+            let co:IEntityColumn = o[1]['co'];
+            sql += ' LEFT JOIN ' + orm.table + ' ' + al1 + ' on ' + al2 + '.' + co.name + '=' + al1 + '.' + co.refName;
+        }
+
+        if(this.whereObject){
+            sql += ' WHERE ' + this.whereObject[0];
         }
         return [sql,this.linkNameMap,this.whereObject?this.whereObject[1]:undefined];
     }

@@ -31,9 +31,6 @@ class Connection{
      * @param force     是否强制关闭
      */
     public async close(force?:boolean){
-        if(!this.connected){
-            return;
-        }
         await ConnectionManager.closeConnection(this,force);
     }
     

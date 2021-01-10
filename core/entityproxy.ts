@@ -1,7 +1,7 @@
 import { IEntityCfg, IEntityRelation, ERelationType, IEntityColumn, IEntity, EEntityState } from "./types";
 import { EntityFactory } from "./entityfactory";
 import { EntityManager } from "./entitymanager";
-import { EntityManagerFactory } from "./entitymanagerfactory";
+import { EntityManagerFactory, getEntityManager } from "./entitymanagerfactory";
 import { ErrorFactory } from "./errorfactory";
 import { NativeQuery } from "./nativequery";
 import { Logger } from "./logger";
@@ -32,39 +32,31 @@ class EntityProxy{
                 
         //具备关联关系
         if(eo.relations.has(propName)){
-            let em:EntityManager = EntityManagerFactory.getCurrentEntityManager();
-            let conn:Connection;
-            //不存在当前em，需要新建
-            if(em === null){
-                conn = await getConnection();
-                em = await EntityManagerFactory.createEntityManager(conn);
-            }
-        
+            let em:EntityManager = await getEntityManager();
             let rel:IEntityRelation = eo.relations.get(propName);
             //关联实体配置
             let eo1:IEntityCfg = EntityFactory.getClass(rel.entity);
-
             let column:IEntityColumn = eo.columns.get(propName);
             //引用外键
             if(rel.type === ERelationType.ManyToOne || rel.type === ERelationType.OneToOne && !rel.mappedBy){
                 let sql:string;
                 let query:NativeQuery;
                 //查询外键对象，如果为persist，则从cache取外键id进行查询，否则采用关联查询
-                if(entity.__status === EEntityState.PERSIST){
-                    let enObj = em.getCache(entity);
-                    if(enObj && enObj.fk && enObj.fk.get(column.name)){
-                        sql = "select * from " + eo1.table + " m where " + column.refName + " = ?";
-                        query = em.createNativeQuery(sql,rel.entity);
-                        //设置外键id
-                        query.setParameter(0,enObj.fk.get(column.name));
-                    }
-                }else{
+                // if(entity.__status === EEntityState.PERSIST){
+                //     let enObj = em.getCache(entity);
+                //     if(enObj && enObj.fk && enObj.fk.get(column.name)){
+                //         sql = "select * from " + eo1.table + " m where " + column.refName + " = ?";
+                //         query = em.createNativeQuery(sql,rel.entity);
+                //         //设置外键id
+                //         query.setParameter(0,enObj.fk.get(column.name));
+                //     }
+                // }else{
                     sql = "select m.* from " + eo1.table + " m,"+ eo.table +" m1 where m." +
                                     column.refName + "= m1." +  column.name + " and m1." + eo.columns.get(eo.id.name).name + " = ?";
                     query = em.createNativeQuery(sql,rel.entity);
                     //设置外键id
                     query.setParameter(0,RelaenUtil.getIdValue(entity));                                    
-                }
+                // }
                 //当state=2时，可能不存在外键，则query不存在
                 if(query){
                     entity[propName] = await query.getResult();
@@ -87,10 +79,7 @@ class EntityProxy{
                 entity[propName] = rel.type===ERelationType.OneToOne?await query.getResult():await query.getResultList();
             }
             //新建的需要关闭
-            if(conn){
-                em.close();
-                conn.close();
-            }
+            await em.close();
             return entity[propName];
         }
     }

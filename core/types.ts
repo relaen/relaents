@@ -222,6 +222,36 @@ interface IEntityRelation{
 }
 
 /**
+ * where条件值对象接口，用于链式操作时构造条件语句
+ */
+interface ICondValueObj{
+    /**
+     * 值
+     */
+    value:any;
+    
+    /**
+     * 字段与值的逻辑关系 如 =,>,<,>=,<=,<>,is,like等，默认=
+     */
+    rel?:string;
+
+    /**
+     * 与前一个字段的逻辑关系(第一个字段条件此项无效)，可选值为AND,OR，默认AND
+     */
+    logic?:string
+
+    /**
+     * 表达式前置串，通常为"("
+     */
+    before?:string;
+
+    /**
+     * 表达式后置串，通常为")"
+     */
+    after?:string;
+}
+
+/**
  * 外键约束
  */
 enum EFkConstraint{
@@ -304,4 +334,4 @@ enum EQueryType{
     DELETE = 3
 
 }
-export {IConnectionCfg,IConnectionPool,IEntity,IEntityCfg,IEntityColumn,IEntityRefColumn,IEntityPKey,IEntityRelation,EFkConstraint,ERelationType,EEntityState,EQueryType}
+export {IConnectionCfg,IConnectionPool,IEntity,IEntityCfg,IEntityColumn,IEntityRefColumn,IEntityPKey,IEntityRelation,ICondValueObj,EFkConstraint,ERelationType,EEntityState,EQueryType}

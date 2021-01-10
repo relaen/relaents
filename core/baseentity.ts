@@ -15,6 +15,9 @@ export class BaseEntity extends Object implements IEntity{
      */
     public __status:EEntityState;
 
+    /**
+     * 构造函数
+     */
     constructor(){
         super();
         //设置新建状态
@@ -54,8 +57,8 @@ export class BaseEntity extends Object implements IEntity{
 
     /**
      * 根据条件查询单个实体
-     * @param params            参数对象，参考EntityManager.findOne
-     * @since 0.1.4
+     * @param params            参数对象，参考EntityManager.findOne方法说明
+     * @since 0.2.0
      */
     public static async findOne(params?:object):Promise<IEntity>{
         let em = await getEntityManager();
@@ -66,10 +69,10 @@ export class BaseEntity extends Object implements IEntity{
 
     /**
      * 根据条件查找多个对象
-     * @param params            参数对象，参考EntityManager.findOne
+     * @param params            参数对象，参考EntityManager.findOne方法说明
      * @param start             开始记录行
      * @param limit             获取记录数
-     * @since 0.1.4                 
+     * @since 0.2.0                 
      */
     public static async findMany(params?:object,start?:number,limit?:number):Promise<Array<IEntity>>{
         let em = await getEntityManager();
@@ -81,7 +84,7 @@ export class BaseEntity extends Object implements IEntity{
     /**
      * 获取记录数
      * @param params    参数对象，参考EntityManager.findOne
-     * @since 0.1.4
+     * @since 0.2.0
      */
     public static async getCount(params?:object):Promise<number>{
         let em = await getEntityManager();
@@ -94,14 +97,13 @@ export class BaseEntity extends Object implements IEntity{
      * 删除对象
      * @param id    实体id值
      * @returns     删除的实体
-     * @since       0.1.4
+     * @since       0.2.0
      */
-    public static async delete(id:any):Promise<IEntity>{
+    public static async delete(id:any):Promise<boolean>{
         let em = await getEntityManager();
-        let entity:IEntity = await em.find(this.name,id);
-        await em.delete(entity);
+        await em.delete(id,this.name);
         await em.close();
-        return entity;
+        return true;
     }
 
     /**

@@ -9,6 +9,8 @@ var RelaenTip ={
     "0022":"Entity class '${0}' has no property '${1}'",
     "0023":"Property '${1}' of entity class '${0}' is not a relative property",
     "0024":"The max-length of property '${1}' of entity class '${0}' is ${2}",
+    "0025":"Entity has no id property or id value",
+
     "0100":"Wrong rql: lack of keyword 'from'",
     "0101":"Wrong rql: nearby 'join on'",
     "0102":"Entity has no id value，can not be delete",

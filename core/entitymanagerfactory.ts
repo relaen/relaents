@@ -21,14 +21,14 @@ class EntityManagerFactory{
      * @param conn  数据库连接对象
      * @returns     entitymanager
      */
-    public static async createEntityManager(conn?:Connection){
+    public static async createEntityManager(){
         let id:number = RelaenUtil.genId();
-        conn = await getConnection(id);
+        let conn:Connection = await getConnection(id);
         let sid = conn.threadId;
         let em:EntityManager;
         if(!this.entityManagerMap.has(sid)){ //
             em = new EntityManager(conn,id);
-            this.entityManagerMap.set(sid,{
+            this.entityManagerMap.set(id,{
                 num:1,
                 em:em
             });
@@ -55,14 +55,16 @@ class EntityManagerFactory{
             let o = this.entityManagerMap.get(sid);
             if(--o.num <= 0){
                 this.entityManagerMap.delete(sid);
+                force = true;
             }
-            force = true;
         }
         if(force){
             //清除缓存
             em.clearCache();
             //如果connection的创建者id与该entitymanager一致，则也需要释放该connection
             if(em.id && em.id === em.connection.fromId){
+                await em.connection.close(true);
+            }else{
                 await em.connection.close();
             }
         }
@@ -71,17 +73,17 @@ class EntityManagerFactory{
     /**
      * 获取当前实体管理器(线程内唯一)
      */
-    public static getCurrentEntityManager(){
-        //获取threadId
-        let sid:number = ThreadLocal.getThreadId();
-        if(sid && this.entityManagerMap.has(sid)){
-            let o = this.entityManagerMap.get(sid);
-            if(o.em){
-                return o.em;
-            }
-        }
-        return null;
-    }
+    // public static getCurrentEntityManager(){
+    //     //获取threadId
+    //     let sid:number = ThreadLocal.getThreadId();
+    //     if(sid && this.entityManagerMap.has(sid)){
+    //         let o = this.entityManagerMap.get(sid);
+    //         if(o.em){
+    //             return o.em;
+    //         }
+    //     }
+    //     return null;
+    // }
 }
 
 /**

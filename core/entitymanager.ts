@@ -26,10 +26,10 @@ class EntityManager{
     public connection:Connection;
 
     /**
-     * 实体缓存map {cacheId:{entity:object,fk:外键值map}
+     * 查询结果集缓存
+     *     key:sql语句和参数值组合成的字符串，value:查询结果集
      */
-    public entityMap:Map<string,any>;
-
+    private cache:Map<string,any> = new Map();
     /**
      * 构造函数
      * @param conn  连接对象
@@ -38,7 +38,7 @@ class EntityManager{
     constructor(conn:Connection,id?:number){
         this.id = id;
         this.connection = conn;
-        this.entityMap = new Map();
+        this.cache = new Map();
     }
 
     /**
@@ -82,20 +82,11 @@ class EntityManager{
                 RelaenUtil.setIdValue(entity,r);
             }
         }else{ //update
-            let cacheId = this.genCacheId(entity);
-            if(cacheId){
-                if(this.entityMap.has(cacheId)){
-                    let entity1:IEntity = this.entityMap.get(cacheId).entity;
-                    //对比有差别才进行更新
-                    if(entity1 && !entity.compare(entity1)){
-                        //更新到数据库
-                        let sqlAndValue:any[] = Translator.entityToUpdate(entity,ignoreUndefinedValue);
-                        let r = await SqlExecutor.exec(this,sqlAndValue[0],sqlAndValue[1]);
-                        if(r === null){
-                            return null;
-                        }
-                    }
-                }
+            //更新到数据库
+            let sqlAndValue:any[] = Translator.entityToUpdate(entity,ignoreUndefinedValue);
+            let r = await SqlExecutor.exec(this,sqlAndValue[0],sqlAndValue[1]);
+            if(r === null){
+                return null;
             }
         }
         return entity;
@@ -103,16 +94,16 @@ class EntityManager{
 
     /**
      * 删除实体
-     * @param entity    待删除实体
-     * @returns         被删除实体
+     * @param entity        待删除实体或id
+     * @param className     实体类名
+     * @returns             被删除实体
      */
-    public async delete(entity:IEntity):Promise<IEntity>{
-        let sql:string = Translator.entityToDelete(entity);
-        let r = await SqlExecutor.exec(this,sql);
-        if(r === null){
-            return null;
+    public async delete(entity:any,className?:string):Promise<boolean>{
+        let sqlAndValue = Translator.toDelete(entity,className);
+        if(sqlAndValue){
+            await SqlExecutor.exec(this,sqlAndValue[0],[sqlAndValue[1]]);
         }
-        return entity;
+        return true;
     }
 
     /**
@@ -122,31 +113,24 @@ class EntityManager{
      * @returns             entity
      */
     public async find(entityClassName:string,id:any):Promise<IEntity>{
-        let key:string = entityClassName + '@' + id;
-        if(this.entityMap.has(key)){  //从缓存中获取
-            return this.genEntityFromObject(this.entityMap.get(key).entity);
-        }else{  //从数据库获取
-            let orm:IEntityCfg = EntityFactory.getClass(entityClassName);
-            if(!orm){
-                throw ErrorFactory.getError("0020",[entityClassName]);
-            }
-            let idName:string = RelaenUtil.getIdName(entityClassName);
-            if(!idName){
-                throw ErrorFactory.getError("0103");
-            }
-            let query = this.createNativeQuery("select * from " + orm.table + " where " + idName + '=?',entityClassName);
-            query.setParameter(0,id);
-            return await query.getResult();
+        let orm:IEntityCfg = EntityFactory.getClass(entityClassName);
+        if(!orm){
+            throw ErrorFactory.getError("0020",[entityClassName]);
         }
+        let idName:string = RelaenUtil.getIdName(entityClassName);
+        if(!idName){
+            throw ErrorFactory.getError("0103");
+        }
+        let query = this.createNativeQuery("select * from " + orm.table + " where " + orm.columns.get(idName).name + '=?',entityClassName);
+        query.setParameter(0,id);
+        return await query.getResult();
     }
 
     /**
      * 根据条件查找一个对象
      * @param entityClassName   实体类名 
-     * @param params            参数对象{propName1:propValue1,propName2:{value:propValue2,rel:'>',before:'(',after:'and'}...}
-     *                          参数值有两种方式，一种是直接在参数名后给值，一种是给对象，对象中包括:
-     *                          value:值,rel:关系,before:字段前字符串(通常为"("),after:值后字符串(通常为"and","or",")")
-     *                          关系包括 >,<,>=,<=,<>,is,like等
+     * @param params            参数对象{propName1:propValue1,propName2:{value:propValue2,rel:'>',before:'(',after:')',logic:'OR'}...}
+     *                          参数值有两种方式，一种是值，一种是值对象，值对象参考ICondValueObj接口说明
      * @param order             排序对象 {propName1:asc,propName2:desc,...}
      * @since 0.1.3
      */
@@ -222,45 +206,30 @@ class EntityManager{
         EntityManagerFactory.closeEntityManager(this,force);
     }
 
-    /**
-     * 生成缓存id
-     * @param entity    实体对象
-     */
-    private genCacheId(entity:IEntity):string{
-        return entity.constructor.name + '@' + RelaenUtil.getIdValue(entity);
-    }
-
     
     /**
-     * 添加实体对象到cache
-     * @param entity 实体对象
-     * @param fk     外键值map
+     * 加入cache
+     * @param key       key 
+     * @param value     结果集
+     * @since           0.2.0
      */
-    public addCache(entity:any,fk?:Map<string,any>){
-        //如果cache设置为false，则不缓存
-        if(!RelaenManager.cache){
-            return;
-        }
-        this.entityMap.set(this.genCacheId(entity),{entity:entity.clone(),fk:fk});
+    public addToCache(key:string,value:any){
+        this.cache.set(key,value);
     }
-
     /**
-     * 获取cache
-     * @param entity  实体对象
-     * @returns       {entity:实体,fk:外键map}
+     * 从cache中获取
+     * @param key   缓存key
+     * @since       0.2.0
      */
-    public getCache(entity:any):any{
-        let cacheId:string = this.genCacheId(entity);
-        if(this.entityMap.has(cacheId)){
-            return this.entityMap.get(cacheId);
-        }
+    public getFromCache(key:string){
+        return this.cache.get(key);
     }
 
     /**
      * 清除缓存
      */
     public clearCache(){
-        this.entityMap.clear();
+        this.cache.clear();
     }
     /**
      * 生成主键
@@ -358,104 +327,6 @@ class EntityManager{
             }
         }
         return true;
-    }
-
-    /**
-     * 处理条件
-     * @param className 实体类名
-     * @param params    参数对象{paramName1:paramValue1,paramName2:{value:paramValue2,rel:'>',before:'(',after:'and'}...}
-     *                  参数值有两种方式，一种是直接在参数名后给值，一种是给对象，对象中包括:
-     *                  value:值,rel:关系,before:字段前字符串(通常为"("),after:值后字符串(通常为"and","or",")")
-     *                  关系包括 >,<,>=,<=,<>,is,like等
-     * @returns      数组，第一个where后的条件语句，第二个元素为值数组，如: [where 语句,[1,2]]
-     */
-    private handleConds(className:string,params:object):any{
-        let orm:IEntityCfg = EntityFactory.getClass(className);
-        if(!orm){
-            throw ErrorFactory.getError("0010",[className]);
-        }
-        if(!params || typeof params !== 'object'){
-            return null;
-        }
-        let pValues:any[] = [];
-        let whereStr:string = '';
-        let index:number = 0;
-        let lastLogic:boolean = false;
-        Object.getOwnPropertyNames(params).forEach((item,ii) => {
-            //可能字段名带“.”
-            let fa:string[] = item.split('.');
-            //不是字段，则跳过
-            if(!orm.columns.has(fa[0])){
-                return;
-            }
-            index++;
-            let vobj = params[item];
-            let rel: string = '=';
-            let v:any;
-            //参数值为对象
-            if ( vobj !== null && typeof vobj === 'object') {
-                if (vobj.rel) {
-                    rel = vobj.rel.toUpperCase();
-                }
-                v = vobj.value;
-            }else{
-                v = vobj;
-            }
-
-            //如果值为null且关系为“=”，则需要改为“is”
-            if (params[item] === null && rel === '=') {
-                rel = 'IS';
-            }
-            //like 添加%
-            if (rel === 'LIKE') {
-                v = '%' + v + '%';
-            }
-            //默认 and 关系
-            if(index>1 && !lastLogic){
-                whereStr += ' AND ';
-            }
-            //置为false
-            lastLogic = false;
-
-            //前置字符串，通常为'('
-            if(vobj.before){
-                whereStr += ' ' + v.before + ' ';
-            }
-            //字段和值
-            whereStr += 'm.' + item + ' ' + rel + ' ?';
-            //后置字符串，通常为 'and','or',')'
-            if(vobj.after){
-                let be:string = vobj.after.trim().toUpperCase();
-                whereStr += ' ' + be + ' ';
-                if(be === 'AND' || be === 'OR'){
-                    lastLogic = true;
-                }
-            }
-            pValues.push(v);
-        });
-        if(whereStr !== ''){
-            return [whereStr,pValues];
-        }
-        return null;
-    }
-
-    /**
-     * 处理排序对象
-     * @param className 
-     * @param params 
-     */
-    private handleOrder(params:object):string{
-        if(!params || typeof params !== 'object'){
-            return null;
-        }
-        let arr = [];
-        Object.getOwnPropertyNames(params).forEach((item) => {
-            arr.push('m.' + item + ' ' + (params[item] === 'asc'?'asc':'desc'));
-        });
-        if(arr.length>0){
-            return arr.join(',');
-        }
-        return null;
     }
 }
 
