@@ -2,6 +2,8 @@ import { EntityManager } from "./entitymanager";
 import { Connection } from "./connection";
 import { getConnection } from "./connectionmanager";
 import { RelaenUtil } from "./relaenutil";
+import { RelaenThreadLocal } from "./threadlocal";
+
 
 /**
  * entity manager 工厂
@@ -14,7 +16,7 @@ class EntityManagerFactory{
     private static entityManagerMap:Map<number,any> = new Map();
 
     /**
-     * 创建 entity manager
+     * 创建 entity manager，使用后需要释放
      * @param conn  数据库连接对象
      * @returns     entitymanager
      */
@@ -23,7 +25,7 @@ class EntityManagerFactory{
         let conn:Connection = await getConnection(id);
         let sid = conn.threadId;
         let em:EntityManager;
-        if(!this.entityManagerMap.has(id)){
+        if(!this.entityManagerMap.has(sid)){
             em = new EntityManager(conn,id);
             this.entityManagerMap.set(sid,{
                 num:1,
@@ -66,6 +68,17 @@ class EntityManagerFactory{
                 await em.connection.close();
             }
         }
+    }
+
+    /**
+     * 获取当前entitymanager，使用后不用释放
+     */
+    public static getCurrentEntityManager():EntityManager{
+        let sid = RelaenThreadLocal.getThreadId();
+        if(!sid || !this.entityManagerMap.has(sid)){
+            return null;
+        }
+        return this.entityManagerMap.get(sid).em;
     }
 }
 
