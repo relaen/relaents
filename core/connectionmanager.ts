@@ -1,7 +1,7 @@
 import { RelaenManager } from "./relaenmanager";
 import { Connection } from "./connection";
 import { ErrorFactory } from "./errorfactory";
-import { ThreadLocal } from "./threadlocal";
+import { RelaenThreadLocal } from "./threadlocal";
 import { IConnectionCfg } from "./types";
 
 
@@ -69,12 +69,10 @@ class ConnectionManager{
     public static async createConnection(id?:number):Promise<Connection>{
         let conn:Connection;
         //把conn加入connectionMap
-        let sid:number = ThreadLocal.getThreadId();
+        let sid:number = RelaenThreadLocal.getThreadId();
 
         if(!sid){ //新建conn
-            sid = ThreadLocal.newThreadId();
-        }else{
-            id = undefined;
+            sid = RelaenThreadLocal.newThreadId();
         }
         if(!this.connectionMap.has(sid)){ //线程id对应对象不存在
             switch(RelaenManager.dialect){
@@ -112,15 +110,14 @@ class ConnectionManager{
      * @param force         是否强制释放
      */
     public static async closeConnection(connection:Connection,force?:boolean){
-        //强制释放，不检查计数器，否则检查计数器
+        //获取threadId
+        let sid:number = connection.threadId;
+            
+        //非强制释放，检查计数器
         if(!force){
-            //获取threadId
-            let sid:number = connection.threadId;
             if(sid && this.connectionMap.has(sid)){
                 let o = this.connectionMap.get(sid);
                 if(--o.num <= 0){ //最后一个close，需要从map删除
-                    //清理 connection map
-                    this.connectionMap.delete(sid);
                     force = true;       
                 }
             }
@@ -128,6 +125,8 @@ class ConnectionManager{
         
         //需要释放
         if(force){
+            //清理 connection map
+            this.connectionMap.delete(sid);
             switch(RelaenManager.dialect){
                 case 'mysql':
                     return await this.closeMysqlConnection(connection);

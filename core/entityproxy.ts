@@ -1,13 +1,10 @@
 import { IEntityCfg, IEntityRelation, ERelationType, IEntityColumn, IEntity, EEntityState } from "./types";
 import { EntityFactory } from "./entityfactory";
 import { EntityManager } from "./entitymanager";
-import { EntityManagerFactory, getEntityManager } from "./entitymanagerfactory";
+import { getEntityManager } from "./entitymanagerfactory";
 import { ErrorFactory } from "./errorfactory";
 import { NativeQuery } from "./nativequery";
-import { Logger } from "./logger";
 import { RelaenUtil } from "./relaenutil";
-import { getConnection } from "./connectionmanager";
-import { Connection } from "./connection";
 /**
  * 实体代理类
  */

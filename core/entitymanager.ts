@@ -3,14 +3,12 @@ import { Translator } from "./translator";
 import { SqlExecutor } from "./sqlexecutor";
 import { EntityFactory } from "./entityfactory";
 import { Query } from "./query";
-import { RelaenManager } from "./relaenmanager";
 import { Connection } from "./connection";
 import { ErrorFactory } from "./errorfactory";
 import { NativeQuery } from "./nativequery";
 import { EntityManagerFactory } from "./entitymanagerfactory";
 import { RelaenUtil } from "./relaenutil";
-import { BaseEntity } from "..";
-import { Logger } from "./logger";
+import { BaseEntity } from "./baseentity";
 
 /**
  * 实体管理器

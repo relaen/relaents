@@ -1,10 +1,7 @@
-import { EntityManager } from "./entitymanager";
 import { EntityFactory } from "./entityfactory";
 import { IEntityCfg, IEntity, EEntityState } from "./types";
-import { EntityManagerFactory, getEntityManager } from "./entitymanagerfactory";
+import { getEntityManager } from "./entitymanagerfactory";
 import { RelaenUtil } from "./relaenutil";
-import { getConnection } from "./connectionmanager";
-import { Connection } from "./connection";
 
 /**
  * 实体基类

@@ -1,4 +1,4 @@
-import { IEntityCfg, IEntityPKey, IEntityColumn, IEntityRelation, IEntity } from "./types";
+import { IEntityCfg, IEntityPKey, IEntityColumn, IEntityRelation} from "./types";
 
 /**
  * 实体工厂，管理所有实体类

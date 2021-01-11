@@ -57,7 +57,7 @@ async function addShop1(){
 async function updShop(){
     // 此为显式获取entitymanager，在该方法中将使用该entitymanager；
     // 如果去掉这一行，将隐式创建entitymanager，此例子中，将创建两个entitymanager(同时创建两个数据库连接)
-    let em:EntityManager = await getEntityManager();
+    // let em:EntityManager = await getEntityManager();
     //采用Shop类find的方法查询
     let shop:Shop = <Shop> await Shop.find(1);
     // 通过entitymanager操作
@@ -67,7 +67,7 @@ async function updShop(){
     await shop.save(true);
     // 通过entitymanager操作
     // await em.save(shop,true);  
-    await em.close();
+    // await em.close();
 }
 
 /**
@@ -338,7 +338,7 @@ RelaenManager.init({
 
 /************* 执行测试方法 ***************/
 
-// addShop();
+addShop();
 // addShop1();
 // updShop();
 // delShop(5);
@@ -349,7 +349,7 @@ RelaenManager.init({
 // findOne();
 // findMany();
 // getCount();
-linkQuery();
+// linkQuery();
 // native();
 // doTransaction();
 
