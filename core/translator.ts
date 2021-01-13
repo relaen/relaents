@@ -413,7 +413,7 @@ class Translator{
             }
 
             //前置字符串，通常为'('
-            if(vobj.before){
+            if(vobj && vobj.before){
                 whereStr += ' ' + vobj.before + ' ';
             }
             //逻辑关系
@@ -423,7 +423,7 @@ class Translator{
             //字段和值
             whereStr += fn + ' ' + rel + ' ?';
             //后置字符串，通常为 'and','or',')'
-            if(vobj.after){
+            if(vobj && vobj.after){
                 whereStr += ' ' + vobj.after + ' ';
             }
 
