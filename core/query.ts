@@ -319,7 +319,7 @@ class Query{
     /**
      * 添加排序对象
      * @param className 
-     * @param params 
+     * @param params    {paramName1:'desc',paramName2:'asc',...} paramName1:参数名,desc:降序 asc:升序
      * @since 0.2.0
      */
     orderBy(params:object){

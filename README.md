@@ -59,6 +59,9 @@ http://www.noomi.cn/relaen/api.html
 1. 取消原有rql创建方式，采用链式创建sql，参考示例代码的linkQuery方法；
 2. 增强实体类和实体对象的方法。
 
+#### 0.2.1
+1. 给实体类的findMany方法增加orderby参数。
+
 ## 配置文件
 relaen依赖配置文件进行初始化，配置内容如下：
 配置项|说明|类型|必填|可选值|默认值|备注

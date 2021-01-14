@@ -69,11 +69,12 @@ export class BaseEntity extends Object implements IEntity{
      * @param params            参数对象，参考EntityManager.findOne方法说明
      * @param start             开始记录行
      * @param limit             获取记录数
+     * @param order             排序规则 {paramName1:'desc',paramName2:'asc',...} paramName1:参数名,desc:降序 asc:升序
      * @since 0.2.0                 
      */
-    public static async findMany(params?:object,start?:number,limit?:number):Promise<Array<IEntity>>{
+    public static async findMany(params?:object,start?:number,limit?:number,order?:object):Promise<Array<IEntity>>{
         let em = await getEntityManager();
-        let list =  await em.findMany(this.name,params,start,limit);
+        let list =  await em.findMany(this.name,params,start,limit,order);
         await em.close();
         return list;
     }
