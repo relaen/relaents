@@ -77,6 +77,10 @@ class Translator{
         let values:string[] = [];
         //占位符
         let qArr:string[] = [];
+
+        //id字段名
+        let idField:string = orm.id && orm.columns.has(orm.id.name) ? orm.columns.get(orm.id.name).name:undefined;
+
         for(let key of orm.columns){
             let fo:IEntityColumn = key[1];
             let v:any;
@@ -87,12 +91,16 @@ class Translator{
                 v = entity[key[0]];
             }
             
-            // //如果绑定字段名不存在，则用属性名
+            // 如果绑定字段名不存在，则用属性名
             let fn = fo.name?fo.name:key[0];
-            if(v === null){
+            //值为空或字段已存在，则不添加
+            if(v === null || fields.includes(fn)){
                 continue;
             }
-            
+            //设置主键
+            if(idField === fn){
+                RelaenUtil.setIdValue(entity,v);
+            }
             fields.push(fn);
             values.push(v);
             qArr.push('?');
@@ -138,7 +146,7 @@ class Translator{
             if(fields.includes(fn)){
                 continue;
             }
-            fields.push(fn);
+            
             //字段值
             let v;
             if(fo.refName){ //外键，只取主键
@@ -147,12 +155,13 @@ class Translator{
             }else{
                 v = entity[key[0]];
             }
-
-            if(v === null && ignoreUndefinedValue){
+            //值为空且不忽略空值或字段已添加，则不处理
+            if(v === null && ignoreUndefinedValue || fields.includes(fn)){
                 continue;
             }
             
             fv.push(fn + '=?');
+            fields.push(fn);
             values.push(v);
             if(key[0] === orm.id.name){
                 idValue = v;
@@ -418,7 +427,11 @@ class Translator{
             }
             //逻辑关系
             if(ii>0){
-                whereStr += ' ' +  (vobj.logic || 'AND') + ' ';
+                if(vobj && vobj.logic &&  vobj.logic.trim() !== ''){
+                    whereStr += ' ' + vobj.logic + ' ';
+                }else{
+                    whereStr += ' AND ';
+                }
             }
             //字段和值
             whereStr += fn + ' ' + rel + ' ?';

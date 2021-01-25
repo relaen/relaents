@@ -60,7 +60,10 @@ http://www.noomi.cn/relaen/api.html
 2. 增强实体类和实体对象的方法。
 
 #### 0.2.1
-1. 给实体类的findMany方法增加orderby参数。
+1. 给实体类的findMany方法增加orderby参数;
+2. 修复insert或update时，相同字段出现多次执行不正确的bug；
+3. 修复where条件多个参数且参数值不是对象时的bug；
+4. 修复外键且主键情况下，设置外键对象并保存后，主键id错误的bug。
 
 ## 配置文件
 relaen依赖配置文件进行初始化，配置内容如下：

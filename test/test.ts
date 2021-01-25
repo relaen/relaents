@@ -2,6 +2,7 @@
 import { RelaenManager, getEntityManager, EntityManager, Query, Connection, Transaction,getConnection,NativeQuery } from "..";
 import { UserInfo } from "./entity/userinfo";
 import { Shop } from "./entity/shop";
+import { User } from "./entity/user";
 
 /**
  * 与数据库相关的方法都采用async，使用时请使用await 关键字
@@ -338,7 +339,7 @@ RelaenManager.init({
 
 /************* 执行测试方法 ***************/
 
-addShop();
+// addShop();
 // addShop1();
 // updShop();
 // delShop(5);
@@ -352,4 +353,3 @@ addShop();
 // linkQuery();
 // native();
 // doTransaction();
-
