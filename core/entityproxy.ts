@@ -38,22 +38,12 @@ class EntityProxy{
             if(rel.type === ERelationType.ManyToOne || rel.type === ERelationType.OneToOne && !rel.mappedBy){
                 let sql:string;
                 let query:NativeQuery;
-                //查询外键对象，如果为persist，则从cache取外键id进行查询，否则采用关联查询
-                // if(entity.__status === EEntityState.PERSIST){
-                //     let enObj = em.getCache(entity);
-                //     if(enObj && enObj.fk && enObj.fk.get(column.name)){
-                //         sql = "select * from " + eo1.table + " m where " + column.refName + " = ?";
-                //         query = em.createNativeQuery(sql,rel.entity);
-                //         //设置外键id
-                //         query.setParameter(0,enObj.fk.get(column.name));
-                //     }
-                // }else{
-                    sql = "select m.* from " + eo1.table + " m,"+ eo.table +" m1 where m." +
-                                    column.refName + "= m1." +  column.name + " and m1." + eo.columns.get(eo.id.name).name + " = ?";
-                    query = em.createNativeQuery(sql,rel.entity);
-                    //设置外键id
-                    query.setParameter(0,RelaenUtil.getIdValue(entity));                                    
-                // }
+                sql = "select m.* from " + eo1.table + " m,"+ eo.table +" m1 where m." +
+                                column.refName + "= m1." +  column.name + " and m1." + eo.columns.get(eo.id.name).name + " = ?";
+                query = em.createNativeQuery(sql,rel.entity);
+                //设置外键id
+                query.setParameter(0,RelaenUtil.getIdValue(entity));                                    
+            
                 //当state=2时，可能不存在外键，则query不存在
                 if(query){
                     entity[propName] = await query.getResult();

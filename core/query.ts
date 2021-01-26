@@ -240,7 +240,7 @@ class Query{
                 handleSubEntity(entity,arr.slice(1),propName,r[field]);
             }
         });
-        entity.__status = EEntityState.PERSIST;
+        this.entityManager.setEntityStatus(entity,EEntityState.PERSIST);
         return entity;
 
         function handleSubEntity(entity:IEntity,arr:string[],key:string,value:any){

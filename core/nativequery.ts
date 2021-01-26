@@ -77,8 +77,8 @@ class NativeQuery extends Query{
                     entity[col[0]] = r[c.name];
                 }    
                 
-                //改变状态
-                entity.__status = EEntityState.PERSIST;
+                //设置状态
+                this.entityManager.setEntityStatus(entity,EEntityState.PERSIST);
                 return entity;
             }
         }

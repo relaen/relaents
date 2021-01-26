@@ -28,6 +28,11 @@ class EntityManager{
      *     key:sql语句和参数值组合成的字符串，value:查询结果集
      */
     private cache:Map<string,any> = new Map();
+
+    /**
+     * 实体状态map
+     */
+    private entityStatusMap:WeakMap<IEntity,EEntityState> = new WeakMap();
     /**
      * 构造函数
      * @param conn  连接对象
@@ -51,8 +56,9 @@ class EntityManager{
         if(!this.preHandleEntity(entity,ignoreUndefinedValue)){
             return null;
         }
+        let status = this.getEntityStatus(entity);
         //无主键或状态为new
-        if(entity.__status === EEntityState.NEW){
+        if(status === EEntityState.NEW){
             //检查并生成主键
             let idValue:any = RelaenUtil.getIdValue(entity);
             let sqlAndValue:any[];
@@ -74,7 +80,7 @@ class EntityManager{
                 return;
             }
             //修改状态
-            entity.__status = EEntityState.PERSIST;
+            this.setEntityStatus(entity,EEntityState.PERSIST);
             //设置主键值
             if(!RelaenUtil.getIdValue(entity)){
                 RelaenUtil.setIdValue(entity,r);
@@ -229,6 +235,7 @@ class EntityManager{
     public clearCache(){
         this.cache.clear();
     }
+
     /**
      * 生成主键
      * @param entity 
@@ -325,6 +332,24 @@ class EntityManager{
             }
         }
         return true;
+    }
+
+    /**
+     * 设置实体状态
+     * @param entity    实体 
+     * @param state     状态
+     */
+    public setEntityStatus(entity:IEntity,state:EEntityState){
+        this.entityStatusMap.set(entity,state);
+    }
+
+    /**
+     * 获取实体状态
+     * @param entity    实体对象
+     * @returns         实体状态或undefined
+     */
+    public getEntityStatus(entity:IEntity):EEntityState{
+        return this.entityStatusMap.get(entity);
     }
 }
 
