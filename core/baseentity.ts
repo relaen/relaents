@@ -1,6 +1,6 @@
 import { EntityFactory } from "./entityfactory";
 import { IEntityCfg, IEntity, EEntityState } from "./types";
-import { getEntityManager } from "./entitymanagerfactory";
+import { getEntityManager, EntityManagerFactory } from "./entitymanagerfactory";
 import { RelaenUtil } from "./relaenutil";
 
 /**
@@ -18,7 +18,7 @@ export class BaseEntity extends Object implements IEntity{
     constructor(){
         super();
         //设置新建状态
-        this.__status = EEntityState.NEW;
+        EntityManagerFactory.setEntityStatus(this,EEntityState.NEW);
     }
 
     /**

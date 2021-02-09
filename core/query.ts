@@ -6,6 +6,7 @@ import { EntityFactory } from "./entityfactory";
 import { IEntityCfg, IEntity, EEntityState, EQueryType, IEntityRelation } from "./types";
 import { ErrorFactory } from "./errorfactory";
 import { RelaenUtil } from "./relaenutil";
+import { EntityManagerFactory } from "./entitymanagerfactory";
 
 /**
  * 查询类
@@ -214,6 +215,10 @@ class Query{
         let entity:IEntity = new ecfg.entity();
         //存储外键值
         Object.getOwnPropertyNames(r).forEach((field)=>{
+            //无值字段不处理
+            if(r[field] === undefined || r[field] === null){
+                return;
+            }
             let ind:number = field.indexOf('_');
             //别名
             let alias:string = field.substr(0,ind);
@@ -240,7 +245,7 @@ class Query{
                 handleSubEntity(entity,arr.slice(1),propName,r[field]);
             }
         });
-        this.entityManager.setEntityStatus(entity,EEntityState.PERSIST);
+        EntityManagerFactory.setEntityStatus(entity,EEntityState.PERSIST);
         return entity;
 
         function handleSubEntity(entity:IEntity,arr:string[],key:string,value:any){

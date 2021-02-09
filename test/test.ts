@@ -219,7 +219,8 @@ async function getCount(){
         }
     }
 
-    await Shop.getCount(params);
+    let count = await Shop.getCount(params);
+    console.log(count);
     //第二种方法
     // let em:EntityManager = await getEntityManager();
     // let count = await em.getCount(Shop.name,params);
@@ -276,13 +277,13 @@ async function linkQuery(){
  */
 async function native(){
     let em:EntityManager = await getEntityManager();
-    let sql = "select * from t_shop";
-    //创建原生查询对象，第二个参数，会导致查询结果转实体类Shop，如果为空，则不转换
-    let query:NativeQuery = em.createNativeQuery(sql,Shop.name);
+    let sql = "select t1.*,t2.* from t_shop t1,t_user t2 where t1.manager_id = t2.user_id";
+    //创建原生查询对象，第二个参数，会导致查询结果转实体类Shop，如果为空，则不转换,转换时不
+    let query:NativeQuery = em.createNativeQuery(sql);
     // 此操作则不转换为实体对象
     // let query:NativeQuery = em.createNativeQuery(sql);
     //前五条数据，因为传入了实体类名，将会转换成实体对象
-    await query.getResultList(0,5);
+    let r = await query.getResultList(0,5);
     await em.close();
 }
 
@@ -350,6 +351,6 @@ RelaenManager.init({
 // findOne();
 // findMany();
 // getCount();
-// linkQuery();
+linkQuery();
 // native();
 // doTransaction();

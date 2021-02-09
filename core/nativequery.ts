@@ -3,6 +3,7 @@ import { SqlExecutor } from "./sqlexecutor";
 import { IEntityCfg, IEntityColumn, IEntity, EEntityState } from "./types";
 import { EntityFactory } from "./entityfactory";
 import { Query } from "./query";
+import { EntityManagerFactory } from "./entitymanagerfactory";
 
 /**
  * 原生查询
@@ -71,14 +72,14 @@ class NativeQuery extends Query{
                 for(let col of ecfg.columns){
                     let c:IEntityColumn = col[1];
                     //该字段无值或是外键
-                    if(r[c.name] === null || c.refName){
+                    if(r[c.name] === null || r[c.name] === undefined || c.refName){
                         continue;
                     }
                     entity[col[0]] = r[c.name];
-                }    
+                }
                 
                 //设置状态
-                this.entityManager.setEntityStatus(entity,EEntityState.PERSIST);
+                EntityManagerFactory.setEntityStatus(entity,EEntityState.PERSIST);
                 return entity;
             }
         }

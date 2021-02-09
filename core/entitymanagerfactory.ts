@@ -3,6 +3,7 @@ import { Connection } from "./connection";
 import { getConnection } from "./connectionmanager";
 import { RelaenUtil } from "./relaenutil";
 import { RelaenThreadLocal } from "./threadlocal";
+import { IEntity, EEntityState } from "./types";
 
 
 /**
@@ -15,6 +16,10 @@ class EntityManagerFactory{
      */
     private static entityManagerMap:Map<number,any> = new Map();
 
+    /**
+     * 实体状态map
+     */
+    private static entityStatusMap:WeakMap<IEntity,EEntityState> = new WeakMap();
     /**
      * 创建 entity manager，使用后需要释放
      * @param conn  数据库连接对象
@@ -79,6 +84,24 @@ class EntityManagerFactory{
             return null;
         }
         return this.entityManagerMap.get(sid).em;
+    }
+
+    /**
+     * 设置实体状态
+     * @param entity    实体 
+     * @param state     状态
+     */
+    public static setEntityStatus(entity:IEntity,state:EEntityState){
+        this.entityStatusMap.set(entity,state);
+    }
+
+    /**
+     * 获取实体状态
+     * @param entity    实体对象
+     * @returns         实体状态或undefined
+     */
+    public static getEntityStatus(entity:IEntity):EEntityState{
+        return this.entityStatusMap.get(entity);
     }
 }
 

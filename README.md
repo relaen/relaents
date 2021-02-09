@@ -5,6 +5,10 @@ relaen是[noomi](https://www.npmjs.com/package/noomi)团队打造的一套node�
 ## 使用限制
 relaen当前仅支持mysql数据库，其它数据库产品陆续加入中。
 
+## 交流
+1. QQ群：926248391；
+2. 加入验证问题：who are you，回答：relaen。
+
 ## 实体对象生成
 relaen提供了[relaen cli](https://www.npmjs.com/package/relaen-cli)工具，该工具可自动生成relaen所需要的实体。
 
@@ -64,6 +68,11 @@ http://www.noomi.cn/relaen/api.html
 2. 修复insert或update时，相同字段出现多次执行不正确的bug；
 3. 修复where条件多个参数且参数值不是对象时的bug；
 4. 修复外键且主键情况下，设置外键对象并保存后，主键id错误的bug。
+
+#### 0.2.2
+1. 去掉entity中的__status属性，由EntityManagerFactory统一管理；
+2. 查询结果为null或undefined，则该属性不会存在于结果集中，避免出现全部属性为空的对象。
+
 
 ## 配置文件
 relaen依赖配置文件进行初始化，配置内容如下：
