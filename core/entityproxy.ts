@@ -26,7 +26,6 @@ class EntityProxy{
         }
 
         let eo:IEntityCfg = EntityFactory.getClass(entity.constructor.name);
-                
         //具备关联关系
         if(eo.relations.has(propName)){
             let em:EntityManager = await getEntityManager();
@@ -42,8 +41,7 @@ class EntityProxy{
                                 column.refName + "= m1." +  column.name + " and m1." + eo.columns.get(eo.id.name).name + " = ?";
                 query = em.createNativeQuery(sql,rel.entity);
                 //设置外键id
-                query.setParameter(0,RelaenUtil.getIdValue(entity));                                    
-            
+                query.setParameter(0,RelaenUtil.getIdValue(entity));
                 //当state=2时，可能不存在外键，则query不存在
                 if(query){
                     entity[propName] = await query.getResult();
@@ -57,7 +55,6 @@ class EntityProxy{
                 if(!column1){
                     throw ErrorFactory.getError('0022',[rel.entity,column1]);
                 }
-                
                 let rql:string = "select * from " + eo1.table + " where " + column1.name + " = ?";
                 //查询外键对象
                 let query:NativeQuery = em.createNativeQuery(rql,rel.entity);
