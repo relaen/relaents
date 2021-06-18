@@ -3,7 +3,7 @@ relaen是[noomi](https://www.npmjs.com/package/noomi)团队打造的一套node�
 支持链式创建查询、原生sql、类查询、一级缓存等。
 
 ## 使用限制
-relaen当前仅支持mysql数据库，其它数据库产品陆续加入中。
+relaen当前仅支持mysql、mssql、oracle(12+)、postgres数据库，其它数据库产品陆续加入中。
 
 ## 交流
 1. QQ群：926248391；
@@ -73,6 +73,9 @@ http://www.noomi.cn/relaen/api.html
 1. 去掉entity中的__status属性，由EntityManagerFactory统一管理；
 2. 查询结果为null或undefined，则该属性不会存在于结果集中，避免出现全部属性为空的对象。
 
+#### 0.3.0
+1. 增加oracle、mssql、postgres数据库支持；
+2. 增加entity scheme配置项。
 
 ## 配置文件
 relaen依赖配置文件进行初始化，配置内容如下：
@@ -108,14 +111,15 @@ min|最小连接数|number|否|1
     "dialect":"mysql",
     "host":"localhost",
     "port":3306,
-    "username":"root",
-    "password":"field",
-	"database":"test",
+    "username":"your user name",
+    "password":"your password",
+	"database":"your db name",
 	"pool":{
 		"min":0,
 		"max":10
 	},
     "entities": [
+        //编译后的实体文件路径
         "/dist/test/entity/**/*.js"
     ],
     "cache":true,
@@ -141,9 +145,8 @@ min|最小连接数|number|否|1
 参数为对象，可选，包含以下项：
 参数名|说明|类型|必填|可选值|默认值|备注
 -|-|-|-|-|-|-
-generator|主键生成策略|string|否|identity(默认，需要数据库支持自增主键),table(需要在数据库中增加主键表)|identity
-table|主键表|string|否|无|无|如果generator为'table'，则该项必填
-column|主键生成对应字段名|string|否|无|无|该字段属于主键表，如果generator为'table'，则该项不能为空
+generator|主键生成策略|string|否|identity(默认，支持mysql、mssql、postgres),sequence(支持oracle、mssql、postgres)|identity
+seqName|主键对应sequence名|否|无|无|如果generator为'sequence'，则该项不能为空
 
 ### @Column(字段注解)
 对属性进行注解，表示该属性为字段。

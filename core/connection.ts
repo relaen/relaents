@@ -1,5 +1,6 @@
-import { Transaction } from "./transaction/transaction";
+import { Transaction } from "./transaction";
 import { ConnectionManager } from "./connectionmanager";
+import { TransactionFactory } from "./transactionfactory";
 /**
  * 数据库连接类
  */
@@ -20,7 +21,17 @@ class Connection{
     /**
      * 创建者对象id
      */
-    fromId:number;
+    fromId: number;
+    
+    /**
+     * 事务对象
+     */
+    transaction:Transaction;
+    /**
+     * 是否自动提交
+     */
+    // oracle 中不使用
+    // autoCommit: boolean = true;
 
     constructor(conn){
         this.conn = conn;
@@ -38,7 +49,9 @@ class Connection{
      * 创建事务对象
      */
     public createTransaction():Transaction{
-        return new Transaction(this);
+        let trClass = TransactionFactory.get();
+        let con = this.conn;
+        return trClass?Reflect.construct(trClass,[con]):null;
     }
 }
 

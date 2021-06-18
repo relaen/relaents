@@ -89,9 +89,7 @@ function OneToOne(cfg:IEntityRelation){
 function ManyToOne(cfg:IEntityRelation){
     return (target:any,propertyName:string)=>{
         cfg.type = ERelationType.ManyToOne;
-        // process.nextTick(()=>{
         EntityFactory.addRelation(target.constructor.name,propertyName,cfg);
-        // });
     }
 }
 

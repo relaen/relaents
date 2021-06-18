@@ -20,6 +20,7 @@ class EntityManagerFactory{
      * 实体状态map
      */
     private static entityStatusMap:WeakMap<IEntity,EEntityState> = new WeakMap();
+    
     /**
      * 创建 entity manager，使用后需要释放
      * @param conn  数据库连接对象

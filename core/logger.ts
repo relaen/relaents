@@ -13,6 +13,14 @@ class Logger{
             console.log(msg);
         }
     }
+
+    /**
+     * 写错误消息
+     * @param msg 
+     */
+    public static error(msg){
+        console.error(msg);
+    }
 }
 
 export{Logger};

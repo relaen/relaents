@@ -1,19 +1,21 @@
-import { Connection } from "../connection";
-import { BaseTransaction } from "./basetransaction";
+import { Transaction } from "../../transaction";
 
 /**
  * mysql 事务类
+ * @since 0.3.0
  */
-class MysqlTransaction extends BaseTransaction{
+class MysqlTransaction extends Transaction{
     /**
      * 开始事务
      */
-    async begin(connection:Connection){
+    public async begin(){
         await new Promise((resolve,reject)=>{
-            connection.conn.beginTransaction((err,conn)=>{
+            this.conn.beginTransaction((err,conn)=>{
                 if(err){
                     reject(err);
+                    return;
                 }
+                super.begin();
                 resolve(null);
             });
         });
@@ -22,14 +24,15 @@ class MysqlTransaction extends BaseTransaction{
     /**
      * 事务提交
      */
-    async commit(connection:Connection){
-        const me = this;
+    public async commit(){
         await new Promise((resolve,reject)=>{
-            connection.conn.commit(async (err)=>{
+            this.conn.commit(async (err)=>{
                 if(err){
-                    await me.rollback(connection.conn); 
+                    await this.rollback();
                     reject(err);
+                    return;
                 }
+                super.commit();
                 resolve(null);
             });
         });
@@ -38,15 +41,19 @@ class MysqlTransaction extends BaseTransaction{
     /**
      * 事务回滚
      */
-    async rollback(connection:Connection){
+    public async rollback(){
         await new Promise((resolve,reject)=>{
-            connection.conn.rollback((err)=>{
+            this.conn.rollback((err)=>{
                 if(err){
                     reject(err);
+                    return;
                 }
+                super.rollback();
                 resolve(null);
             });
         });
     }
 }
-export {MysqlTransaction}
+
+
+export{MysqlTransaction}

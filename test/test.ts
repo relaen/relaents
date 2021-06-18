@@ -340,7 +340,7 @@ RelaenManager.init({
 
 /************* 执行测试方法 ***************/
 
-// addShop();
+addShop();
 // addShop1();
 // updShop();
 // delShop(5);
@@ -351,6 +351,6 @@ RelaenManager.init({
 // findOne();
 // findMany();
 // getCount();
-linkQuery();
+// linkQuery();
 // native();
 // doTransaction();

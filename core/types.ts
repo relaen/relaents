@@ -1,282 +1,313 @@
 /**
  * 连接池配置
  */
-interface IConnectionPool{
+interface IConnectionPool {
     /**
      * 最大连接数
      */
-    max:number;
+    max: number;
     /**
      * 最小连接数
      */
-    min:number;
+    min: number;
 }
 
 /**
  * 连接配置
  */
-interface IConnectionCfg{
+interface IConnectionCfg {
     /**
      * 数据库产品
      */
-    dialect:string;
+    dialect: string;
     /**
      * 服务器地址
      */
-    host:string;
-     /**
-      * 端口号
-      */
-    port:number;
+    host: string;
+    /**
+     * 端口号
+     */
+    port: number;
     /**
      * 用户名
      */
-    username:string;
+    username: string;
     /**
      * 密码
      */
-    password:string;
+    password: string;
     /**
      * 数据库
      */
-    database:string;
+    database: string;
+
+    /**
+     * 连接超时时间
+     * @since 0.3.0
+     */
+    timeout:number;
+
+    /**
+     * 连接后idle超时时间（ms）
+     */
+    idleTimeout: number;
+
     /**
      * 连接池配置
      */
-    pool:IConnectionPool;
+    pool: IConnectionPool;
     /**
      * 是否cache
      */
-    cache:boolean;
+    cache: boolean;
     /**
      * 是否调试模式
      */
-    debug:boolean;
+    debug: boolean;
 
     /**
      * 实体配置数组 
      */
-    entities:Array<string>
+    entities: Array<string>
 }
 
 /**
  * 实体接口
  */
-interface IEntity{
+interface IEntity {
     /**
      * 状态
      */
-    __status:EEntityState;
+    __status: EEntityState;
     /**
      * 保存方法
      */
-    save:Function;
+    save: Function;
     /**
      * 删除方法
      */
-    delete:Function;
+    delete: Function;
     /**
      * 比较方法
      */
-    compare:Function;
+    compare: Function;
 }
 /**
  * entity类配置项
  */
-interface IEntityCfg{
+interface IEntityCfg {
     /**
      * 实体类
      */
-    entity?:any;
+    entity?: any;
     /**
      * 表名
      */
-    table?:string;
+    table?: string;
 
     /**
      * 数据库名
      */
-    schema?:string;
+    schema?: string;
 
     /**
      * 主键
      */
-    id?:IEntityPKey;
+    id?: IEntityPKey;
 
     /**
      * 字段集合，键为对象属性名(非表字段名)
      */
-    columns:Map<string,IEntityColumn>;
+    columns: Map<string, IEntityColumn>;
 
     /**
      * 关系集合，键为对象属性名(非表字段名)
      */
-    relations:Map<string,IEntityRelation>;
+    relations: Map<string, IEntityRelation>;
 }
 
 /**
  * 实体字段配置
  */
-interface IEntityColumn{
+interface IEntityColumn {
     /**
      * 字段名，默认为属性名
      */
-    name?:string;
-    
+    name?: string;
+
     /**
      * 外键字段名
      */
-    refName?:string;
+    refName?: string;
 
     /**
      * 数据类型 int double string date object
      */
-    type?:string;
+    type?: string;
 
     /**
      * 是否可空
      */
-    nullable?:boolean;
+    nullable?: boolean;
 
     /**
      * 长度，type为字符串时有效
      */
-    length?:number;
+    length?: number;
+
+    /**
+     * 是否自增,mssql
+     */
+    identity?: boolean;
 }
 
 /**
  * 外键字段类型
  */
-interface IEntityRefColumn{
+interface IEntityRefColumn {
     /**
      * 字段名，默认为属性名
      */
-    name?:string;
+    name?: string;
 
     /**
      * 外键字段名
      */
-    refName?:string;
+    refName?: string;
 
     /**
      * 是否可空
      */
-    nullable?:boolean;
+    nullable?: boolean;
 }
 
 /**
  * 实体主键配置
  */
-interface IEntityPKey{
+interface IEntityPKey {
     /**
      * 对应属性名
      */
-    name?:string;
+    name?: string;
+
     /**
-     * 主键生成策略 identity table uuid
+     * 主键生成策略 identity,sequence,table,uuid
      */
-    generator?:string;
+    generator?: string;
 
     /**
      * 主键来源表，数据库表，专门用于主键生成
-     * 该表必须包含两个字段 
-     * id_name: string,对应某个实体主键生成器名,
-     * id_value: int,对应主键值
      */
-    table?:string;
+    table?: string;
 
     /**
-     * 主键对应来源表记录项，如User实体用id_name='ID_USER'这一条记录产生主键，则keyName='ID_USER'
+     * 主键键字段名，如果generator为'table'，则该项不能为空
      */
-    keyName?:string;
+    columnName?: string;
+
+    /**
+     * 主键值字段名，如果generator为'table'，则该项不能为空
+     */
+     valueName?: string;
+
+    /**
+     * 主键对应记录项名，如果generator为'table'，则该项不能为空
+     * 如User实体用columnName=ID_USER这一条记录产生主键，则keyName='ID_USER'
+     */
+    keyName?: string;
+
+    /**
+     * 对应sequence生成策略，表示sequence name
+     */
+    seqName?: string;
 }
 
 /**
  * 实体关系配置
  */
-interface IEntityRelation{
+interface IEntityRelation {
     /**
      * 被依赖的实体类名
      */
-    entity:string;
+    entity: string;
 
     /**
      * 关系类型
      */
-    type?:ERelationType;
+    type?: ERelationType;
 
     /**
      * 外键删除策略 cascade,setnull,none
      */
-    onDelete?:string;
+    onDelete?: string;
 
     /**
      * 外键更新策略 cascade,setnull,none
      */
-    onUpdate?:string;
+    onUpdate?: string;
 
     /**
      * 被引用时对应子表属性 
      */
-    mappedBy?:string;
+    mappedBy?: string;
 }
 
 /**
  * where条件值对象接口，用于链式操作时构造条件语句
  */
-interface ICondValueObj{
+interface ICondValueObj {
     /**
      * 值
      */
-    value:any;
-    
+    value: any;
+
     /**
      * 字段与值的逻辑关系 如 =,>,<,>=,<=,<>,is,like等，默认=
      */
-    rel?:string;
+    rel?: string;
 
     /**
      * 与前一个字段的逻辑关系(第一个字段条件此项无效)，可选值为AND,OR，默认AND
      */
-    logic?:string
+    logic?: string
 
     /**
      * 表达式前置串，通常为"("
      */
-    before?:string;
+    before?: string;
 
     /**
      * 表达式后置串，通常为")"
      */
-    after?:string;
+    after?: string;
 }
 
 /**
  * 外键约束
  */
-enum EFkConstraint{
+enum EFkConstraint {
     /**
      * 无操作
      */
-    NONE='none',
+    NONE = 'none',
     /**
      * 限制修改和删除
      */
-    RESTRICT='restrict',
+    RESTRICT = 'restrict',
     /**
      * 级联操作
      */
-    CASCADE='cascade',
+    CASCADE = 'cascade',
     /**
      * 外键置空
      */
-    SETNULL='set null'
+    SETNULL = 'set null'
 }
 
 /**
  * 关系类型
  */
-enum ERelationType{
+enum ERelationType {
     /**
      * 一对一关系
      */
@@ -298,22 +329,22 @@ enum ERelationType{
 /**
  * 实体状态
  */
-enum EEntityState{
+enum EEntityState {
     /**
      * 新建状态
      */
-    NEW = 1,   
+    NEW = 1,
 
     /**
      * 持久化状态
      */
-    PERSIST = 2     
+    PERSIST = 2
 }
 
 /**
  * query类型
  */
-enum EQueryType{
+enum EQueryType {
     /**
      * select
      */
@@ -334,4 +365,4 @@ enum EQueryType{
     DELETE = 3
 
 }
-export {IConnectionCfg,IConnectionPool,IEntity,IEntityCfg,IEntityColumn,IEntityRefColumn,IEntityPKey,IEntityRelation,ICondValueObj,EFkConstraint,ERelationType,EEntityState,EQueryType}
+export { IConnectionCfg, IConnectionPool, IEntity, IEntityCfg, IEntityColumn, IEntityRefColumn, IEntityPKey, IEntityRelation, ICondValueObj, EFkConstraint, ERelationType, EEntityState, EQueryType }
