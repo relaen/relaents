@@ -27,14 +27,33 @@ class Connection{
      * 事务对象
      */
     transaction:Transaction;
-    /**
-     * 是否自动提交
-     */
-    // oracle 中不使用
-    // autoCommit: boolean = true;
 
-    constructor(conn){
+    /**
+     * 使用次数
+     * @since 0.3.0
+     */
+    useCount:number;
+
+    /**
+     * 构造器
+     * @param conn  实际的连接
+     */
+    constructor(conn?:any){
+        this.useCount = 1;
+        this.setConn(conn);
+    }
+
+    /**
+     * 设置实际的connection
+     * @param conn      实际的连接
+     * @sinace 0.3.0
+     */
+    public setConn(conn:any){
+        if(!conn){
+            return;
+        }
         this.conn = conn;
+        this.connected = true;
     }
 
     /**
@@ -51,7 +70,7 @@ class Connection{
     public createTransaction():Transaction{
         let trClass = TransactionFactory.get();
         let con = this.conn;
-        return trClass?Reflect.construct(trClass,[con]):null;
+        return trClass?Reflect.construct(trClass,[this]):null;
     }
 }
 

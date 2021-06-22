@@ -10,7 +10,7 @@ class MysqlTransaction extends Transaction{
      */
     public async begin(){
         await new Promise((resolve,reject)=>{
-            this.conn.beginTransaction((err,conn)=>{
+            this.conn.conn.beginTransaction((err,conn)=>{
                 if(err){
                     reject(err);
                     return;
@@ -26,7 +26,7 @@ class MysqlTransaction extends Transaction{
      */
     public async commit(){
         await new Promise((resolve,reject)=>{
-            this.conn.commit(async (err)=>{
+            this.conn.conn.commit(async (err)=>{
                 if(err){
                     await this.rollback();
                     reject(err);
@@ -43,7 +43,7 @@ class MysqlTransaction extends Transaction{
      */
     public async rollback(){
         await new Promise((resolve,reject)=>{
-            this.conn.rollback((err)=>{
+            this.conn.conn.rollback((err)=>{
                 if(err){
                     reject(err);
                     return;

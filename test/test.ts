@@ -3,6 +3,7 @@ import { RelaenManager, getEntityManager, EntityManager, Query, Connection, Tran
 import { UserInfo } from "./entity/userinfo";
 import { Shop } from "./entity/shop";
 import { User } from "./entity/user";
+import { RelaenThreadLocal } from "../core/threadlocal";
 
 /**
  * 与数据库相关的方法都采用async，使用时请使用await 关键字
@@ -324,10 +325,10 @@ RelaenManager.init({
     //数据库名
     database:"test",
     //连接池，可选
-    pool:{
-        min:0,
-        max:10
-    },
+    // pool:{
+    //     min:0,
+    //     max:10
+    // },
     //实体文件配置，为编译后js地址
     entities: [
         "/dist/test/entity/**/*.js"
@@ -340,7 +341,7 @@ RelaenManager.init({
 
 /************* 执行测试方法 ***************/
 
-addShop();
+// addShop();
 // addShop1();
 // updShop();
 // delShop(5);
@@ -354,3 +355,9 @@ addShop();
 // linkQuery();
 // native();
 // doTransaction();
+
+for(let i=0;i<30;i++){
+    doTransaction();
+}
+
+

@@ -1,4 +1,6 @@
+import { Connection } from "./connection";
 import { Logger } from "./logger";
+import { RelaenThreadLocal } from "./threadlocal";
 import { TransactionManager } from "./transactionmanager";
 
 /**
@@ -6,15 +8,22 @@ import { TransactionManager } from "./transactionmanager";
  */
 abstract class Transaction{
     /**
-     * 实际连接对象，与dialect对应
+     * 连接对象
      */
-    conn:any;
+    conn:Connection;
+
+    /**
+     * 线程id
+     */
+    threadId: number;
     /**
      * 构造器
      * @param conn  真实连接对象
      */
     constructor(conn:any){
         this.conn = conn;
+        //每个transaction都新建一个threadId
+        this.threadId = RelaenThreadLocal.newThreadId();
         //加入事务管理器
         TransactionManager.add(this);
     }
@@ -29,7 +38,7 @@ abstract class Transaction{
      */
     public async commit(){
         //从事务管理器移除
-        TransactionManager.remove();
+        TransactionManager.remove(this.threadId);
         Logger.console('Transaction is commited.');
     }
 
@@ -38,7 +47,7 @@ abstract class Transaction{
      */
     public async rollback(){
         //从事务管理器移除
-        TransactionManager.remove();
+        TransactionManager.remove(this.threadId);
         Logger.console('Transaction is rolled back.');
     }
 }

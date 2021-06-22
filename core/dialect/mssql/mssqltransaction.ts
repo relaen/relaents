@@ -17,13 +17,13 @@ export class MssqlTransaction extends Transaction {
     constructor(conn:any){
         super(conn);
         //创建实际的transaction
-        this.tr = conn.transaction();
+        this.tr = conn.conn.transaction();
     }
     /**
      * 开始事务
      */
     async begin() {
-        this.tr.begin();
+        await this.tr.begin();
         super.begin();
     }
 
