@@ -31,7 +31,7 @@ abstract class Transaction{
      * 事务开始
      */
     public async begin(){
-        Logger.console('Transaction is began.');
+        Logger.console('Transaction is begun.');
     }
     /**
      * 事务提交,继承类需要重载
@@ -39,7 +39,7 @@ abstract class Transaction{
     public async commit(){
         //从事务管理器移除
         TransactionManager.remove(this.threadId);
-        Logger.console('Transaction is commited.');
+        Logger.console('Transaction is committed.');
     }
 
     /**
