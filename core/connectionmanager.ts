@@ -53,14 +53,11 @@ class ConnectionManager {
             }
             conn.connected = true;
             conn.threadId = sid;
-            this.connectionMap.set(sid, {
-                num: 1,
-                conn: conn
-            });
+            //加入connection map
+            this.connectionMap.set(sid, conn);
         } else { //已存在，则只修改conn的创建数，不新建conn
-            let o = this.connectionMap.get(sid);
-            o.num++;
-            conn = o.conn;
+            conn = this.connectionMap.get(sid);
+            conn.useCount++;
         }
         return conn;
     }
@@ -76,8 +73,8 @@ class ConnectionManager {
         //非强制释放，检查计数器
         if (!force) {
             if (sid && this.connectionMap.has(sid)) {
-                let o = this.connectionMap.get(sid);
-                if (--o.num <= 0) { //最后一个close，需要从map删除
+                let conn:Connection = this.connectionMap.get(sid);
+                if (--conn.useCount <= 0) { //最后一个close，需要从map删除
                     force = true;
                 }
             }
@@ -89,6 +86,25 @@ class ConnectionManager {
             this.connectionMap.delete(sid);
             return await this.provider.closeConnection(connection);
         }
+    }
+
+    /**
+     * 添加conn到map
+     * @param threadId      线程id 
+     * @param conn          连接对象
+     * @since 0.3.0
+     */
+    public static addConnection(threadId:number,conn:Connection){
+        this.connectionMap.set(threadId, conn);
+    }
+
+    /**
+     * 从map移除connection
+     * @param threadId      线程id
+     * @since 0.3.0
+     */
+     public static removeConnection(threadId:number){
+        this.connectionMap.delete(threadId);
     }
 }
 

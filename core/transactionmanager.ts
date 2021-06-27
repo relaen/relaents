@@ -1,9 +1,10 @@
-import { RelaenManager } from "./relaenmanager";
+import { ConnectionManager } from "./connectionmanager";
 import { RelaenThreadLocal } from "./threadlocal";
 import { Transaction } from "./transaction";
 
 /**
- * 事务 管理器
+ * 事务管理器
+ * @since 0.3.0
  */
 export class TransactionManager{
     /**
@@ -14,11 +15,12 @@ export class TransactionManager{
 
     /**
      * 添加事务
-     * @param value     transaction 类
-     * @param threadId  thread id，默认新建
+     * @param tx     transaction实例
      */
-    public static add(value:Transaction,threadId?:number){
-        this.transactions.set(threadId || RelaenThreadLocal.newThreadId(),value);
+    public static add(tx:Transaction){
+        this.transactions.set(tx.threadId,tx);
+        //因为已经修改theadId，需要把connection绑定到新threadid
+        ConnectionManager.addConnection(tx.threadId,tx.conn);
     }
 
     /**
@@ -35,6 +37,8 @@ export class TransactionManager{
      * @param threadId  thread id，默认为当前thread id
      */
     public static remove(threadId?:number){
-        this.transactions.delete(threadId||RelaenThreadLocal.getThreadId());
+        threadId ||= RelaenThreadLocal.getThreadId();
+        this.transactions.delete(threadId);
+        ConnectionManager.removeConnection(threadId);
     }
 }
