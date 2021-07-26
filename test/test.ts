@@ -341,7 +341,7 @@ RelaenManager.init({
 
 /************* 执行测试方法 ***************/
 
-// addShop();
+addShop();
 // addShop1();
 // updShop();
 // delShop(5);
@@ -355,9 +355,4 @@ RelaenManager.init({
 // linkQuery();
 // native();
 // doTransaction();
-
-for(let i=0;i<30;i++){
-    doTransaction();
-}
-
 
