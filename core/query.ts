@@ -6,7 +6,6 @@ import { IEntityCfg, IEntity, EEntityState, EQueryType, IEntityRelation } from "
 import { ErrorFactory } from "./errorfactory";
 import { RelaenUtil } from "./relaenutil";
 import { EntityManagerFactory } from "./entitymanagerfactory";
-import { RelaenManager } from "./relaenmanager";
 import { Translator } from "./translator";
 import { TranslatorFactory } from "./translatorfactory";
 

@@ -1,17 +1,17 @@
 import { Transaction } from "../../transaction";
 
 /**
- * mysql 事务类
+ * Sqlite 事务类
  * @since 0.3.0
  */
-class MysqlTransaction extends Transaction{
+class SqliteTransaction extends Transaction {
     /**
      * 开始事务
      */
-    public async begin(){
-        await new Promise((resolve,reject)=>{
-            this.conn.conn.beginTransaction((err)=>{
-                if(err){
+    public async begin() {
+        await new Promise((resolve, reject) => {
+            this.conn.conn.run('begin', (err) => {
+                if (err) {
                     return reject(err);
                 }
                 super.begin();
@@ -23,11 +23,10 @@ class MysqlTransaction extends Transaction{
     /**
      * 事务提交
      */
-    public async commit(){
-        await new Promise((resolve,reject)=>{
-            this.conn.conn.commit(async (err)=>{
-                if(err){
-                    await this.rollback();
+    public async commit() {
+        await new Promise((resolve, reject) => {
+            this.conn.conn.run('commit', (err) => {
+                if (err) {
                     return reject(err);
                 }
                 super.commit();
@@ -39,13 +38,13 @@ class MysqlTransaction extends Transaction{
     /**
      * 事务回滚
      */
-    public async rollback(){
-        await new Promise((resolve,reject)=>{
-            this.conn.conn.rollback((err)=>{
-                if(err){
+    public async rollback() {
+        await new Promise((resolve, reject) => {
+            this.conn.conn.run('rollback', (err) => {
+                if (err) {
                     return reject(err);
                 }
-                super.rollback();
+                super.commit();
                 resolve(null);
             });
         });
@@ -53,4 +52,4 @@ class MysqlTransaction extends Transaction{
 }
 
 
-export{MysqlTransaction}
+export { SqliteTransaction }

@@ -53,7 +53,7 @@ class ConnectionManager {
             }
             conn.connected = true;
             conn.threadId = sid;
-            //加入connection map
+            //加入connection map 
             this.connectionMap.set(sid, conn);
         } else { //已存在，则只修改conn的创建数，不新建conn
             conn = this.connectionMap.get(sid);

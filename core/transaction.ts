@@ -6,7 +6,7 @@ import { TransactionManager } from "./transactionmanager";
 /**
  * 事务基类
  */
-abstract class Transaction{
+abstract class  Transaction{
     /**
      * 连接对象
      */

@@ -1,22 +1,20 @@
 import { Connection } from "../../connection";
 import { ErrorFactory } from "../../errorfactory";
 import { BaseProvider } from "../../baseprovider";
-import { EntityManager } from "../../entitymanager";
-import { IMysqlConnectionCfg } from "./mysqloptions";
+import { IMariadbConnectionCfg } from "./mariadboptions";
 
 /**
- * mysql provider
+ * mariadb provider
  * @since 0.3.0
  */
-export class MysqlProvider extends BaseProvider {
-
+export class MariadbProvider extends BaseProvider {
     /**
      * 构造器
      * @param cfg   连接配置
      */
-    constructor(cfg: IMysqlConnectionCfg) {
+    constructor(cfg: IMariadbConnectionCfg) {
         super(cfg);
-        this.dbMdl = require('mysql');
+        this.dbMdl = require('mariadb');
         this.options = cfg.options ? cfg.options : {
             host: cfg.host,
             port: cfg.port,
@@ -26,18 +24,21 @@ export class MysqlProvider extends BaseProvider {
             ssl: cfg.ssl,
             charset: cfg.charset,
             timezone: cfg.timezone,
+            foundRows: cfg.foundRows,
             dateStrings: cfg.dateStrings,
             connectTimeout: cfg.connectTimeout,
+            multipleStatements: cfg.multipleStatements,
             supportBigNumbers: cfg.supportBigNumbers,
             bigNumberStrings: cfg.bigNumberStrings,
-            multipleStatements: cfg.multipleStatements,
-            flags: cfg.flags,
-            trace: cfg.trace
+            flags: cfg.flags
         };
-        //连接池
+
+        // 连接池
         if (cfg.options || cfg.pool) {
             if (!cfg.options && cfg.pool) {
-                this.options["connectionLimit"] = cfg.pool.max;
+                this.options['connectionLimit'] = cfg.pool.max;
+                this.options['idleTimeout'] = cfg.idleTimeout;
+                this.options['minimumIdle'] = cfg.pool.min;
             }
             this.pool = this.dbMdl.createPool(this.options);
         }
@@ -48,24 +49,10 @@ export class MysqlProvider extends BaseProvider {
      * @returns     数据库连接
      */
     public async getConnection(): Promise<any> {
-        return new Promise((resolve, reject) => {
-            if (this.pool) {
-                this.pool.getConnection((err, conn) => {
-                    if (err) {
-                        return reject(err);
-                    }
-                    resolve(conn);
-                })
-            } else {
-                let conn = this.dbMdl.createConnection(this.options);
-                conn.connect(err => {
-                    if (err) {
-                        return reject(err);
-                    }
-                    resolve(conn);
-                });
-            }
-        });
+        if (this.pool) {
+            return await this.pool.getConnection();
+        }
+        return await this.dbMdl.createConnection(this.options);
     }
 
     /**
@@ -74,17 +61,13 @@ export class MysqlProvider extends BaseProvider {
      */
     public async closeConnection(connection: Connection) {
         if (this.pool) {
-            connection.conn.release();
-            return Promise.resolve(null);
+            await connection.conn.release();
         } else {
-            return new Promise((resolve, reject) => {
-                connection.conn.end(err => {
-                    if (err) {
-                        return reject(ErrorFactory.getError('0202', [err]));
-                    }
-                    resolve(null);
-                });
-            });
+            try {
+                await connection.conn.end();
+            } catch (err) {
+                ErrorFactory.getError('0202', [err]);
+            }
         }
     }
 
@@ -96,14 +79,7 @@ export class MysqlProvider extends BaseProvider {
      * @returns             结果(集)
      */
     public async exec(connection: Connection, sql: string, params?: any[]) {
-        return await new Promise((resolve, reject) => {
-            connection.conn.query(sql, params, (err, results, fields) => {
-                if (err) {
-                    return reject(err);
-                }
-                resolve(results);
-            });
-        });
+        return await connection.conn.query(sql, params);
     }
 
     /**
@@ -122,18 +98,6 @@ export class MysqlProvider extends BaseProvider {
             return sql + ' limit ' + limit;
         }
         return sql;
-    }
-
-    /**
-     * 获取实体sequence，针对主键生成策略为sequence时有效
-     * mysql 不支持sequence，返回0
-     * @param em        entity manager
-     * @param seqName   sequence name
-     * @param schema    schema
-     * @returns         sequence 值
-     */
-    public async getSequenceValue(em: EntityManager, seqName: string, schema?: string): Promise<number> {
-        return null;
     }
 
     /**

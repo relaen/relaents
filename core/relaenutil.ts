@@ -78,12 +78,13 @@ class RelaenUtil {
      * @returns     修改后的sql
      */
     public static handlePlaceholder(sql:string):string{
-        //mysql 默认处理
-        if(RelaenManager.dialect === 'mysql'){
+        // 占位符为?的默认处理
+        if (['mysql', 'mariadb', 'sqlite'].includes(RelaenManager.dialect)) {
             return sql;
         }
         let reg = /(\'.*?\?.*?\')|\?/g;
         let index = 0;
+
         return sql.replace(reg,(match,p1)=>{
             if(match !== '?'){
                 return p1;

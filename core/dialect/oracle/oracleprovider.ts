@@ -1,30 +1,50 @@
 import { Connection } from "../../connection";
-import { IConnectionCfg } from "../../types";
 import { BaseProvider } from "../../baseprovider";
 import { EntityManager } from "../../entitymanager";
 import { NativeQuery } from "../../nativequery";
+import { IOracleConnectionCfg } from "./oracleoptions";
+import { resolve } from "path/posix";
 
 /**
  * oracle provider
  * @since 0.3.0
  */
+// 需要手动加
 export class OracleProvider extends BaseProvider {
+
+    /**
+     * 是否开启连接池
+     */
+    private isPool: boolean;
+
     /**
      * 构造器
      * @param cfg   连接配置
      */
-    constructor(cfg: IConnectionCfg) {
+    constructor(cfg: IOracleConnectionCfg) {
         super(cfg);
         this.dbMdl = require('oracledb');
         this.dbMdl.autoCommit = true;
-        this.options = {
+        this.options = cfg.options ? cfg.options : {
             user: cfg.username,
             password: cfg.password,
-            connectString: cfg.host + ":" + cfg.port + "/" + cfg.database
+            connectString: cfg.host + ":" + cfg.port + "/" + cfg.database,
+            privilege: cfg.privilege,
+            stmtCacheSize: cfg.stmtCacheSize,
+            tag: cfg.tag
         }
-        if (cfg.pool && cfg.pool.max) {
+
+        // 连接池
+        if (!cfg.options && cfg.pool) {
+            this.options['poolAlias'] = cfg.poolAlias;
+            this.options['poolIncrement'] = cfg.poolIncrement;
             this.options['poolMax'] = cfg.pool.max;
-            this.options['poolMin'] = cfg.pool.min || 4;
+            this.options['poolMin'] = cfg.pool.min;
+            this.options['poolTimeout'] = cfg.idleTimeout;
+            this.options['enableStatistics'] = cfg.enableStatistics;
+        }
+        if (cfg.options || cfg.pool) {
+            this.isPool = true;
         }
     }
 
@@ -33,8 +53,7 @@ export class OracleProvider extends BaseProvider {
      * @returns     connection
      */
     public async getConnection(): Promise<any> {
-        // 使用池连接
-        if (this.options['poolMax']) {
+        if (this.isPool) {
             if (!this.pool) {
                 this.pool = await this.dbMdl.createPool(this.options);
             }
@@ -67,7 +86,6 @@ export class OracleProvider extends BaseProvider {
         // 默认自动提交
         let autoCommit = connection.conn.autoCommit === undefined ? true : connection.conn.autoCommit;
         let r = await connection.conn.execute(sql, params, { autoCommit: autoCommit, outFormat: 4002 });
-        // 为查询时返回查询rows，与mysql一致
         if (r.rows) {
             return r.rows;
         }
@@ -96,10 +114,10 @@ export class OracleProvider extends BaseProvider {
      * @param schema    schema
      * @returns         sequence 值
      */
-    public async getSequenceValue(em: EntityManager, seqName: string, schema?:string): Promise<number> {
+    public async getSequenceValue(em: EntityManager, seqName: string, schema?: string): Promise<number> {
         // 需要指定sequence所属schema
         let query: NativeQuery = em.createNativeQuery(
-            "select " + (schema?schema + "." + seqName:seqName) + ".nextval from dual"
+            "select " + (schema ? schema + "." + seqName : seqName) + ".nextval from dual"
         );
         let r = await query.getResultList(-1, -1);
         if (r[0].NEXTVAL) {

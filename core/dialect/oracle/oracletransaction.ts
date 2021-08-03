@@ -10,8 +10,7 @@ export class OracleTransaction extends Transaction {
      * 开始事务
      */
     async begin() {
-        // transaction 中引用原conn
-        this.conn.conn['autoCommit'] = false;
+        this.conn.autoCommit = false;
         super.begin();
     }
 
@@ -21,7 +20,7 @@ export class OracleTransaction extends Transaction {
     async commit() {
         try {
             await this.conn.conn.commit();
-            this.conn.conn['autoCommit'] = true;
+            this.conn.autoCommit = true;
             super.commit();
         } catch (err) {
             throw err;
@@ -34,9 +33,8 @@ export class OracleTransaction extends Transaction {
     async rollback() {
         try {
             await this.conn.conn.rollback();
-            this.conn.conn['autoCommit'] = true;
+            this.conn.autoCommit = true;
             super.rollback();
-            return null;
         } catch (err) {
             throw err;
         }

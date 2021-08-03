@@ -136,7 +136,7 @@ class EntityManager {
      * @param params            参数对象{propName1:propValue1,propName2:{value:propValue2,rel:'>',before:'(',after:')',logic:'OR'}...}
      *                          参数值有两种方式，一种是值，一种是值对象，值对象参考ICondValueObj接口说明
      * @param order             排序对象 {propName1:asc,propName2:desc,...}
-     * @since 0.1.3
+     * @since 0.1.3 
      */
     public async findOne(entityClassName: string, params?: object, order?: object): Promise<any> {
         let lst = await this.findMany(entityClassName, params, 0, 1, order);

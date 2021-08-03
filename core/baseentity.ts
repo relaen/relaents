@@ -45,6 +45,11 @@ export class BaseEntity extends Object implements IEntity{
         return this;
     }
 
+    /**
+     * 根据id查询单个实体
+     * @param id                实体主键
+     * @returns                 查询实体
+     */
     public static async find(id:any):Promise<IEntity>{
         let em = await getEntityManager();
         let entity =  await em.find(this.name,id);
