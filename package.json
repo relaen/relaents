@@ -1,6 +1,6 @@
 {
   "name": "relaen",
-  "version": "0.3.0-beta3",
+  "version": "0.3.0-final",
   "description": "一个node环境下基于typescript的ORM框架",
   "main": "dist/index.js",
   "types": "dist/types/index.d.ts",
@@ -42,6 +42,16 @@
     "node": ">=13.10.0"
   },
   "contributors": [
+    {
+      "name": "杨雷",
+      "email": "fieldyang@163.com"
+    },
+    {
+      "name": "赵率宏",
+      "email": "973478129@qq.com"
+    }
+  ],
+  "maintainers": [
     {
       "name": "杨雷",
       "email": "fieldyang@163.com"
