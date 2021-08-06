@@ -33,7 +33,7 @@ export class MssqlProvider extends BaseProvider {
         };
 
         // 连接池
-        if (cfg.options || cfg.pool) {
+        if (cfg.usePool || cfg.pool) {
             if (!cfg.options && cfg.pool) {
                 this.options['pool'] = {
                     max: cfg.pool.max,
@@ -87,8 +87,8 @@ export class MssqlProvider extends BaseProvider {
         params.forEach((value, index) => {
             request.input(index.toString(), value);
         });
-        // TODO 返回recordset处理
-        return await request.query(sql);
+        let result = await request.query(sql);
+        return result.recordset;
     }
 
     /**
@@ -103,15 +103,15 @@ export class MssqlProvider extends BaseProvider {
             return sql;
         }
         //无order by 则需要添加
-        // TODO from的正则验证
         if (!/order\s+by/i.test(sql)) {
-            let r = /from\s+\w+/.exec(sql);
+            let r = /from\s+\w+/i.exec(sql);
             if (!r) {
                 return sql;
             }
-            let tbl = r[0].replace(/from\s+/, '');
+            let tbl = r[0].replace(/from\s+/i, '');
+            let t0 = /from\s+\w+\s+t0/i.test(sql);
             let cfg: IEntityCfg = EntityFactory.getEntityCfgByTblName(tbl);
-            sql += ' order by ' + cfg.columns.get(cfg.id.name).name + ' asc ';
+            sql += ' ORDER BY ' + (t0 ? 't0.' : '') + cfg.columns.get(cfg.id.name).name + ' ASC ';
         }
         return sql + ' OFFSET ' + start + ' ROWS FETCH NEXT ' + limit + ' ROWS ONLY';
     }
@@ -139,10 +139,9 @@ export class MssqlProvider extends BaseProvider {
      * @returns         主键
      */
     public getIdentityId(result: any): any {
-        // TODO 返回结果集
-        if (!result.recordset || result.recordset.length > 1 || !result.recordset[0].insertId) {
+        if (!result || result.length > 1 || !result[0].insertId) {
             return;
         }
-        return result.recordset[0].insertId;
+        return result[0].insertId;
     }
 }

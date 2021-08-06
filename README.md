@@ -3,7 +3,7 @@ relaen是[noomi](https://www.npmjs.com/package/noomi)团队打造的一套node�
 支持链式创建查询、原生sql、类查询、一级缓存等。
 
 ## 使用限制
-relaen当前仅支持mysql、mssql、oracle(12+)、postgres数据库，其它数据库产品陆续加入中。
+relaen当前仅支持mysql、mssql(2012+)、oracle(12+)、postgres数据库，其它数据库产品陆续加入中。
 
 ## 交流
 1. QQ群：926248391；

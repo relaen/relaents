@@ -85,7 +85,7 @@ class RelaenUtil {
         let reg = /(\'.*?\?.*?\')|\?/g;
         let index = 0;
 
-        return sql.replace(reg,(match,p1)=>{
+        return sql. replace(reg,(match,p1)=>{
             if(match !== '?'){
                 return p1;
             }

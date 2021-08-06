@@ -27,7 +27,7 @@ export class PostgresProvider extends BaseProvider {
         };
 
         // 连接池
-        if (cfg.options || cfg.pool) {
+        if (cfg.usePool || cfg.pool) {
             if (!cfg.options && cfg.pool) {
                 this.options['max'] = cfg.pool.max;
                 this.options['idleTimeoutMillis'] = cfg.idleTimeout;

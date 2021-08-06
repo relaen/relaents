@@ -43,7 +43,7 @@ export class OracleProvider extends BaseProvider {
             this.options['poolTimeout'] = cfg.idleTimeout;
             this.options['enableStatistics'] = cfg.enableStatistics;
         }
-        if (cfg.options || cfg.pool) {
+        if (cfg.usePool || cfg.pool) {
             this.isPool = true;
         }
     }
@@ -101,10 +101,13 @@ export class OracleProvider extends BaseProvider {
      * @since           0.2.0
      */
     public handleStartAndLimit(sql: string, start?: number, limit?: number) {
-        if (!Number.isInteger(start) || start < 0 || !Number.isInteger(limit) || limit <= 0) {
-            return sql;
+        if (limit > 0 && Number.isInteger(limit)) {
+            if (start >= 0 && Number.isInteger(start)) {
+                return sql + ' OFFSET ' + start + ' ROWS FETCH NEXT ' + limit + ' ROWS ONLY';
+            }
+            return sql + ' FETCH NEXT ' + limit + ' ROWS ONLY';
         }
-        return sql + ' OFFSET ' + start + ' ROWS FETCH NEXT ' + limit + ' ROWS ONLY';
+        return sql;
     }
 
     /**

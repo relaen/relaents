@@ -35,7 +35,7 @@ export class MysqlProvider extends BaseProvider {
             trace: cfg.trace
         };
         //连接池
-        if (cfg.options || cfg.pool) {
+        if (cfg.usePool || cfg.pool) {
             if (!cfg.options && cfg.pool) {
                 this.options["connectionLimit"] = cfg.pool.max;
             }

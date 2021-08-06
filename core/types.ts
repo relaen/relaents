@@ -23,7 +23,7 @@ interface IConnectionCfg {
     /**
      * 服务器地址
      */
-    host?: string;
+    host: string;
     /**
      * 端口号
      */
@@ -68,7 +68,11 @@ interface IConnectionCfg {
     /**
      * 数据库原生配置，详细配置参照各数据库文档
      */
-    options: any
+    options: any;
+    /**
+     * 是否开启连接池，数据库原生配置使用
+     */
+    usePool: boolean;
 }
 
 /**

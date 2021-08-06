@@ -79,9 +79,6 @@ export class MssqlTranslator extends Translator{
         if (!idValue) {
             throw ErrorFactory.getError('0021', [orm.id.name]);
         }
-        fv.forEach((v, i) => {
-            fv[i] = v.slice(0, -1) + i
-        });
     
         arr.push(fv.join(','));
         //where
