@@ -9,9 +9,13 @@ import { ISqliteConnectionCfg } from "./sqliteoptions";
 export class SqliteProvider extends BaseProvider {
 
     /**
-     * SQLITE_BUSY 配置时间
+     * SQLITE_BUSY 重复执行时间
      */
-    private busyTimeoute: number ;
+    private busyErrorRetry: number;
+    /**
+     * SQLITE_BUSY retry重复执行超时时间
+     */
+    private busyTimeout: number;
 
     /**
      * 构造器
@@ -23,7 +27,8 @@ export class SqliteProvider extends BaseProvider {
         this.options = cfg.options ? cfg.options : {
             database: cfg.database
         }
-        this.busyTimeoute = cfg.busyTimeout || 500;
+        this.busyErrorRetry = cfg.busyErrorRetry || 500;
+        this.busyTimeout = cfg.busyTimeout >= 0 ? cfg.busyTimeout : 2000;
     }
 
     /**
@@ -67,11 +72,15 @@ export class SqliteProvider extends BaseProvider {
         return new Promise(async (resolve, reject) => {
             // insert into 使用run
             const isInsertQuery = sql.substr(0, 11).toLocaleLowerCase() === 'insert into';
+            const isBeginImmediate = sql.substr(0, 15).toLocaleLowerCase() === 'begin immediate';
+            const busyErrorRetry = this.busyErrorRetry;
+            const busyTimeout = this.busyTimeout;
+            let retryNum = 0;
             await execute();
 
             // 执行函数
             async function execute() {
-                if (isInsertQuery) {
+                if (isInsertQuery || isBeginImmediate) {
                     connection.conn.run(sql, params, handler);
                 } else {
                     connection.conn.all(sql, params, handler);
@@ -81,11 +90,13 @@ export class SqliteProvider extends BaseProvider {
             function handler(err: any, rows: any) {
                 if (err) {
                     // SQLITE_BUSY 配置时间
-                    if (err.code === 'SQLITE_BUSY') {
-                        if (this.busyTimeOut > 0) {
-                            setTimeout(execute, this.busyTimeOut);
-                            return;
+                    if (err.code === 'SQLITE_BUSY' && busyErrorRetry > 0) {
+                        // busyTime 为0，一直循环执行到成功
+                        if (busyTimeout > 0 && (++retryNum * busyErrorRetry) > busyTimeout) {
+                            return reject(err);
                         }
+                        setTimeout(execute, this.busyErrorRetry);
+                        return;
                     }
                     return reject(err);
                 }
@@ -118,7 +129,6 @@ export class SqliteProvider extends BaseProvider {
     }
 
 
-
     /**
      * 从sql执行结果获取identityid，仅对主键生成策略是identity的有效
      * @param result    sql执行结果
@@ -126,5 +136,12 @@ export class SqliteProvider extends BaseProvider {
      */
     public getIdentityId(result: any): number {
         return result.lastID;
+    }
+
+    /**
+     * 加表锁
+     */
+    public lockTable(table?: string, schema?: string): string {
+        return "begin immediate";
     }
 }

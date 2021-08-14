@@ -144,4 +144,13 @@ export class MysqlProvider extends BaseProvider {
     public getIdentityId(result: any): number {
         return result.insertId;
     }
+
+
+    public lockTable(table: string, schema?: string): string {
+        return "LOCK TABLES " + table + " WRITE";
+    }
+
+    public unLockTable(table?: string, schema?: string): string {
+        return "UNLOCK TABLES";
+    }
 }

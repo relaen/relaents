@@ -12,7 +12,7 @@ export abstract class BaseProvider {
      * 配置
      */
     protected options: any;
-    
+
     /**
      * 连接池
      */
@@ -80,6 +80,20 @@ export abstract class BaseProvider {
      * @returns         主键
      */
     public getIdentityId(result: any): number {
+        return null;
+    }
+
+    /**
+     * 加表锁
+     */
+    public lockTable(table?: string, schema?: string): string {
+        return null;
+    }
+
+    /**
+     * 释放表锁，返回null即事务commit/rollback释放表锁
+     */
+    public unLockTable(table?: string, schema?: string): string {
         return null;
     }
 }

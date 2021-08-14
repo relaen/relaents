@@ -108,4 +108,18 @@ export class MariadbProvider extends BaseProvider {
     public getIdentityId(result: any): number {
         return result.insertId;
     }
+
+    /**
+     * 加表锁
+     */
+    public lockTable(table: string, schema?: string): string {
+        return "LOCK TABLE " + table + " write";
+    }
+
+    /**
+     * 释放表锁，返回null即事务commit/rollback释放表锁
+     */
+    public unLockTable(table?: string, schema?: string): string {
+        return "UNLOCK TABLES";
+    }
 }

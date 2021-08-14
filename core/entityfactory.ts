@@ -57,7 +57,7 @@ class EntityFactory{
         }
         // 生成器类型为table无keyName或sequence无seqName
         if(cfg.generator === 'table' && !cfg.keyName || cfg.generator === 'sequence' && !cfg.seqName){
-            throw ErrorFactory.getError("0050");
+            throw ErrorFactory.getError("0050",[entityName]);
         }
         let entity:IEntityCfg = this.entityClasses.get(entityName);
         entity.id = cfg;

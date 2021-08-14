@@ -5,7 +5,11 @@ import { IConnectionCfg } from "../../types";
  */
 export interface ISqliteConnectionCfg extends IConnectionCfg{
     /**
-     * SQLITE_BUSY 重新执行时间
+     * SQLITE_BUSY 重复执行时间
      */
-    readonly busyTimeout?: number;
+     readonly busyErrorRetry: number;
+     /**
+      * SQLITE_BUSY retry重复执行超时时间
+      */
+     readonly busyTimeout: number;
 }

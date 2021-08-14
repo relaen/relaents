@@ -123,4 +123,11 @@ export class PostgresProvider extends BaseProvider {
         }
         return <number>Object.values(result[0])[0];
     }
+
+    /**
+     * 加表锁
+     */
+    public lockTable(table: string, schema?: string): string {
+        return "lock table " + (schema ? schema + "." + table : table) + " in exclusive mode";
+    }
 }

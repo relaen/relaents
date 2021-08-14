@@ -6,7 +6,7 @@ import { EntityManager } from "../../entitymanager";
 import { NativeQuery } from "../../nativequery";
 import { TransactionManager } from "../../transactionmanager";
 import { IMssqlConnectionCfg } from "./mssqloptions";
-import { isBuffer } from "util";
+import { ErrorFactory } from "../../errorfactory";
 
 /**
  * mssql provider
@@ -144,4 +144,12 @@ export class MssqlProvider extends BaseProvider {
         }
         return result[0].insertId;
     }
+
+    /**
+     * 加表锁
+     */
+    public lockTable(table: string, schema?: string): string {
+        return "select * from " + (schema ? schema + "." + table : table) + " with (tablockx)";
+    }
+
 }

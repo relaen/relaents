@@ -129,4 +129,11 @@ export class OracleProvider extends BaseProvider {
         }
         return 0;
     }
+
+    /**
+     * 加表锁
+     */
+     public lockTable(table: string, schema?: string): string {
+        return "lock table " + (schema?schema+"."+table:table) + " in exclusive mode";
+    }
 }

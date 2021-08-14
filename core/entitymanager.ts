@@ -10,6 +10,8 @@ import { RelaenUtil } from "./relaenutil";
 import { BaseEntity } from "./baseentity";
 import { TranslatorFactory } from "./translatorfactory";
 import { ConnectionManager } from "./connectionmanager";
+import { Transaction } from "./transaction";
+import { RelaenManager } from "./relaenmanager";
 
 /**
  * 实体管理器
@@ -251,28 +253,46 @@ class EntityManager {
             let value;
             switch (orm.id.generator) {
                 case 'sequence':
-                    value = await ConnectionManager.provider.getSequenceValue(this,orm.id.seqName,orm.schema);
+                    value = await ConnectionManager.provider.getSequenceValue(this, orm.id.seqName, orm.schema);
                     //抛出异常
-                    if(!value){
+                    if (!value) {
                         throw ErrorFactory.getError("0051");
                     }
                     break;
                 case 'table':  //TODO 0.3.1版本使用此功能
                     let fn: string = orm.id.keyName;
-                    //需要加锁
-                    let query: NativeQuery = this.createNativeQuery("select " + orm.id.valueName + " from " + 
-                        RelaenUtil.getTableName(orm.id.table,orm.schema) + " where "+ orm.id.columnName +" ='" + fn + "'");
+                    let tx: Transaction = this.connection.createTransaction();
+                    // sqlite 使用begin immediate替代begin开启事务
+                    if (RelaenManager.dialect !== "sqlite") {
+                        await tx.begin();
+                    }
+                    // 加表锁
+                    let lock = await this.createNativeQuery(ConnectionManager.provider.lockTable(orm.id.table, orm.schema)).getResultList(0, 0);
+                    // 查询主键值
+                    let query: NativeQuery = this.createNativeQuery("select " + orm.id.valueName + " from " +
+                        RelaenUtil.getTableName(orm.id.table, orm.schema) + " where " + orm.id.columnName + " ='" + fn + "'");
                     let r = await query.getResult();
                     if (r) {
                         //转换为整数
                         value = parseInt(r);
-                        query = this.createNativeQuery("update " + RelaenUtil.getTableName(orm.id.table,orm.schema) + 
-                            " set " + orm.id.valueName + "="  + (++value) + 
-                            " where "+ orm.id.columnName + " ='" + fn + "'");
-                        await query.getResult();
+                        query = this.createNativeQuery("update " + RelaenUtil.getTableName(orm.id.table, orm.schema) +
+                            " set " + orm.id.valueName + "=" + (++value) +
+                            " where " + orm.id.columnName + " ='" + fn + "'");
+                        await query.getResult(); 
                     }
+
                     //释放锁
                     //TODO 0.3.1
+                    await tx.commit();
+                    // 处理不是commit/rollback的释放锁
+                    let endLock = ConnectionManager.provider.unLockTable(orm.id.table, orm.schema);
+                    if (endLock) {
+                        await this.createNativeQuery(endLock).getResultList(0, 0);
+                    }
+                    // TODO 没有查询到主键抛错
+                    if (!value) {
+                        throw new Error('没有查询到主键');
+                    }
                     break;
                 case 'uuid':
                     value = require('uuid').v1();

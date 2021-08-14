@@ -27,6 +27,6 @@ var RelaenTip ={
     "0202":"Failed to close connection,error message is:${0}",
     "0250":"Connection is not exist,create connection first",
 
-    "0300":"Dialect '${0}' has no corresponding provider"
+    "0300": "Dialect '${0}' has no corresponding provider"
 }
 export {RelaenTip}
