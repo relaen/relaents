@@ -160,7 +160,7 @@ interface IEntityColumn {
     length?: number;
 
     /**
-     * 是否自增,mssql
+     * 是否自增，mssql
      */
     identity?: boolean;
 }

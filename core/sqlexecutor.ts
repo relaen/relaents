@@ -42,13 +42,9 @@ export class SqlExecutor {
         //处理占位符
         sql = RelaenUtil.handlePlaceholder(sql);
         //打印sql
-        Logger.console("[Relaen execute sql]:\"" + sql + "\"");
-        //打印参数
-        if (params) {
-            Logger.console("Parameters is " + JSON.stringify(params));
-        }
-        try{
-            result = await ConnectionManager.provider.exec(em.connection,sql,params);
+        Logger.log(sql, params);
+        try {
+            result = await ConnectionManager.provider.exec(em.connection, sql, params);
             //执行增删改，则清空cache
             if (sqlType === 1) {
                 em.clearCache();
@@ -56,9 +52,11 @@ export class SqlExecutor {
                 em.addToCache(key, result);
             }
         } catch (e) {
+            Logger.error(e);
             throw ("[Relaen execute sql] Error:\"" + e.message + "\"");
         }
-        Logger.console("[Relaen execute sql]:\"OK\"");
+        // Logger.log("[Relaen execute sql]:\"OK\"");
+        Logger.log("OK");
         return result;
     }
 }

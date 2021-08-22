@@ -31,8 +31,7 @@ export class MysqlProvider extends BaseProvider {
             supportBigNumbers: cfg.supportBigNumbers,
             bigNumberStrings: cfg.bigNumberStrings,
             multipleStatements: cfg.multipleStatements,
-            flags: cfg.flags,
-            trace: cfg.trace
+            flags: cfg.flags
         };
         //连接池
         if (cfg.usePool || cfg.pool) {

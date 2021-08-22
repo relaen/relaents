@@ -6,7 +6,6 @@ import { EntityManager } from "../../entitymanager";
 import { NativeQuery } from "../../nativequery";
 import { TransactionManager } from "../../transactionmanager";
 import { IMssqlConnectionCfg } from "./mssqloptions";
-import { ErrorFactory } from "../../errorfactory";
 
 /**
  * mssql provider
@@ -27,6 +26,7 @@ export class MssqlProvider extends BaseProvider {
             password: cfg.password,
             database: cfg.database,
             connectionTimeout: cfg.connectTimeout,
+            requestTimeout: cfg.requestTimeout,
             options: {
                 trustServerCertificate: true,
             }
@@ -42,6 +42,7 @@ export class MssqlProvider extends BaseProvider {
                 }
             }
             this.pool = new this.dbMdl.ConnectionPool(this.options);
+            console.log(this.pool.totalCount);
         }
     }
 

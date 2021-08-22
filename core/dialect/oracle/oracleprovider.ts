@@ -36,12 +36,10 @@ export class OracleProvider extends BaseProvider {
 
         // 连接池
         if (!cfg.options && cfg.pool) {
-            this.options['poolAlias'] = cfg.poolAlias;
             this.options['poolIncrement'] = cfg.poolIncrement;
             this.options['poolMax'] = cfg.pool.max;
             this.options['poolMin'] = cfg.pool.min;
             this.options['poolTimeout'] = cfg.idleTimeout;
-            this.options['enableStatistics'] = cfg.enableStatistics;
         }
         if (cfg.usePool || cfg.pool) {
             this.isPool = true;

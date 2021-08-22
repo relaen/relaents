@@ -18,7 +18,7 @@ class EntityProxy {
      */
     public static async get(entity: IEntity, propName: string): Promise<any> {
         if (!RelaenUtil.getIdValue(entity)) {
-            Logger.error(ErrorFactory.getError("0105").message);
+            Logger.error(ErrorFactory.getError("0105"));
             return null;
         }
 

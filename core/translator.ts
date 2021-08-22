@@ -62,7 +62,7 @@ export abstract class Translator {
      * entity转insert sql
      * @param entity 
      */
-    public entityToInsert(entity: any,extra?:string): any[] {
+    public entityToInsert(entity: any, extra?: string): any[] {
         let orm: IEntityCfg = EntityFactory.getClass(entity.constructor.name);
         if (!orm) {
             throw ErrorFactory.getError("0010", [entity.constructor.name]);
@@ -110,7 +110,7 @@ export abstract class Translator {
         arr.push(qArr.join(','));
         arr.push(')');
         //针对不同的数据库，可能存在附加串
-        if(extra){
+        if (extra) {
             arr.push(extra);
         }
         return [arr.join(' '), values];
@@ -435,14 +435,40 @@ export abstract class Translator {
                     whereStr += ' AND ';
                 }
             }
+            let placeholder = ' ?';
+            // in,not in,between 字段和值处理
+            if (rel === 'IN' || rel === 'NOT IN') {
+                if (!Array.isArray(v)) {
+                    // TODO error处理
+                    throw new Error('参数为数组');
+                }
+                let arr = new Array(v.length).fill('?');
+                placeholder = ' (' + arr.join() + ') ';
+
+
+            }
+            if (rel === 'BETWEEN') {
+                if (!Array.isArray(v) || v.length !== 2) {
+                    // TODO error处理
+                    throw new Error('参数为长度2的数组');
+                }
+                placeholder = ' ? AND ?';
+            }
             //字段和值
-            whereStr += fn + ' ' + rel + ' ?';
+            whereStr += fn + ' ' + rel + placeholder;
+
             //后置字符串，通常为 'and','or',')'
             if (vobj && vobj.after) {
                 whereStr += ' ' + vobj.after + ' ';
             }
 
-            pValues.push(v);
+            if (Array.isArray(v)) {
+                for (const vi of v) {
+                    pValues.push(vi);
+                }
+            } else {
+                pValues.push(v);
+            }
         });
         if (whereStr !== '') {
             this.whereObject = [whereStr, pValues];
@@ -489,7 +515,7 @@ export abstract class Translator {
      * @returns 数组[sql,linkMap,values]
      *          其中：linkMap为该translator的linkNameMap，values为查询参数值
      */
-     protected getSelectSql(): any[] {
+    protected getSelectSql(): any[] {
         let orm: IEntityCfg = EntityFactory.getClass(this.mainEntityName);
         //linkName不存在主表，则需要设置主表
         if (!this.linkNameMap.has(this.mainEntityName)) {
@@ -549,9 +575,9 @@ export abstract class Translator {
      * @returns 数组[sql,linkMap,values]
      *          其中：linkMap为该translator的linkNameMap，values为查询参数值
      */
-    protected getDeleteSql(notNeedAlias?:boolean) {
+    protected getDeleteSql(notNeedAlias?: boolean) {
         let orm: IEntityCfg = EntityFactory.getClass(this.mainEntityName);
-        let sql = "delete " + (notNeedAlias?'':'t0 ') + " from " + RelaenUtil.getTableName(orm) + " t0 ";
+        let sql = "delete " + (notNeedAlias ? '' : 't0 ') + " from " + RelaenUtil.getTableName(orm) + " t0 ";
         //处理主表和join表
         for (let o of this.linkNameMap) {
             if (!o[1]['from']) {

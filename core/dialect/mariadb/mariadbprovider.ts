@@ -24,7 +24,6 @@ export class MariadbProvider extends BaseProvider {
             ssl: cfg.ssl,
             charset: cfg.charset,
             timezone: cfg.timezone,
-            foundRows: cfg.foundRows,
             dateStrings: cfg.dateStrings,
             connectTimeout: cfg.connectTimeout,
             multipleStatements: cfg.multipleStatements,

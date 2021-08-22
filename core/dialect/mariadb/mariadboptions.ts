@@ -22,18 +22,9 @@ export interface IMariadbConnectionCfg extends IConnectionCfg {
      */
     readonly timezone: string;
     /**
-     * When enabled, the update number corresponds to update rows. 
-     * When disabled, it indicates the real rows changed.
-     */
-    readonly foundRows: boolean;
-    /**
      * Whether to retrieve dates as strings or as Date objects. 
      */
     readonly dateStrings: boolean;
-    /**
-     * Sets the connection timeout in milliseconds.
-     */
-    readonly connectTimeout: number;
     /**
      * Allows you to issue several SQL statements in a single quer() call.
      * This may be a security risk as it allows for SQL Injection attacks.
@@ -50,11 +41,5 @@ export interface IMariadbConnectionCfg extends IConnectionCfg {
     /**
      * Shows the byte-encoded flags. 
      */
-    readonly flags: boolean;
-    /**
-     * Indicate idle time after which a pool connection is released. 
-     * Value must be lower than @@wait_timeout. 
-     */
-    readonly idleTimeout: number;
-
+    readonly flags: string;
 }
