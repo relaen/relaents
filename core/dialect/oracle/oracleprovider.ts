@@ -83,6 +83,7 @@ export class OracleProvider extends BaseProvider {
     public async exec(connection: Connection, sql: string, params?: any[]) {
         // 默认自动提交
         let autoCommit = connection.conn.autoCommit === undefined ? true : connection.conn.autoCommit;
+        params = params || [];
         let r = await connection.conn.execute(sql, params, { autoCommit: autoCommit, outFormat: 4002 });
         if (r.rows) {
             return r.rows;
@@ -131,7 +132,7 @@ export class OracleProvider extends BaseProvider {
     /**
      * 加表锁
      */
-     public lockTable(table: string, schema?: string): string {
-        return "lock table " + (schema?schema+"."+table:table) + " in exclusive mode";
+    public lockTable(table: string, schema?: string): string {
+        return "lock table " + (schema ? schema + "." + table : table) + " in exclusive mode";
     }
 }

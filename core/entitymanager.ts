@@ -27,6 +27,11 @@ class EntityManager {
     public connection: Connection;
 
     /**
+     * 是否开启缓存
+     */
+    public isCache: boolean;
+
+    /**
      * 查询结果集缓存
      *     key:sql语句和参数值组合成的字符串，value:查询结果集
      */
@@ -37,9 +42,10 @@ class EntityManager {
      * @param conn  连接对象
      * @param id    entity manager id
      */
-    constructor(conn: Connection, id?: number) {
+    constructor(conn: Connection, id?: number, isCache?: boolean) {
         this.id = id;
         this.connection = conn;
+        this.isCache = isCache;
         this.cache = new Map();
     }
 
@@ -126,10 +132,30 @@ class EntityManager {
         if (!idName) {
             throw ErrorFactory.getError("0103");
         }
-        let sql = "select * from " + RelaenUtil.getTableName(orm) + " where " + orm.columns.get(idName).name + ' = ?';
+        // let sql = "select * from " + RelaenUtil.getTableName(orm) + " where " + orm.columns.get(idName).name + ' = ?';
+        let sql = "select " + this.isSelectField(orm) + " from " + RelaenUtil.getTableName(orm) + " where " + orm.columns.get(idName).name + ' = ?';
         let query = this.createNativeQuery(sql, entityClassName);
         query.setParameter(0, id);
         return await query.getResult();
+    }
+
+    /**
+     * 是否存在隐藏字段
+     */
+    public isSelectField(orm: IEntityCfg) {
+        let arr = [];
+        let isHide = false;
+        for (let values of orm.columns.values()) {
+            if (values.select !== false) {
+                arr.push(values.name);
+                continue;
+            }
+            isHide = true;
+        }
+        if (arr.length > 0 && isHide === true) {
+            return arr.join();
+        }
+        return '*';
     }
 
     /**
@@ -159,7 +185,11 @@ class EntityManager {
      */
     public async findMany(entityClassName: string, params?: object, start?: number, limit?: number, order?: object): Promise<Array<any>> {
         let query: Query = this.createQuery(entityClassName);
-        return await query.select('*')
+        let orm: IEntityCfg = EntityFactory.getClass(entityClassName);
+        if (!orm) {
+            throw ErrorFactory.getError("0020", [entityClassName]);
+        }
+        return await query.select(this.isSelectField(orm))
             .where(params)
             .orderBy(order)
             .getResultList(start, limit);
@@ -223,7 +253,9 @@ class EntityManager {
      * @since           0.2.0
      */
     public addToCache(key: string, value: any) {
-        this.cache.set(key, value);
+        if (this.cache) {
+            this.cache.set(key, value);
+        }
     }
     /**
      * 从cache中获取
@@ -256,7 +288,7 @@ class EntityManager {
                     value = await ConnectionManager.provider.getSequenceValue(this, orm.id.seqName, orm.schema);
                     //抛出异常
                     if (!value) {
-                        throw ErrorFactory.getError("0051");
+                        throw ErrorFactory.getError("0051", [(orm.schema || '') + orm.id.seqName]);
                     }
                     break;
                 case 'table':  //TODO 0.3.1版本使用此功能
@@ -270,15 +302,15 @@ class EntityManager {
                     let lock = await this.createNativeQuery(ConnectionManager.provider.lockTable(orm.id.table, orm.schema)).getResultList(0, 0);
                     // 查询主键值
                     let query: NativeQuery = this.createNativeQuery("select " + orm.id.valueName + " from " +
-                        RelaenUtil.getTableName(orm.id.table, orm.schema) + " where " + orm.id.columnName + " ='" + fn + "'");
+                        RelaenUtil.getTableName(orm) + " where " + orm.id.columnName + " ='" + fn + "'");
                     let r = await query.getResult();
                     if (r) {
                         //转换为整数
                         value = parseInt(r);
-                        query = this.createNativeQuery("update " + RelaenUtil.getTableName(orm.id.table, orm.schema) +
+                        query = this.createNativeQuery("update " + RelaenUtil.getTableName(orm) +
                             " set " + orm.id.valueName + "=" + (++value) +
                             " where " + orm.id.columnName + " ='" + fn + "'");
-                        await query.getResult(); 
+                        await query.getResult();
                     }
 
                     //释放锁

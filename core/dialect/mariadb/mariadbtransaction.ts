@@ -1,4 +1,4 @@
-import { Transaction } from "../../transaction";
+import { IsolationLevel, Transaction } from "../../transaction";
 
 /**
  * mariadb 事务类
@@ -8,7 +8,10 @@ class MariadbTransaction extends Transaction {
     /**
      * 开始事务
      */
-    public async begin() {
+    public async begin(isolationLevel?: IsolationLevel) {
+        if (isolationLevel) {
+            await this.conn.conn.query('SET TRANSACTION LEVEL ' + isolationLevel);
+        }
         await this.conn.conn.beginTransaction();
         super.begin();
     }

@@ -55,7 +55,7 @@ class Logger {
      * 写日志到控制台
      * @param msg   待写消息
      */
-    public static log(sql: string, params?: any[]) {
+    public static log(sql: string, params?: any[] | object) {
         let msg = "[Relaen execute sql]:\"" + sql + "\"";
         this.log4js.info(msg);
         if (params) {

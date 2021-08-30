@@ -163,6 +163,16 @@ interface IEntityColumn {
      * 是否自增，mssql
      */
     identity?: boolean;
+
+    /**
+     * 乐观锁，数据版本Version
+     */
+    version?: boolean;
+
+    /**
+     * 实体类查询，不显示字段
+     */
+    select?: boolean;
 }
 
 /**
@@ -331,6 +341,7 @@ enum EQueryType {
      * select
      */
     SELECT = 0,
+    
     /**
      * insert
      */
@@ -347,4 +358,5 @@ enum EQueryType {
     DELETE = 3
 
 }
+
 export { IConnectionCfg, IConnectionPool, IEntity, IEntityCfg, IEntityColumn, IEntityRefColumn, IEntityPKey, IEntityRelation, ICondValueObj, ERelationType, EEntityState, EQueryType }

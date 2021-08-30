@@ -75,7 +75,7 @@ export class MssqlProvider extends BaseProvider {
      * @param params        参数数组
      * @returns             结果(集)
      */
-    public async exec(connection: Connection, sql: string, params?: any[]): Promise<any> {
+    public async exec(connection: Connection, sql: string, params?: any[] | object): Promise<any> {
         let request; //用request作为sql执行器
         //如果事务存在，则通过事务获取request，否则通过connection获取
         let tr = TransactionManager.get();
@@ -85,9 +85,16 @@ export class MssqlProvider extends BaseProvider {
             request = connection.conn.request();
         }
         params = params || [];
-        params.forEach((value, index) => {
-            request.input(index.toString(), value);
-        });
+        // 绑定数组或对象参数
+        if (Array.isArray(params)) {
+            params.forEach((value, index) => {
+                request.input(index.toString(), value);
+            });
+        } else {
+            Object.getOwnPropertyNames(params).forEach((item) => {
+                request.input(item, params[item]);
+            })
+        }
         let result = await request.query(sql);
         return result.recordset;
     }
@@ -100,21 +107,32 @@ export class MssqlProvider extends BaseProvider {
      * @returns         处理后的sql
      */
     public handleStartAndLimit(sql: string, start?: number, limit?: number): string {
-        if (!Number.isInteger(start) || start < 0 || !Number.isInteger(limit) || limit <= 0) {
-            return sql;
-        }
-        //无order by 则需要添加
-        if (!/order\s+by/i.test(sql)) {
-            let r = /from\s+\w+/i.exec(sql);
-            if (!r) {
-                return sql;
+        // mssql 需要orderby，offset fetch同时使用
+        if (Number.isInteger(limit) && limit > 0) {
+            if (Number.isInteger(start) && start >= 0) {
+                return handle(start, limit);
             }
-            let tbl = r[0].replace(/from\s+/i, '');
-            let t0 = /from\s+\w+\s+t0/i.test(sql);
-            let cfg: IEntityCfg = EntityFactory.getEntityCfgByTblName(tbl);
-            sql += ' ORDER BY ' + (t0 ? 't0.' : '') + cfg.columns.get(cfg.id.name).name + ' ASC ';
+            if (start === undefined || start === null) {
+                return handle(0, limit);
+            }
         }
-        return sql + ' OFFSET ' + start + ' ROWS FETCH NEXT ' + limit + ' ROWS ONLY';
+        return sql;
+
+        function handle(start: number, limit: number) {
+            //无order by 则需要添加
+            if (!/order\s+by/i.test(sql)) {
+                let r = /from\s+\w+/i.exec(sql);
+                if (!r) {
+                    return sql;
+                }
+                let tbl = r[0].replace(/from\s+/i, '');
+                let t0 = /from\s+\w+\s+t0/i.test(sql);
+                let cfg: IEntityCfg = EntityFactory.getEntityCfgByTblName(tbl);
+                sql += ' ORDER BY ' + (t0 ? 't0.' : '') + cfg.columns.get(cfg.id.name).name + ' ASC';
+            }
+            return sql + ' OFFSET ' + start + ' ROWS FETCH NEXT ' + limit + ' ROWS ONLY';
+        }
+
     }
 
     /**

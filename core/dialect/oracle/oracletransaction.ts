@@ -1,4 +1,5 @@
-import { Transaction } from "../../transaction";
+import { Logger } from "../../logger";
+import { IsolationLevel, Transaction } from "../../transaction";
 
 /**
  * oracle 事务类
@@ -9,7 +10,13 @@ export class OracleTransaction extends Transaction {
     /**
      * 开始事务
      */
-    async begin() {
+    async begin(isolationLevel?: IsolationLevel) {
+        // Oracle only supports SERIALIZABLE and READ COMMITTED isolation
+        if (isolationLevel === "SERIALIZABLE" || isolationLevel === "READ COMMITTED") {
+            let sql = "SET TRANSACTION ISOLATION LEVEL " + isolationLevel;
+            await this.conn.conn.execute(sql);
+            Logger.log(sql);
+        }
         this.conn.autoCommit = false;
         super.begin();
     }

@@ -1,4 +1,4 @@
-import { Transaction } from "../../transaction";
+import { IsolationLevel, Transaction } from "../../transaction";
 
 /**
  * postgres 事务类
@@ -8,7 +8,10 @@ export class PostgresTransaction extends Transaction {
     /**
      * 事务开始
      */
-    async begin() {
+    async begin(isolationLevel?: IsolationLevel) {
+        if (isolationLevel) {
+            await this.conn.conn.query("SET TRANSACTION ISOLATION LEVEL " + isolationLevel);
+        }
         await this.conn.conn.query('begin');
         super.begin();
     }

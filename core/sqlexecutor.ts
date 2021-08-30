@@ -16,7 +16,7 @@ export class SqlExecutor {
      * @param limit         最大记录行
      * @returns             执行结果或undefined
      */
-    public static async exec(em: EntityManager, sql: string, params?: any[], start?: number, limit?: number): Promise<any> {
+    public static async exec(em: EntityManager, sql: string, params?: any[] | object, start?: number, limit?: number): Promise<any> {
         sql = sql.trim();
         //sql类型：0:查询 1:增删改
         let sqlType: number = ['insert', 'update', 'delete'].includes(sql.substr(0, 6).toLowerCase()) ? 1 : 0;

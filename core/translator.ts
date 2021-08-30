@@ -3,6 +3,7 @@ import { BaseEntity } from "./baseentity";
 import { EntityFactory } from "./entityfactory";
 import { ErrorFactory } from "./errorfactory";
 import { RelaenUtil } from "./relaenutil";
+import { RelaenManager } from "./relaenmanager";
 
 /**
  * 翻译器
@@ -15,21 +16,26 @@ export abstract class Translator {
      */
     public linkNameMap: Map<string, object> = new Map();
 
-
     /**
      * 别名id
      */
     private aliasId: number = 0;
 
     /**
+     * 主实体名
+     */
+    private mainEntityName: string;
+    
+    /**
+     * 修饰符 如distince
+     */
+    public modifiers: string[];
+    
+    /**
      * 选中字段数组
      */
     private selectedFields: string[];
 
-    /**
-     * 主实体名
-     */
-    private mainEntityName: string;
     /**
      * from table 数组
      */
@@ -41,10 +47,15 @@ export abstract class Translator {
     private whereObject: any[];
 
     /**
-     * 修饰符 如distince
+     * group by string
      */
-    public modifiers: string[];
-
+    private groupString: string;
+    
+    /**
+     * having条件string
+     */
+    private havingObject: any[];
+    
     /**
      * order by string
      */
@@ -55,9 +66,15 @@ export abstract class Translator {
      */
     public sqlType: EQueryType;
 
+    /**
+     * lock 类型
+     */
+    private lockMode: 'optimistic' | 'pessimistic';
+
     constructor(entityName?: string) {
         this.mainEntityName = entityName;
     }
+    
     /**
      * entity转insert sql
      * @param entity 
@@ -136,6 +153,9 @@ export abstract class Translator {
         let idValue: any;
         //id名
         let idName: string;
+        //Version值、名
+        let versionName: string;
+        let versionValue: number;
         if (!orm.id) {
             throw ErrorFactory.getError('0103');
         }
@@ -163,10 +183,22 @@ export abstract class Translator {
                 idValue = v;
                 idName = key[1].name;
             }
+            // 添加版本version
+            if (this.lockMode === 'optimistic' && fo.version) {
+                if (typeof fo.version !== 'number') {
+                    throw "版本支持number";
+                }
+                if (v === undefined || v === null) {
+                    throw "实体对象未查询到version值";
+                }
+                versionName = fn;
+                versionValue = v;
+            }
             //值为空且不忽略空值或字段已添加，则不处理
             if (v === null && ignoreUndefinedValue || fields.includes(fn)) {
                 continue;
             }
+
             fv.push(fn + '=?');
             values.push(v);
         }
@@ -177,6 +209,9 @@ export abstract class Translator {
         //where
         arr.push('where');
         arr.push(idName + '=' + idValue);
+        if (versionName && versionValue) {
+            arr.push('AND ' + versionName + '=' + versionValue);
+        }
         let sql = arr.join(' ');
         return [sql, values];
     }
@@ -384,6 +419,25 @@ export abstract class Translator {
         if (!params || typeof params !== 'object') {
             return null;
         }
+        let condition = this.handleCondition(params);
+
+        if (condition[0] !== '') {
+            this.whereObject = condition;
+        }
+    }
+
+    public handleHaving(params: object) {
+        if (!params || typeof params !== 'object') {
+            return null;
+        }
+        let condition = this.handleCondition(params);
+
+        if (condition[0] !== '') {
+            this.havingObject = condition;
+        }
+    }
+
+    private handleCondition(params: object, entityName?: string) {
         //值数组
         let pValues: any[] = [];
         //where字符串
@@ -410,13 +464,13 @@ export abstract class Translator {
             }
 
             //如果值为null且关系为“=”，则需要改为“is”
-            if (params[item] === null && rel === '=') {
+            if ((v === null && rel === '=')) {
                 rel = 'IS';
             }
-            //like 添加%
-            if (rel === 'LIKE') {
-                v = '%' + v + '%';
-            }
+            //like 不添加%
+            // if (rel === 'LIKE') {
+            //     v = '%' + v + '%';
+            // }
 
             // 如果值为实体对象，则获取实体对象的主键值
             if (v instanceof BaseEntity) {
@@ -436,7 +490,7 @@ export abstract class Translator {
                 }
             }
             let placeholder = ' ?';
-            // in,not in,between 字段和值处理
+            // in,not in,between,not between 字段和值处理
             if (rel === 'IN' || rel === 'NOT IN') {
                 if (!Array.isArray(v)) {
                     // TODO error处理
@@ -447,7 +501,7 @@ export abstract class Translator {
 
 
             }
-            if (rel === 'BETWEEN') {
+            if (rel === 'BETWEEN' || rel === 'NOT BETWEEN') {
                 if (!Array.isArray(v) || v.length !== 2) {
                     // TODO error处理
                     throw new Error('参数为长度2的数组');
@@ -470,9 +524,7 @@ export abstract class Translator {
                 pValues.push(v);
             }
         });
-        if (whereStr !== '') {
-            this.whereObject = [whereStr, pValues];
-        }
+        return [whereStr, pValues];
     }
 
     /**
@@ -492,6 +544,26 @@ export abstract class Translator {
         });
         if (arr.length > 0) {
             this.orderString = arr.join(',');
+        }
+    }
+
+    /**
+     * 处理group by
+     * @param params 
+     * @param entityName 
+     */
+    public handleGroup(params: string | string[]): string {
+        if (!params) {
+            return null;
+        }
+        params = typeof params === 'string' ? [params] : params;
+        let arr = [];
+        for (const param of params) {
+            let fn = this.handleOneField(param, null, null, true);
+            arr.push(fn);
+        }
+        if (arr.length > 0) {
+            this.groupString = arr.join(',');
         }
     }
 
@@ -558,16 +630,35 @@ export abstract class Translator {
                 orm = EntityFactory.getClass(t);
                 sql += ',' + RelaenUtil.getTableName(orm) + ' ' + this.linkNameMap.get(t)['alias'];
             }
-        }
 
+            if (this.lockMode === 'pessimistic' && RelaenManager.dialect === 'mssql') {
+                sql += this.handleLock();
+            }
+        }
+        // 参数数组
+        let paramsArr = [];
         if (this.whereObject) {
             sql += ' WHERE ' + this.whereObject[0];
+            paramsArr = paramsArr.concat(this.whereObject[1]);
+        }
+
+        if (this.groupString) {
+            sql += ' GROUP BY ' + this.groupString;
+        }
+
+        if (this.havingObject) {
+            sql += ' HAVING ' + this.havingObject[0];
+            paramsArr = paramsArr.concat(this.havingObject[1]);
         }
 
         if (this.orderString) {
             sql += ' ORDER BY ' + this.orderString;
         }
-        return [sql, this.linkNameMap, this.whereObject ? this.whereObject[1] : undefined];
+
+        if (this.lockMode === 'pessimistic') {
+            sql += this.handleLock();
+        }
+        return [sql, this.linkNameMap, paramsArr];
     }
     /**
      * 生成增删改sql
@@ -594,5 +685,27 @@ export abstract class Translator {
             sql += ' WHERE ' + this.whereObject[0];
         }
         return [sql, this.linkNameMap, this.whereObject ? this.whereObject[1] : undefined];
+    }
+
+    /**
+     * 处理悲观锁
+     */
+    protected handleLock() {
+        if (this.lockMode === 'pessimistic') {
+            switch (RelaenManager.dialect) {
+                case 'mysql':
+                case 'oracle':
+                case 'postgres':
+                case 'mariadb':
+                    return " FOR UPDATE";
+                case 'mssql':
+                    return " WITH(UPDLOCK,ROWLOCK)";
+                case 'sqlite':
+                    return '';
+                default:
+                    // TODO throw
+                    throw "不支持行锁";
+            }
+        }
     }
 }

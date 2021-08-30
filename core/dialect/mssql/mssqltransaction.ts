@@ -1,4 +1,4 @@
-import { Transaction } from "../../transaction";
+import { IsolationLevel, Transaction } from "../../transaction";
 
 /**
  * mssql 事务类
@@ -8,23 +8,27 @@ export class MssqlTransaction extends Transaction {
     /**
      * 实际的transaction
      */
-    private tr:any;
+    private tr: any;
 
     /**
      * 构造器
      * @param conn      connection 
      */
-    constructor(conn:any){
+    constructor(conn: any) {
         super(conn);
         //创建实际的transaction
         this.tr = conn.conn.transaction();
     }
-    
+
     /**
      * 开始事务
      */
-    async begin() {
-        await this.tr.begin();
+    async begin(isolationLevel?: IsolationLevel) {
+        if (isolationLevel) {
+            await this.tr.begin(isolationLevel);
+        } else {
+            await this.tr.begin();
+        }
         super.begin();
     }
 

@@ -68,7 +68,7 @@ export class SqliteProvider extends BaseProvider {
      * @param params        参数数组
      * @returns             结果(集)
      */
-    public async exec(connection: Connection, sql: string, params?: any[]) {
+    public async exec(connection: Connection, sql: string, params?: any[] | object) {
         return new Promise(async (resolve, reject) => {
             // insert into 使用run
             const isInsertQuery = sql.substr(0, 11).toLocaleLowerCase() === 'insert into';

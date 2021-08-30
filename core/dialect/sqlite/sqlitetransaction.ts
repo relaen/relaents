@@ -8,9 +8,13 @@ class SqliteTransaction extends Transaction {
     /**
      * 开始事务
      */
-    public async begin() {
+    public async begin(isolationLevel?: any) {
         await new Promise((resolve, reject) => {
-            this.conn.conn.run('begin', (err) => {
+            let sql = 'begin';
+            if (isolationLevel === 'immediate' || isolationLevel === 'exclusive') {
+                sql += isolationLevel;
+            }
+            this.conn.conn.run(sql, (err) => {
                 if (err) {
                     return reject(err);
                 }

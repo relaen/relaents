@@ -21,7 +21,7 @@ class Query {
     /**
      * 参数值数组
      */
-    paramArr: any[];
+    paramArr: any[] | object;
 
     /**
      * 执行sql
@@ -56,7 +56,7 @@ class Query {
     /**
      * 解释器
      */
-    private translator:Translator;
+    private translator: Translator;
     /**
      * 构造query对象
      * @param rql               relean ql 
@@ -71,7 +71,7 @@ class Query {
         this.entityManager = em;
         this.entityClassName = entityClassName;
         this.type = EQueryType.SELECT;
-        this.paramArr = [];
+        this.paramArr;
         //初始化translator
         this.translator = TranslatorFactory.get(entityClassName);
     }
@@ -81,9 +81,13 @@ class Query {
      * @param paramName 
      * @param value 
      */
-    public setParameter(index: number, value: any) {
+    public setParameter(index: number | string, value: any) {
+        if (!this.paramArr) {
+            this.paramArr = typeof index === 'number' ? [] : {}
+        }
+
         //补全参数个数
-        if (this.paramArr.length <= index) {
+        if (Array.isArray(this.paramArr) && this.paramArr.length <= index) {
             for (let i = this.paramArr.length; i <= index; i++) {
                 this.paramArr.push(null);
             }
@@ -96,16 +100,27 @@ class Query {
      * 设置多个参数值，从下标0开始
      * @param valueArr 值数组
      */
-    public setParameters(valueArr: Array<any>) {
-        valueArr.forEach((value, i) => {
-            //对于entity，只获取其主键
-            let v = value instanceof BaseEntity ? RelaenUtil.getIdValue(value) : value;
-            if (i >= this.paramArr.length) {
-                this.paramArr.push(v);
-            } else {
-                this.paramArr[i] = v;
-            }
-        });
+    public setParameters(valueArr: any[] | object) {
+        if (Array.isArray(valueArr)) {
+            this.paramArr = this.paramArr || [];
+            valueArr.forEach((value, i) => {
+                //对于entity，只获取其主键
+                let v = value instanceof BaseEntity ? RelaenUtil.getIdValue(value) : value;
+                if (Array.isArray(this.paramArr) && i >= this.paramArr.length) {
+                    this.paramArr.push(v);
+                } else {
+                    this.paramArr[i] = v;
+                }
+            });
+        } else {
+            this.paramArr = this.paramArr || {};
+            Object.getOwnPropertyNames(valueArr).forEach((item) => {
+                let value = valueArr[item];
+                //对于entity，只获取其主键
+                let v = value instanceof BaseEntity ? RelaenUtil.getIdValue(value) : value;
+                this.paramArr[item] = v;
+            });
+        }
     }
 
     /**
@@ -174,7 +189,7 @@ class Query {
         if (limit > 0) {
             this.limit = limit;
         }
-        
+
         let results: any[] = await SqlExecutor.exec(this.entityManager, this.execSql, this.paramArr, this.start, this.limit);
         if (!notEntity && Array.isArray(results)) {
             let retArr: any[] = [];
@@ -308,7 +323,7 @@ class Query {
         this.translator.handleFrom(tables);
         return this;
     }
-  
+
     /**
      * 添加where条件
      * @param params    参数对象{paramName1:paramValue1,paramName2:{value:paramValue2,rel:'>',before:'(',after:'and'}...}
@@ -353,6 +368,28 @@ class Query {
     delete() {
         this.type = EQueryType.DELETE;
         this.translator.sqlType = this.type;
+        return this;
+    }
+
+    /**
+     * 添加分组条件
+     * @param params 属性或属性数组
+     */
+    groupBy(params: string | Array<string>) {
+        this.translator.handleGroup(params);
+        return this;
+    }
+
+    /**
+     * 添加where条件
+     * @param params    参数对象{paramName1:paramValue1,paramName2:{value:paramValue2,rel:'>',before:'(',after:'and'}...}
+     *                  参数值有两种方式，一种是直接在参数名后给值，一种是给对象，对象中包括:
+     *                  value:值,rel:关系,before:字段前字符串(通常为"("),after:值后字符串(通常为"and","or",")")
+     *                  关系包括 >,<,>=,<=,<>,is,like等
+     * @returns      数组，第一个where后的条件语句，第二个元素为值数组，如: [where 语句,[1,2]]
+     */
+    having(params: object) {
+        this.translator.handleHaving(params);
         return this;
     }
 }

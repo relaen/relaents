@@ -48,7 +48,7 @@ export abstract class BaseProvider {
      * @param sql           sql语句
      * @param params        参数
      */
-    public async exec(connection: Connection, sql: string, params?: any[]): Promise<any> {
+    public async exec(connection: Connection, sql: string, params?: any[] | object): Promise<any> {
         return null;
     }
 
