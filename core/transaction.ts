@@ -16,6 +16,12 @@ abstract class Transaction {
      * 线程id
      */
     threadId: number;
+
+    /**
+     * 事务隔离级别
+     */
+    isolation: IsolationLevel;
+
     /**
      * 构造器
      * @param conn  真实连接对象
@@ -27,12 +33,23 @@ abstract class Transaction {
         //加入事务管理器
         TransactionManager.add(this);
     }
+
+    /**
+     * 设置当前事务
+     * @param isolation 事务隔离级
+     */
+    public async setisolationLevel(isolationLevel: IsolationLevel) {
+        return null;
+    }
+
     /**
      * 事务开始
+     * @param sqliteTransaction sqlite事务类型
      */
-    public async begin(isolationLevel?: IsolationLevel) {
+    public async begin(sqliteTransaction?: 'immediate' | 'exclusive') {
         Logger.log('Transaction is begun.');
     }
+
     /**
      * 事务提交,继承类需要重载
      */
@@ -52,5 +69,5 @@ abstract class Transaction {
     }
 }
 // 事务隔离级别
-type IsolationLevel = "SERIALIZABLE" | "READ UNCOMMITTED" | "READ COMMITTED" | "REPEATABLE READ" | "immediate" | "exclusive";
+type IsolationLevel = "SERIALIZABLE" | "READ UNCOMMITTED" | "READ COMMITTED" | "REPEATABLE READ";
 export { Transaction, IsolationLevel }

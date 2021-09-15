@@ -51,6 +51,11 @@ class RelaenManager {
     public static fileLog: boolean;
 
     /**
+     * 是否禁止全表更新与删除，默认禁止
+     */
+    public static fullTableOperation: boolean;
+
+    /**
      * 初始化
      * @param cfg   配置文件名或配置对象
      */
@@ -66,15 +71,16 @@ class RelaenManager {
         this.debug = cfg.debug || false;
         this.fileLog = cfg.fileLog || false;
         this.cache = cfg.cache === false ? false : true;
+        this.fullTableOperation = cfg.fullTableOperation === true ? true : false;
         this.initProvider();
         this.initTransaction();
         this.initTranslator();
         this.initPlaceholder();
-        Logger.init(this.debug,this.fileLog);
+        Logger.init(this.debug, this.fileLog);
         ConnectionManager.init(cfg);
         //加载实体
         for (let path of cfg.entities) {
-            EntityFactory.addEntities(path);
+            await EntityFactory.addEntities(path);
         }
     }
 

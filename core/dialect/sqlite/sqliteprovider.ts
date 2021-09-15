@@ -1,5 +1,6 @@
 import { BaseProvider } from "../../baseprovider";
 import { Connection } from "../../connection";
+import { LockType } from "../../types";
 import { ISqliteConnectionCfg } from "./sqliteoptions";
 
 /**
@@ -136,12 +137,5 @@ export class SqliteProvider extends BaseProvider {
      */
     public getIdentityId(result: any): number {
         return result.lastID;
-    }
-
-    /**
-     * 加表锁
-     */
-    public lockTable(table?: string, schema?: string): string {
-        return "begin immediate";
     }
 }

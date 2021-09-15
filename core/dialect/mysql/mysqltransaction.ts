@@ -1,4 +1,5 @@
 import { rejects } from "assert";
+import { ConnectionManager } from "../../connectionmanager";
 import { Logger } from "../../logger";
 import { IsolationLevel, Transaction } from "../../transaction";
 
@@ -7,22 +8,23 @@ import { IsolationLevel, Transaction } from "../../transaction";
  * @since 0.3.0
  */
 class MysqlTransaction extends Transaction {
+
+    /**
+     * 设置当前事务
+     * @param isolation 事务隔离级
+     */
+    public async setisolationLevel(isolationLevel: IsolationLevel) {
+        if (isolationLevel) {
+            let sql = "SET TRANSACTION ISOLATION LEVEL " + isolationLevel;
+            await ConnectionManager.provider.exec(this.conn, sql);
+            Logger.log(sql);
+        }
+    }
+
     /**
      * 开始事务
      */
-    public async begin(isolationLevel?: IsolationLevel) {
-        if (isolationLevel) {
-            await new Promise((resolve, reject) => {
-                let sql = "SET TRANSACTION ISOLATION LEVEL " + isolationLevel;
-                this.conn.conn.query(sql, (err) => {
-                    if (err) {
-                        return reject(err);
-                    }
-                    Logger.log(sql)
-                    resolve(null);
-                });
-            });
-        }
+    public async begin() {
         await new Promise((resolve, reject) => {
             this.conn.conn.beginTransaction((err) => {
                 if (err) {
@@ -44,7 +46,6 @@ class MysqlTransaction extends Transaction {
                     await this.rollback();
                     return reject(err);
                 }
-                // TODO 还原
                 super.commit();
                 resolve(null);
             });

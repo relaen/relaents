@@ -2,7 +2,7 @@ import { EntityManager } from "./entitymanager";
 import { BaseEntity } from "./baseentity";
 import { SqlExecutor } from "./sqlexecutor";
 import { EntityFactory } from "./entityfactory";
-import { IEntityCfg, IEntity, EEntityState, EQueryType, IEntityRelation } from "./types";
+import { IEntityCfg, IEntity, EEntityState, EQueryType, IEntityRelation, LockMode } from "./types";
 import { ErrorFactory } from "./errorfactory";
 import { RelaenUtil } from "./relaenutil";
 import { EntityManagerFactory } from "./entitymanagerfactory";
@@ -57,6 +57,7 @@ class Query {
      * 解释器
      */
     private translator: Translator;
+
     /**
      * 构造query对象
      * @param rql               relean ql 
@@ -71,9 +72,11 @@ class Query {
         this.entityManager = em;
         this.entityClassName = entityClassName;
         this.type = EQueryType.SELECT;
-        this.paramArr;
+        this.paramArr = [];
         //初始化translator
-        this.translator = TranslatorFactory.get(entityClassName);
+        if (this.constructor.name === 'Query') {
+            this.translator = TranslatorFactory.get(entityClassName);
+        }
     }
 
     /**
@@ -81,11 +84,7 @@ class Query {
      * @param paramName 
      * @param value 
      */
-    public setParameter(index: number | string, value: any) {
-        if (!this.paramArr) {
-            this.paramArr = typeof index === 'number' ? [] : {}
-        }
-
+    public setParameter(index: number, value: any) {
         //补全参数个数
         if (Array.isArray(this.paramArr) && this.paramArr.length <= index) {
             for (let i = this.paramArr.length; i <= index; i++) {
@@ -100,27 +99,16 @@ class Query {
      * 设置多个参数值，从下标0开始
      * @param valueArr 值数组
      */
-    public setParameters(valueArr: any[] | object) {
-        if (Array.isArray(valueArr)) {
-            this.paramArr = this.paramArr || [];
-            valueArr.forEach((value, i) => {
-                //对于entity，只获取其主键
-                let v = value instanceof BaseEntity ? RelaenUtil.getIdValue(value) : value;
-                if (Array.isArray(this.paramArr) && i >= this.paramArr.length) {
-                    this.paramArr.push(v);
-                } else {
-                    this.paramArr[i] = v;
-                }
-            });
-        } else {
-            this.paramArr = this.paramArr || {};
-            Object.getOwnPropertyNames(valueArr).forEach((item) => {
-                let value = valueArr[item];
-                //对于entity，只获取其主键
-                let v = value instanceof BaseEntity ? RelaenUtil.getIdValue(value) : value;
-                this.paramArr[item] = v;
-            });
-        }
+    public setParameters(valueArr: Array<any>) {
+        valueArr.forEach((value, i) => {
+            //对于entity，只获取其主键
+            let v = value instanceof BaseEntity ? RelaenUtil.getIdValue(value) : value;
+            if (Array.isArray(this.paramArr) && i >= this.paramArr.length) {
+                this.paramArr.push(v);
+            } else {
+                this.paramArr[i] = v;
+            }
+        });
     }
 
     /**
@@ -128,7 +116,9 @@ class Query {
      * @param start     开始位置
      */
     public setStart(start: number) {
-        this.start = start;
+        if (start >= 0) {
+            this.start = start;
+        }
     }
 
     /**
@@ -136,7 +126,9 @@ class Query {
      * @param limit     记录数
      */
     public setLimit(limit: number) {
-        this.limit = limit;
+        if (limit > 0) {
+            this.limit = limit;
+        }
     }
 
     /**
@@ -150,7 +142,7 @@ class Query {
         let r;
         switch (this.type) {
             case EQueryType.SELECT:
-                r = await this.getResultList(-1, -1, notEntity);
+                r = await this.getResultList(null, 1, notEntity);
                 if (r && r.length > 0) {
                     //返回实体
                     if (!notEntity) {
@@ -183,12 +175,8 @@ class Query {
             return null;
         }
         this.preHandle();
-        if (start >= 0) {
-            this.start = start;
-        }
-        if (limit > 0) {
-            this.limit = limit;
-        }
+        this.setStart(start);
+        this.setLimit(limit);
 
         let results: any[] = await SqlExecutor.exec(this.entityManager, this.execSql, this.paramArr, this.start, this.limit);
         if (!notEntity && Array.isArray(results)) {
@@ -390,6 +378,17 @@ class Query {
      */
     having(params: object) {
         this.translator.handleHaving(params);
+        return this;
+    }
+
+    /**
+     * 设置查询锁模式
+     * @param lockMode 锁模式
+     */
+    setLock(lockMode: LockMode) {
+        if (lockMode) {
+            this.translator.lockMode = lockMode;
+        }
         return this;
     }
 }

@@ -1,3 +1,5 @@
+import { ConnectionManager } from "../../connectionmanager";
+import { ErrorFactory } from "../../errorfactory";
 import { Logger } from "../../logger";
 import { IsolationLevel, Transaction } from "../../transaction";
 
@@ -8,15 +10,24 @@ import { IsolationLevel, Transaction } from "../../transaction";
 export class OracleTransaction extends Transaction {
 
     /**
+     * 设置当前事务
+     * @param isolation 事务隔离级
+     */
+    public async setisolationLevel(isolationLevel: IsolationLevel) {
+        // Oracle only supports SERIALIZABLE and READ COMMITTED isolation
+        if (isolationLevel === 'SERIALIZABLE' || isolationLevel === 'READ COMMITTED') {
+            let sql = "SET TRANSACTION ISOLATION LEVEL " + isolationLevel;
+            await ConnectionManager.provider.exec(this.conn, sql);
+            Logger.log(sql);
+        } else if (isolationLevel === 'READ UNCOMMITTED' || isolationLevel === 'REPEATABLE READ') {
+            throw ErrorFactory.getError('0408');
+        }
+    }
+
+    /**
      * 开始事务
      */
-    async begin(isolationLevel?: IsolationLevel) {
-        // Oracle only supports SERIALIZABLE and READ COMMITTED isolation
-        if (isolationLevel === "SERIALIZABLE" || isolationLevel === "READ COMMITTED") {
-            let sql = "SET TRANSACTION ISOLATION LEVEL " + isolationLevel;
-            await this.conn.conn.execute(sql);
-            Logger.log(sql);
-        }
+    async begin() {
         this.conn.autoCommit = false;
         super.begin();
     }

@@ -8,11 +8,11 @@ class SqliteTransaction extends Transaction {
     /**
      * 开始事务
      */
-    public async begin(isolationLevel?: any) {
+    public async begin(sqliteTransaction?: 'immediate' | 'exclusive') {
         await new Promise((resolve, reject) => {
             let sql = 'begin';
-            if (isolationLevel === 'immediate' || isolationLevel === 'exclusive') {
-                sql += isolationLevel;
+            if (sqliteTransaction === 'immediate' || sqliteTransaction === 'exclusive') {
+                sql += ' ' + sqliteTransaction;
             }
             this.conn.conn.run(sql, (err) => {
                 if (err) {
@@ -22,6 +22,10 @@ class SqliteTransaction extends Transaction {
                 resolve(null);
             });
         });
+    }
+
+    public async beginImmediate() {
+
     }
 
     /**

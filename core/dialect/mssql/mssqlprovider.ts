@@ -1,11 +1,12 @@
 import { Connection } from "../../connection";
-import { IEntityCfg } from "../../types";
+import { IEntityCfg, LockType } from "../../types";
 import { BaseProvider } from "../../baseprovider";
 import { EntityFactory } from "../../entityfactory";
 import { EntityManager } from "../../entitymanager";
 import { NativeQuery } from "../../nativequery";
 import { TransactionManager } from "../../transactionmanager";
 import { IMssqlConnectionCfg } from "./mssqloptions";
+import { table } from "console";
 
 /**
  * mssql provider
@@ -107,19 +108,21 @@ export class MssqlProvider extends BaseProvider {
      * @returns         处理后的sql
      */
     public handleStartAndLimit(sql: string, start?: number, limit?: number): string {
-        // mssql 需要orderby，offset fetch同时使用
-        if (Number.isInteger(limit) && limit > 0) {
-            if (Number.isInteger(start) && start >= 0) {
-                return handle(start, limit);
-            }
-            if (start === undefined || start === null) {
-                return handle(0, limit);
-            }
+        //mssql 需要orderby，offset fetch同时使用
+        handleOrder();
+        if (start && limit) {
+            return sql + " OFFSET " + start + " ROWS FETCH NEXT " + limit + " ROWS ONLY";
+        }
+        if (limit) {
+            return sql + " OFFSET 0 ROWS FETCH NEXT " + limit + " ROWS ONLY";
+        }
+        if (start) {
+            return sql + " OFFSET " + start + " ROWS";
         }
         return sql;
 
-        function handle(start: number, limit: number) {
-            //无order by 则需要添加
+        //无order by 则需要添加
+        function handleOrder() {
             if (!/order\s+by/i.test(sql)) {
                 let r = /from\s+\w+/i.exec(sql);
                 if (!r) {
@@ -127,12 +130,14 @@ export class MssqlProvider extends BaseProvider {
                 }
                 let tbl = r[0].replace(/from\s+/i, '');
                 let t0 = /from\s+\w+\s+t0/i.test(sql);
+                let orderBy = '(SELECT NULL)';
                 let cfg: IEntityCfg = EntityFactory.getEntityCfgByTblName(tbl);
-                sql += ' ORDER BY ' + (t0 ? 't0.' : '') + cfg.columns.get(cfg.id.name).name + ' ASC';
+                if (cfg) {
+                    orderBy = (t0 ? 't0.' : '') + cfg.columns.get(cfg.id.name).name + ' ASC';
+                }
+                sql += ' ORDER BY ' + orderBy;
             }
-            return sql + ' OFFSET ' + start + ' ROWS FETCH NEXT ' + limit + ' ROWS ONLY';
         }
-
     }
 
     /**
@@ -165,10 +170,35 @@ export class MssqlProvider extends BaseProvider {
     }
 
     /**
-     * 加表锁
+     * 获取加锁sql语句
+     * @param type      锁类型    
+     * @param tables    表名，表锁时使用
+     * @param schema    模式名，表锁时使用
      */
-    public lockTable(table: string, schema?: string): string {
-        return "select * from " + (schema ? schema + "." + table : table) + " with (tablockx)";
+    public lock(type: LockType, tables?: string[], schema?: string) {
+        if (schema && tables) {
+            tables.forEach((v, i) => {
+                tables[i] = schema + '.' + tables[i];
+            });
+        }
+        switch (type) {
+            case 'table_read':
+                return "SELECT * FROM " + tables.join() + " WITH (HOLDLOCK,TABLOCK)";
+            case 'table_write':
+                return "SELECT * FROM " + tables.join() + " WITH (UPDLOCK,TABLOCK)";
+            case 'row_read':
+                return "WITH(HOLDLOCK,ROWLOCK)";
+            case 'row_write':
+                return "WITH(UPDLOCK,ROWLOCK)";
+        }
+    }
+
+    /**
+     * 获取新增返回主键字段sql语句
+     * @param idField 主键字段
+     */
+    public insertReturn(idField: string) {
+        return "SELECT @@IDENTITY AS insertId";
     }
 
 }

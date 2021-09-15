@@ -4,6 +4,10 @@ import { EntityManager } from "../../entitymanager";
 import { NativeQuery } from "../../nativequery";
 import { IOracleConnectionCfg } from "./oracleoptions";
 import { resolve } from "path/posix";
+import { LockType } from "../../types";
+import { ErrorFactory } from "../../errorfactory";
+import { RelaenManager } from "../../relaenmanager";
+import { table } from "console";
 
 /**
  * oracle provider
@@ -82,7 +86,7 @@ export class OracleProvider extends BaseProvider {
      */
     public async exec(connection: Connection, sql: string, params?: any[]) {
         // 默认自动提交
-        let autoCommit = connection.conn.autoCommit === undefined ? true : connection.conn.autoCommit;
+        let autoCommit = connection.autoCommit === false ? false : true;
         params = params || [];
         let r = await connection.conn.execute(sql, params, { autoCommit: autoCommit, outFormat: 4002 });
         if (r.rows) {
@@ -100,11 +104,14 @@ export class OracleProvider extends BaseProvider {
      * @since           0.2.0
      */
     public handleStartAndLimit(sql: string, start?: number, limit?: number) {
-        if (limit > 0 && Number.isInteger(limit)) {
-            if (start >= 0 && Number.isInteger(start)) {
-                return sql + ' OFFSET ' + start + ' ROWS FETCH NEXT ' + limit + ' ROWS ONLY';
-            }
-            return sql + ' FETCH NEXT ' + limit + ' ROWS ONLY';
+        if (limit && start) {
+            return sql + " OFFSET " + start + " ROWS FETCH NEXT " + limit + " ROWS ONLY";
+        }
+        if (limit) {
+            return sql + " FETCH NEXT " + limit + " ROWS ONLY";
+        }
+        if (start) {
+            return sql + " OFFSET " + start + " ROWS";
         }
         return sql;
     }
@@ -130,9 +137,27 @@ export class OracleProvider extends BaseProvider {
     }
 
     /**
-     * 加表锁
+     * 获取加锁sql语句
+     * @param type      锁类型    
+     * @param tables    表名，表锁时使用
+     * @param schema    模式名，表锁时使用
      */
-    public lockTable(table: string, schema?: string): string {
-        return "lock table " + (schema ? schema + "." + table : table) + " in exclusive mode";
+    public lock(type: LockType, tables?: string[], schema?: string) {
+        if (schema) {
+            tables.forEach((v, i) => {
+                tables[i] = schema + '.' + tables[i];
+            });
+        }
+        switch (type) {
+            //表连接为 ',' 逗号
+            case 'table_read':
+                return "LOCK TABLE " + tables.join() + " IN SHARE MODE";
+            case 'table_write':
+                return "LOCK TABLE " + tables.join() + " IN EXCLUSIVE MODE";
+            case 'table_read':
+                return "FOR UPDATE"
+            case 'row_write':
+                return "FOR UPDATE";
+        }
     }
 }

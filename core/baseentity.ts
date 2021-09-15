@@ -1,5 +1,5 @@
 import { EntityFactory } from "./entityfactory";
-import { IEntityCfg, IEntity, EEntityState } from "./types";
+import { IEntityCfg, IEntity, EEntityState, LockMode } from "./types";
 import { getEntityManager, EntityManagerFactory } from "./entitymanagerfactory";
 import { RelaenUtil } from "./relaenutil";
 
@@ -27,9 +27,9 @@ export class BaseEntity extends Object implements IEntity {
      * @param ignoreUndefinedValue  忽略undefined值，针对update时有效
      * @returns                     保存后的实体
      */
-    public async save(ignoreUndefinedValue?: boolean): Promise<IEntity> {
+    public async save(ignoreUndefinedValue?: boolean, lockMode?: LockMode): Promise<IEntity> {
         let em = await getEntityManager();
-        await em.save(this, ignoreUndefinedValue);
+        await em.save(this, ignoreUndefinedValue, lockMode);
         await em.close();
         return this;
     }
@@ -120,8 +120,6 @@ export class BaseEntity extends Object implements IEntity {
         await em.close();
         return true;
     }
-
-
 
     /**
      * 对比

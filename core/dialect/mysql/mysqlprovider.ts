@@ -3,6 +3,8 @@ import { ErrorFactory } from "../../errorfactory";
 import { BaseProvider } from "../../baseprovider";
 import { EntityManager } from "../../entitymanager";
 import { IMysqlConnectionCfg } from "./mysqloptions";
+import { LockType } from "../../types";
+import { table } from "console";
 
 /**
  * mysql provider
@@ -114,25 +116,14 @@ export class MysqlProvider extends BaseProvider {
      * @since           0.2.0
      */
     public handleStartAndLimit(sql: string, start?: number, limit?: number): string {
-        if (limit > 0 && Number.isInteger(limit)) {
-            if (start >= 0 && Number.isInteger(start)) {
-                return sql + ' limit ' + start + ',' + limit;
-            }
-            return sql + ' limit ' + limit;
+        if (limit && start) {
+            return sql + ' LIMIT ' + start + ',' + limit;
         }
+        if (limit) {
+            return sql + ' LIMIT ' + limit;
+        }
+        //mysql不能单独设置偏移量
         return sql;
-    }
-
-    /**
-     * 获取实体sequence，针对主键生成策略为sequence时有效
-     * mysql 不支持sequence，返回0
-     * @param em        entity manager
-     * @param seqName   sequence name
-     * @param schema    schema
-     * @returns         sequence 值
-     */
-    public async getSequenceValue(em: EntityManager, seqName: string, schema?: string): Promise<number> {
-        return null;
     }
 
     /**
@@ -144,12 +135,34 @@ export class MysqlProvider extends BaseProvider {
         return result.insertId;
     }
 
-
-    public lockTable(table: string, schema?: string): string {
-        return "LOCK TABLES " + table + " WRITE";
+    /**
+     * 获取加锁sql语句
+     * @param type      锁类型    
+     * @param tables    表名，表锁时使用
+     * @param schema    模式名，表锁时使用
+     */
+    public lock(type: LockType, tables?: string[], schema?: string) {
+        switch (type) {
+            //表连接为 ' ' 空格
+            case 'table_read':
+                return "LOCK TABLE " + tables.join(' ') + " READ";
+            case 'table_write':
+                return "LOCK TABLE " + tables.join(' ') + " WRITE";
+            case 'row_read':
+                return "IN SHARE MODE";
+            case 'row_write':
+                return "FOR UPDATE";
+        }
     }
 
-    public unLockTable(table?: string, schema?: string): string {
-        return "UNLOCK TABLES";
+    /**
+     * 获取释放锁sql语句
+     * @param type      锁类型
+     */
+    public unlock(type: LockType) {
+        switch (type) {
+            case 'table_write':
+                return "UNLOCK TABLES";
+        }
     }
 }

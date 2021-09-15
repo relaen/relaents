@@ -4,6 +4,7 @@ import { BaseEntity } from "./baseentity";
 import { RelaenManager } from "./relaenmanager";
 import { PlaceholderFactory } from "./placeholderfactory";
 
+
 class RelaenUtil {
     /**
      * 对象id计数器
@@ -16,22 +17,36 @@ class RelaenUtil {
     public static genId() {
         return ++this.idGenerator;
     }
+
+    /**
+     * 获取table名
+     * @param cfg   实体配置
+     * @returns     表名串，如果有schema，则加上schema
+     */
+    public static getTableName(cfg: IEntityCfg | string, schema?: string) {
+        if (typeof cfg === 'object') {
+            return cfg.schema ? cfg.schema + '.' + cfg.table : cfg.table;
+        }
+        return schema ? schema + '.' + cfg : cfg;
+    }
+
     /**
      * 获取id名 
-     * @param entity 实体对象或实体类名
+     * @param entity 实体类名|实体对象|实体配置
      * @returns      实体id名
      */
-    public static getIdName(entity: any): string {
-        let en: string;
-        if (entity instanceof BaseEntity) {
-            en = entity.constructor.name;
-        } else if (typeof entity === 'string') {
-            en = entity;
+    public static getIdName(entity: string | BaseEntity | IEntityCfg): string {
+        let cfg: IEntityCfg;
+        if (typeof entity === 'string') {
+            cfg = EntityFactory.getClass(entity);
+        } else if (typeof entity === 'object') {
+            if (entity instanceof BaseEntity) {
+                cfg = EntityFactory.getClass(entity.constructor.name);
+            } else {
+                cfg = entity;
+            }
         }
-        let cfg: IEntityCfg = EntityFactory.getClass(en);
-        if (cfg.id) {
-            return cfg.id.name;
-        }
+        return cfg && cfg.id ? cfg.id.name : null;
     }
 
     /**
@@ -77,7 +92,7 @@ class RelaenUtil {
      * @param sql   sql串
      * @returns     修改后的sql
      */
-    public static handlePlaceholder(sql:string):string{
+    public static handlePlaceholder(sql: string): string {
         // 占位符为?的默认处理
         if (['mysql', 'mariadb', 'sqlite'].includes(RelaenManager.dialect)) {
             return sql;
@@ -85,26 +100,14 @@ class RelaenUtil {
         let reg = /(\'.*?\?.*?\')|\?/g;
         let index = 0;
 
-        return sql. replace(reg,(match,p1)=>{
-            if(match !== '?'){
+        return sql.replace(reg, (match, p1) => {
+            if (match !== '?') {
                 return p1;
             }
             return PlaceholderFactory.get(index++);
         });
     }
 
-    /**
-     * 获取table名
-     * @param cfg   实体配置或表名
-     * @returns     表名串，如果有schema，则需要加上schema
-     */
-    public static getTableName(cfg:IEntityCfg|string,schema?:string){
-        if(typeof cfg === 'object'){
-            return cfg.schema?cfg.schema + '.' + cfg.table:cfg.table;
-        }else{
-            return schema?schema + '.' + cfg:cfg;
-        }
-    }
 }
 
 export { RelaenUtil }

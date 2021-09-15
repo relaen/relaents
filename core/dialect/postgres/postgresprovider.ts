@@ -3,6 +3,8 @@ import { BaseProvider } from "../../baseprovider";
 import { EntityManager } from "../../entitymanager";
 import { NativeQuery } from "../../nativequery";
 import { IPostgresConnectionCfg } from "./postgresoptions";
+import { LockType } from "../../types";
+import { table } from "console";
 
 /**
  * postgres provider
@@ -83,11 +85,14 @@ export class PostgresProvider extends BaseProvider {
      * @since           0.2.0
      */
     public handleStartAndLimit(sql: string, start?: number, limit?: number): string {
-        if (Number.isInteger(limit) && limit > 0) {
-            if (Number.isInteger(start) && start >= 0) {
-                return sql + ' LIMIT ' + limit + ' OFFSET ' + start;
-            }
+        if (limit && start) {
+            return sql + ' LIMIT ' + limit + ' OFFSET ' + start;
+        }
+        if (limit) {
             return sql + ' LIMIT ' + limit;
+        }
+        if (start) {
+            return sql + ' OFFSET ' + start;
         }
         return sql;
     }
@@ -125,9 +130,34 @@ export class PostgresProvider extends BaseProvider {
     }
 
     /**
-     * 加表锁
+     * 获取加锁sql语句
+     * @param type      锁类型    
+     * @param tables    表名，表锁时使用
+     * @param schema    模式名，表锁时使用
      */
-    public lockTable(table: string, schema?: string): string {
-        return "lock table " + (schema ? schema + "." + table : table) + " in exclusive mode";
+    public lock(type: LockType, tables?: string[], schema?: string) {
+        if (schema && tables) {
+            tables.forEach((v, i) => {
+                tables[i] = schema + '.' + tables[i];
+            });
+        }
+        switch (type) {
+            case 'table_read':
+                return "LOCK TABLE " + tables.join() + " IN SHARE MODE";
+            case 'table_write':
+                return "LOCK TABLE " + tables.join() + " IN EXCLUSIVE MODE";
+            case 'row_read':
+                return "FOR SHARE";
+            case 'row_write':
+                return "FOR UPDATE";
+        }
+    }
+
+    /**
+     * 获取新增返回主键字段sql语句
+     * @param idField 主键字段
+     */
+    public insertReturn(idField: string) {
+        return 'RETURNING ' + idField;
     }
 }

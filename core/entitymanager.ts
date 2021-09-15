@@ -11,7 +11,7 @@ import { BaseEntity } from "./baseentity";
 import { TranslatorFactory } from "./translatorfactory";
 import { ConnectionManager } from "./connectionmanager";
 import { Transaction } from "./transaction";
-import { RelaenManager } from "./relaenmanager";
+import { LockMode } from "..";
 
 /**
  * 实体管理器
@@ -54,15 +54,17 @@ class EntityManager {
      * 如果状态为new，则执行insert，同时改变为persist，如果为persist，则执行update
      * @param entity                实体
      * @param ignoreUndefinedValue  忽略undefined值，针对update时有效
+     * @param lockMode              乐观锁，针对update时有效
      * @returns                     保存后的实体
      */
-    public async save(entity: IEntity, ignoreUndefinedValue?: boolean): Promise<IEntity> {
+    public async save(entity: IEntity, ignoreUndefinedValue?: boolean, lockMode?: LockMode): Promise<IEntity> {
         //先进行预处理
         if (!this.preHandleEntity(entity, ignoreUndefinedValue)) {
             return null;
         }
         let status = EntityManagerFactory.getEntityStatus(entity);
         let translator = TranslatorFactory.get(entity.constructor.name);
+        translator.lockMode = lockMode;
         //无主键或状态为new
         if (status === EEntityState.NEW) {
             //检查并生成主键
@@ -109,8 +111,11 @@ class EntityManager {
      * @returns             被删除实体
      */
     public async delete(entity: any, className?: string): Promise<boolean> {
-        let translator = TranslatorFactory.get(entity.constructor.name);
-        let sqlAndValue = translator.toDelete(entity, className);
+        if (entity instanceof BaseEntity) {
+            className = entity.constructor.name;
+        }
+        let translator = TranslatorFactory.get(className);
+        let sqlAndValue = translator.toDelete(entity);
         if (sqlAndValue) {
             await SqlExecutor.exec(this, sqlAndValue[0], [sqlAndValue[1]]);
         }
@@ -126,36 +131,16 @@ class EntityManager {
     public async find(entityClassName: string, id: any): Promise<IEntity> {
         let orm: IEntityCfg = EntityFactory.getClass(entityClassName);
         if (!orm) {
-            throw ErrorFactory.getError("0020", [entityClassName]);
+            throw ErrorFactory.getError("0010", [entityClassName]);
         }
         let idName: string = RelaenUtil.getIdName(entityClassName);
         if (!idName) {
-            throw ErrorFactory.getError("0103");
+            throw ErrorFactory.getError("0020");
         }
-        // let sql = "select * from " + RelaenUtil.getTableName(orm) + " where " + orm.columns.get(idName).name + ' = ?';
-        let sql = "select " + this.isSelectField(orm) + " from " + RelaenUtil.getTableName(orm) + " where " + orm.columns.get(idName).name + ' = ?';
+        let sql = "SELECT " + this.isSelectField(orm, true) + " FROM " + RelaenUtil.getTableName(orm) + " WHERE " + orm.columns.get(idName).name + '=?';
         let query = this.createNativeQuery(sql, entityClassName);
         query.setParameter(0, id);
         return await query.getResult();
-    }
-
-    /**
-     * 是否存在隐藏字段
-     */
-    public isSelectField(orm: IEntityCfg) {
-        let arr = [];
-        let isHide = false;
-        for (let values of orm.columns.values()) {
-            if (values.select !== false) {
-                arr.push(values.name);
-                continue;
-            }
-            isHide = true;
-        }
-        if (arr.length > 0 && isHide === true) {
-            return arr.join();
-        }
-        return '*';
     }
 
     /**
@@ -184,15 +169,41 @@ class EntityManager {
      * @since 0.1.3
      */
     public async findMany(entityClassName: string, params?: object, start?: number, limit?: number, order?: object): Promise<Array<any>> {
-        let query: Query = this.createQuery(entityClassName);
         let orm: IEntityCfg = EntityFactory.getClass(entityClassName);
         if (!orm) {
-            throw ErrorFactory.getError("0020", [entityClassName]);
+            throw ErrorFactory.getError("0010", [entityClassName]);
         }
+        let query: Query = this.createQuery(entityClassName);
         return await query.select(this.isSelectField(orm))
             .where(params)
             .orderBy(order)
             .getResultList(start, limit);
+    }
+
+    /**
+     * 是否存在隐藏字段
+     * @param orm       实体配置
+     * @param isField   默认返回属性名，true返回数据库字段
+     */
+    public isSelectField(orm: IEntityCfg, isField?: boolean) {
+        let arr = [];
+        for (let [key, values] of orm.columns) {
+            if (values.select !== false) {
+                if (isField) {
+                    //返回字段名时，不查询外键对象
+                    if (!values.refName) {
+                        arr.push(values.name);
+                    }
+                } else {
+                    arr.push(key);
+                }
+                continue;
+            }
+        }
+        if (isField) {
+            return arr.join() || '*';
+        }
+        return arr;
     }
 
     /**
@@ -217,13 +228,14 @@ class EntityManager {
     public async deleteMany(entityClassName: string, params?: object): Promise<boolean> {
         return await this.createQuery(entityClassName).delete().where(params).getResult();
     }
+
     /**
      * 创建查询对象
      * @param rql               relean ql
      * @param entityClassName   实体类名
      * @returns                 查询对象
      */
-    public createQuery(entityClassName?: string): Query {
+    public createQuery(entityClassName: string): Query {
         return new Query(this, entityClassName);
     }
 
@@ -291,39 +303,41 @@ class EntityManager {
                         throw ErrorFactory.getError("0051", [(orm.schema || '') + orm.id.seqName]);
                     }
                     break;
-                case 'table':  //TODO 0.3.1版本使用此功能
+                case 'table':
                     let fn: string = orm.id.keyName;
                     let tx: Transaction = this.connection.createTransaction();
-                    // sqlite 使用begin immediate替代begin开启事务
-                    if (RelaenManager.dialect !== "sqlite") {
-                        await tx.begin();
+                    // sqlite 使用begin immediate替代begin开启事务，其它数据库开启事务
+                    await tx.begin('immediate');
+
+                    // 加表锁，需要单独执行语句
+                    let locksql = ConnectionManager.provider.lock("table_write", [orm.id.table], orm.schema);
+                    if (locksql) {
+                        await this.createNativeQuery(locksql).getResult();
                     }
-                    // 加表锁
-                    let lock = await this.createNativeQuery(ConnectionManager.provider.lockTable(orm.id.table, orm.schema)).getResultList(0, 0);
+
                     // 查询主键值
-                    let query: NativeQuery = this.createNativeQuery("select " + orm.id.valueName + " from " +
-                        RelaenUtil.getTableName(orm) + " where " + orm.id.columnName + " ='" + fn + "'");
+                    let query: NativeQuery = this.createNativeQuery("SELECT " + orm.id.valueName + " FROM " +
+                        RelaenUtil.getTableName(orm.id.table, orm.schema) + " WHERE " + orm.id.columnName + " ='" + fn + "'");
                     let r = await query.getResult();
                     if (r) {
                         //转换为整数
                         value = parseInt(r);
-                        query = this.createNativeQuery("update " + RelaenUtil.getTableName(orm) +
-                            " set " + orm.id.valueName + "=" + (++value) +
-                            " where " + orm.id.columnName + " ='" + fn + "'");
+                        query = this.createNativeQuery("UPDATE " + RelaenUtil.getTableName(orm.id.table, orm.schema) +
+                            " SET " + orm.id.valueName + "=" + (++value) +
+                            " WHERE " + orm.id.columnName + " ='" + fn + "'");
                         await query.getResult();
                     }
 
-                    //释放锁
-                    //TODO 0.3.1
-                    await tx.commit();
-                    // 处理不是commit/rollback的释放锁
-                    let endLock = ConnectionManager.provider.unLockTable(orm.id.table, orm.schema);
+                    //处理不是commit/rollback的释放锁
+                    let endLock = ConnectionManager.provider.unlock('table_write');
                     if (endLock) {
-                        await this.createNativeQuery(endLock).getResultList(0, 0);
+                        await this.createNativeQuery(endLock).getResult();
                     }
-                    // TODO 没有查询到主键抛错
+                    //释放锁
+                    await tx.commit();
+                    // 没有查询到主键抛错
                     if (!value) {
-                        throw new Error('没有查询到主键');
+                        throw ErrorFactory.getError('0401', [entity.constructor.name]);
                     }
                     break;
                 case 'uuid':
@@ -348,7 +362,7 @@ class EntityManager {
         }
         let ecfg: IEntityCfg = EntityFactory.getClass(obj.__entityClassName);
         if (!ecfg) {
-            throw ErrorFactory.getError("0020", [obj.__entityClassName]);
+            throw ErrorFactory.getError("0010", [obj.__entityClassName]);
         }
         let en: IEntity = new ecfg.entity;
         for (let col of ecfg.columns) {

@@ -1,6 +1,6 @@
 import { Connection } from "./connection";
 import { EntityManager } from "./entitymanager";
-import { IConnectionCfg } from "./types";
+import { IConnectionCfg, LockType } from "./types";
 
 /**
  * 数据库驱动器接口
@@ -70,7 +70,7 @@ export abstract class BaseProvider {
      * @param schema    schema
      * @returns         sequence 值
      */
-    getSequenceValue(em: EntityManager, seqName: string, schema?: string): Promise<number> {
+    public getSequenceValue(em: EntityManager, seqName: string, schema?: string): Promise<number> {
         return null;
     }
 
@@ -84,16 +84,28 @@ export abstract class BaseProvider {
     }
 
     /**
-     * 加表锁
+     * 获取加锁sql语句
+     * @param type      锁类型    
+     * @param tables    表名，表锁时使用
+     * @param schema    模式名，表锁时使用
      */
-    public lockTable(table?: string, schema?: string): string {
+    public lock(type: LockType, tables?: string[], schema?: string) {
         return null;
     }
 
     /**
-     * 释放表锁，返回null即事务commit/rollback释放表锁
+     * 获取释放锁sql语句
+     * @param type      锁类型
      */
-    public unLockTable(table?: string, schema?: string): string {
+    public unlock(type: LockType) {
+        return null;
+    }
+
+    /**
+     * 获取新增返回主键字段sql语句
+     * @param idField 主键字段
+     */
+    public insertReturn(idField: string) {
         return null;
     }
 }

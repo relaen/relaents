@@ -2,6 +2,7 @@ import { Connection } from "../../connection";
 import { ErrorFactory } from "../../errorfactory";
 import { BaseProvider } from "../../baseprovider";
 import { IMariadbConnectionCfg } from "./mariadboptions";
+import { LockType } from "../../types";
 
 /**
  * mariadb provider
@@ -90,11 +91,11 @@ export class MariadbProvider extends BaseProvider {
      * @since           0.2.0
      */
     public handleStartAndLimit(sql: string, start?: number, limit?: number): string {
-        if (limit > 0 && Number.isInteger(limit)) {
-            if (start >= 0 && Number.isInteger(start)) {
-                return sql + ' limit ' + start + ',' + limit;
-            }
-            return sql + ' limit ' + limit;
+        if (limit && start) {
+            return sql + ' LIMIT ' + start + ',' + limit;
+        }
+        if (limit) {
+            return sql + ' LIMIT ' + limit;
         }
         return sql;
     }
@@ -108,17 +109,35 @@ export class MariadbProvider extends BaseProvider {
         return result.insertId;
     }
 
+
     /**
-     * 加表锁
+     * 获取加锁sql语句
+     * @param type      锁类型    
+     * @param tables    表名，表锁时使用
+     * @param schema    模式名，表锁时使用
      */
-    public lockTable(table: string, schema?: string): string {
-        return "LOCK TABLE " + table + " write";
+    public lock(type: LockType, tables?: string[], schema?: string) {
+        switch (type) {
+            //表连接为 ' ' 空格
+            case 'table_read':
+                return "LOCK TABLE " + tables.join(' ') + " READ";
+            case 'table_write':
+                return "LOCK TABLE " + tables.join(' ') + " WRITE";
+            case 'row_read':
+                return "LOCK IN SHARE MODE";
+            case 'row_write':
+                return "FOR UPDATE";
+        }
     }
 
     /**
-     * 释放表锁，返回null即事务commit/rollback释放表锁
+     * 获取释放锁sql语句
+     * @param type      锁类型
      */
-    public unLockTable(table?: string, schema?: string): string {
-        return "UNLOCK TABLES";
+    public unlock(type: LockType) {
+        switch (type) {
+            case 'table_write':
+                return "UNLOCK TABLES";
+        }
     }
 }

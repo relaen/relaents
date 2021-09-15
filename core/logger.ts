@@ -11,10 +11,6 @@ class Logger {
         let fileAppenders = {
             type: 'file',
             filename: 'relaen.log',
-            maxLogSize: 1024 * 5,
-            backups: 5,
-            compress: false,
-            encoding: "utf-8",
             layout: {
                 type: "pattern",
                 pattern: "[%d] %m"
