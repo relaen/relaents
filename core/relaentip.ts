@@ -32,13 +32,11 @@ var RelaenTip = {
     "0401": "Entity '${0}' id can not be found by table",
     "0402": "Optimistic lock version only supports number",
     "0403": "Optimistic lock version is null",
-    "0404": "关系符in，参数为数组",
-    "0405": "关系符between，参数为长度2的数组",
-    "0406": "Entity has no where conditions",
-    "0407": "Relaen 不支持${0}悲观锁",
-    "0107": "Entity has no id value，can not be loaded",
-    "0408": "Oracle only supports SERIALIZABLE and READ COMMITTED isolation level",
-    "0409": "实体version版本值为空",
-    "0410": "实体version版本值"
+    "0404": "The 'in' conditional relation's param is an array",
+    "0405": "The 'between' conditional relation's param is an array of length 2",
+    "0406": "Can't upate or delete full table without 'where' condition",
+    "0407": "Oracle only supports SERIALIZABLE and READ COMMITTED isolation level",
+    "0408": "Entity '${0}' version can not be found",
+    "0409": "Entity '${0}' version only supports number and timestamp"
 }
 export { RelaenTip }

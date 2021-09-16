@@ -20,7 +20,7 @@ export class OracleTransaction extends Transaction {
             await ConnectionManager.provider.exec(this.conn, sql);
             Logger.log(sql);
         } else if (isolationLevel === 'READ UNCOMMITTED' || isolationLevel === 'REPEATABLE READ') {
-            throw ErrorFactory.getError('0408');
+            throw ErrorFactory.getError('0407');
         }
     }
 

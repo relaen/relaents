@@ -64,7 +64,9 @@ class EntityManager {
         }
         let status = EntityManagerFactory.getEntityStatus(entity);
         let translator = TranslatorFactory.get(entity.constructor.name);
-        translator.lockMode = lockMode;
+        if (lockMode === 'optimistic') {
+            translator.lockMode = lockMode;
+        }
         //无主键或状态为new
         if (status === EEntityState.NEW) {
             //检查并生成主键

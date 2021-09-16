@@ -174,10 +174,10 @@ export abstract class Translator {
             //乐观锁，添加版本version
             if (this.lockMode === 'optimistic' && cfg.version) {
                 if (v === undefined || v === null) {
-                    throw "实体对象未查询到version值";
+                    throw ErrorFactory.getError('0408', [this.mainEntityName]);
                 }
                 if (typeof v !== 'number') {
-                    throw "版本数据类型仅支持number和timestamp";
+                    throw ErrorFactory.getError('0409', [this.mainEntityName]);
                 }
                 if (cfg.type === 'date') {
                     versionValue = new Date().getTime();
@@ -692,25 +692,4 @@ export abstract class Translator {
         }
         return [arr.join(' '), this.linkNameMap, this.whereObject ? this.whereObject[1] : undefined];
     }
-
-    /**
-     * 处理悲观锁
-     */
-    // protected handleLock() {
-    //     if (this.lockMode === 'pessimistic') {
-    //         switch (RelaenManager.dialect) {
-    //             case 'mysql':
-    //             case 'oracle':
-    //             case 'postgres':
-    //             case 'mariadb':
-    //                 return " FOR UPDATE";
-    //             case 'mssql':
-    //                 return " WITH(UPDLOCK,ROWLOCK)";
-    //             case 'sqlite':
-    //                 return '';
-    //             default:
-    //                 throw ErrorFactory.getError('0407', [RelaenManager.dialect]);
-    //         }
-    //     }
-    // }
 }
