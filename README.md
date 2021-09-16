@@ -1,9 +1,9 @@
 # Relaen
 relaen是[noomi](https://www.npmjs.com/package/noomi)团队打造的一套node环境下基于typescript的[ORM](https://baike.baidu.com/item/对象关系映射/311152?fromtitle=ORM&fromid=3583252&fr=aladdin)框架。  
-支持链式创建查询、原生sql、类查询、一级缓存等。
+支持链式创建查询、原生sql、类查询、一级缓存、文件日志和锁机制等。
 
 ## 使用限制
-relaen当前仅支持mysql、mssql(2012+)、oracle(12+)、postgres数据库，其它数据库产品陆续加入中。
+relaen当前支持mysql、mssql(2012+)、oracle(12+)、postgres、mariadb、sqlite数据库，其它数据库产品陆续加入中。
 
 ## 交流
 1. QQ群：926248391；
@@ -77,6 +77,19 @@ http://www.noomi.cn/relaen/api.html
 1. 增加oracle、mssql、postgres数据库支持；
 2. 增加entity scheme配置项。
 
+#### 0.4.0
+1. 增加mariadb、sqlite数据库支持；
+2. 增加乐观锁与悲观锁机制；
+3. 增加主键table生成；
+4. 增加Query中条件构建；
+5. 增加实体查询属性隐藏配置select；
+6. 增加原生连接传递参数options；
+7. 增加文件日志记录；
+8. 增加防止全表删除属性fullTableOperation；
+9. 增加原生查询nativequery字符串绑定参数setParameter方法；
+10. 新增事务隔离级设置方法；
+11. 完善分页语句判断
+
 ## 配置文件
 relaen依赖配置文件进行初始化，配置内容如下：
 配置项|说明|类型|必填|可选值|默认值|备注
@@ -87,10 +100,18 @@ port|数据库服务器端口|number|否|无|如果是默认则不用，如mysql
 username|用户名|string|是|无|无|
 password|密码|string|是|无|无|
 database|数据库|string|是|无|无|只支持单数据库
+schema|模式名|string|否|无|无|mysql、mariadb、sqlite不支持
 entities|实体js目录|string array|是|无|无|如:["/dist/entity/**/*.js"]
 cache|是否开启一级缓存|boolean|否|无|true|
 debug|是否为debug模式|boolean|否|无|false|调试模式将在控制台输出每次执行的sql语句
-pool|连接池配置|object|否|无|无|如果配置，则开启数据库连接池，连接库配置如下
+fileLog|是否开启文件日志| boolean\|object|否|无|false|将数据库操作日志记录到文件，true开启默认文件日志，object传入自定义appeder 
+fullTableOperation|是否全表更新与删除|boolean|否|无|false|默认不能全表更新删除  
+pool|连接池配置|object|否|无|无|如果配置，则开启数据库连接池，连接库配置如下 
+connectTimeout|连接超时时间|number|否|无|无|  
+idleTimeout|连接池空闲连接超时时间|number|否|无|无| 
+options|原生连接配置|object|否|无|无|如果使用数据库原生连接配置，上述host等配置失效
+usePool|原生连接是否开启连接池|boolean|否|无|无|在开启数据库原生连接配置，是否开启连接池      
+
 
 **连接池配置**  
 如果pool为空对象，则max和min使用默认值。
