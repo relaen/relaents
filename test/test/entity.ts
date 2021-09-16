@@ -46,7 +46,7 @@ async function upd1() {
     //2、更新新建实体,同上述新增5
     // shop = new Shop(1);
     shop.shopName = 'frank的店铺修改';
-    return await shop.save(true);
+    return await shop.save(true, 'optimistic');
 }
 
 /**
@@ -78,4 +78,4 @@ async function del() {
     await Shop.deleteMany({ shopName: { rel: 'like', value: 'frank%' } })
 }
 
-add1();
+upd1();

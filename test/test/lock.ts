@@ -2,7 +2,7 @@ import { Connection, EntityManager, getConnection, getEntityManager, Query, Rela
 import { config } from "../config";
 import { Shop } from "../entity/shop";
 
-RelaenManager.init(config.sqlite);
+RelaenManager.init(config.postgres);
 /*************************锁测试****************************/
 /**
  * 乐观锁测试
@@ -11,7 +11,7 @@ async function lock1() {
     let shop = <Shop>await Shop.find(1);
     if (shop) {
         shop.shopName = '乐观锁测试';
-        await shop.save(true);
+        await shop.save(true, 'optimistic');
     }
 }
 
@@ -25,17 +25,19 @@ async function lock2() {
     let em: EntityManager = await getEntityManager();
     let query: Query = em.createQuery(Shop.name);
     let shop = await query.select('*')
-        .where({ shopId: 1 })
+        // .where({ shopId: 1 })
         //1、pessimistic 使用行锁，不支持sqlite
         .setLock('pessimistic')
         .getResultList();
-    if (shop.length > 0) {
+    if (shop) {
         shop = shop[0];
         shop.shopName = '悲观锁测试';
         await shop.save(true);
     } else {
         console.log('查询对象不存在');
     }
+    console.log(1);
+    
     await tx.commit();
     await em.close();
 }
