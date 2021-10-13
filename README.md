@@ -164,6 +164,7 @@ min|最小连接数|number|否|1
 
 #### 参数
 参数为对象，可选，包含以下项：
+
 参数名|说明|类型|必填|可选值|默认值|备注
 -|-|-|-|-|-|-
 generator|主键生成策略|string|否|identity(支持mysql、mssql、postgres、mariadb、sqlite),sequence(支持oracle、mssql、postgres),table,uuid|identity
