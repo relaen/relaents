@@ -4,7 +4,6 @@ import { EntityManager } from "../../entitymanager";
 import { NativeQuery } from "../../nativequery";
 import { IPostgresConnectionCfg } from "./postgresoptions";
 import { LockType } from "../../types";
-import { table } from "console";
 
 /**
  * postgres provider

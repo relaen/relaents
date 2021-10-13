@@ -2,7 +2,7 @@ import { Transaction } from "../../transaction";
 
 /**
  * Sqlite 事务类
- * @since 0.3.0
+ * @since 0.4.0
  */
 class SqliteTransaction extends Transaction {
     /**

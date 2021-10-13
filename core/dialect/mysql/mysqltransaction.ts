@@ -1,4 +1,3 @@
-import { rejects } from "assert";
 import { ConnectionManager } from "../../connectionmanager";
 import { Logger } from "../../logger";
 import { IsolationLevel, Transaction } from "../../transaction";

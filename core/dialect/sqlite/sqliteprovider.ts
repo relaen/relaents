@@ -1,11 +1,10 @@
 import { BaseProvider } from "../../baseprovider";
 import { Connection } from "../../connection";
-import { LockType } from "../../types";
 import { ISqliteConnectionCfg } from "./sqliteoptions";
 
 /**
  * sqlite provider
- * @since 0.3.0
+ * @since 0.4.0
  */
 export class SqliteProvider extends BaseProvider {
 

@@ -2,6 +2,7 @@ import { IConnectionCfg } from "../../types";
 
 /**
  * Sqlite ConnectionCfg
+ * @since 0.4.0
  */
 export interface ISqliteConnectionCfg extends IConnectionCfg{
     /**

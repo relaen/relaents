@@ -80,7 +80,7 @@ http://www.noomi.cn/relaen/api.html
 #### 0.4.0
 1. 增加mariadb、sqlite数据库支持；
 2. 增加乐观锁与悲观锁机制；
-3. 增加主键table生成；
+3. 增加主键表选项生成；
 4. 增加Query中条件构建；
 5. 增加实体查询属性隐藏配置select；
 6. 增加原生连接传递参数options；
@@ -94,24 +94,22 @@ http://www.noomi.cn/relaen/api.html
 relaen依赖配置文件进行初始化，配置内容如下：
 配置项|说明|类型|必填|可选值|默认值|备注
 -|-|-|-|-|-|-
-dialect|数据库产品|string|是|mysql,oracle,mssql|无|支持的数据库产品持续更新
-host|数据库服务器地址|string|是|无|无|数据库服务器网址或ip或localhost
-port|数据库服务器端口|number|否|无|如果是默认则不用，如mysql的3306
-username|用户名|string|是|无|无|
-password|密码|string|是|无|无|
-database|数据库|string|是|无|无|只支持单数据库
-schema|模式名|string|否|无|无|mysql、mariadb、sqlite不支持
+dialect|数据库产品|string|是|mysql,oracle,mssql|无|支持的数据库产品持续更新 
+host|数据库服务器地址|string|是|无|无|数据库服务器网址或ip或localhost 
+port|数据库服务器端口|number|否|无|如果是默认则不用，如mysql的3306 
+username|用户名|string|是|无|无| 
+password|密码|string|是|无|无| 
+database|数据库|string|是|无|无|只支持单数据库  
 entities|实体js目录|string array|是|无|无|如:["/dist/entity/**/*.js"]
-cache|是否开启一级缓存|boolean|否|无|true|
+cache|是否开启一级缓存|boolean|否|无|true| 
 debug|是否为debug模式|boolean|否|无|false|调试模式将在控制台输出每次执行的sql语句
 fileLog|是否开启文件日志| boolean\|object|否|无|false|将数据库操作日志记录到文件，true开启默认文件日志，object传入自定义appeder 
 fullTableOperation|是否全表更新与删除|boolean|否|无|false|默认不能全表更新删除  
 pool|连接池配置|object|否|无|无|如果配置，则开启数据库连接池，连接库配置如下 
 connectTimeout|连接超时时间|number|否|无|无|  
 idleTimeout|连接池空闲连接超时时间|number|否|无|无| 
-options|原生连接配置|object|否|无|无|如果使用数据库原生连接配置，上述host等配置失效
-usePool|原生连接是否开启连接池|boolean|否|无|无|在开启数据库原生连接配置，是否开启连接池      
-
+options|原生连接配置|object|否|无|无|如果使用数据库原生连接配置，上述host等配置失效  
+usePool|原生连接是否开启连接池|boolean|否|无|无|在开启数据库原生连接配置，是否开启连接池 
 
 **连接池配置**  
 如果pool为空对象，则max和min使用默认值。
@@ -157,7 +155,7 @@ min|最小连接数|number|否|1
 参数顺序|参数名|类型|必填
 -|-|-|-
 1|表名称|string|是
-2|数据库名称|string|否
+2|数据库模式名称|string|否
 
 ### @Id(主键注解)     
 对属性进行注解，表示该属性对应Entity的主键，relaen只支持**单主键**。
@@ -166,8 +164,12 @@ min|最小连接数|number|否|1
 参数为对象，可选，包含以下项：
 参数名|说明|类型|必填|可选值|默认值|备注
 -|-|-|-|-|-|-
-generator|主键生成策略|string|否|identity(默认，支持mysql、mssql、postgres),sequence(支持oracle、mssql、postgres)|identity
-seqName|主键对应sequence名|否|无|无|如果generator为'sequence'，则该项不能为空
+generator|主键生成策略|string|否|identity(支持mysql、mssql、postgres、mariadb、sqlite),sequence(支持oracle、mssql、postgres),table,uuid|identity
+seqName|主键对应sequence名|string|否|无|无|如果generator为'sequence'，则该项不能为空
+table|主键对应table名|string|否|无|无|如果generator为'table'，则该项不能为空 
+columnName|主键对应table表键字段名|string|否|无|无|如果generator为'table'，则该项不能为空 
+valueName|主键对应table表值字段名|string|否|无|无|如果generator为'table'，则该项不能为空 
+keyName|主键对应记录项名|string|否|无|无|如果generator为'table'，则该项不能为空 
 
 ### @Column(字段注解)
 对属性进行注解，表示该属性为字段。
@@ -180,6 +182,9 @@ name|表中对应字段名|string|否|无|属性名|表中字段名与属性名�
 type|数据类型|string|是|int,double,string,date,object|无|
 nullable|是否可空|boolean|否|true,false|false|
 length|长度|number|否|无|无|type为string时有效
+identity|是否自增|boolean|否|true,false|无|在mssql数据库标识主键是否自增
+select|是否查询|boolean|否|true,false|无|在实体查询是否可见
+version|数据版本|boolean|否|true,false|无|标识字段为数据版本记录
 
 ### @JoinColumn(关联字段注解)
 对属性进行注解，表示该属性为外键关联字段，与@ManyToOne或@OneToOne配合使用。
@@ -200,7 +205,7 @@ nullable|是否可空|boolean|否|true,false|false|
 参数名|说明|类型|必填|可选值|默认值|备注
 -|-|-|-|-|-|-
 entity|关联实体类名|string|是|无|无|
-eager|是否及时获取|boolean|否|无|false|如果为true，则在获取该实体数据时，同时获取关联对象数据
+eager|是否及时获取|boolean|否|无|false|如果为true，则在获取该实体数据时，同时获取关联对象数据（弃用）
 
 ### @OneToMany(一对多关系注解)
 对属性进行注解，表示该属性为外键关联字段，为“一对多关系”的“一”对应的列。
@@ -211,8 +216,8 @@ eager|是否及时获取|boolean|否|无|false|如果为true，则在获取该�
 -|-|-|-|-|-|-
 entity|关联实体类名|string|是|无|无|
 mappedBy|关联实体对应属性名|string|是|无|无|对应关联表**ManyToOne**注解的属性名
-onDelete|外键删除策略|string|否|EFkConstraint枚举类型的SETNULL,NONE,CONSTRAINT,CASCADE|NONE|
-onUpdate|外键更新策略|string|否|EFkConstraint枚举类型的SETNULL,NONE,CONSTRAINT,CASCADE|NONE|
+onDelete|外键删除策略|string|否|EFkConstraint枚举类型的SETNULL,NONE,CONSTRAINT,CASCADE|NONE|弃用
+onUpdate|外键更新策略|string|否|EFkConstraint枚举类型的SETNULL,NONE,CONSTRAINT,CASCADE|NONE|弃用
 
 ### @OneToOne(一对一关系注解)
 请参考ManyToOne和OneToMany进行设置

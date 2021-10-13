@@ -1,5 +1,6 @@
 /**
  * 日志类
+ * @since 0.4.0
  */
 class Logger {
 

@@ -3,11 +3,7 @@ import { BaseProvider } from "../../baseprovider";
 import { EntityManager } from "../../entitymanager";
 import { NativeQuery } from "../../nativequery";
 import { IOracleConnectionCfg } from "./oracleoptions";
-import { resolve } from "path/posix";
 import { LockType } from "../../types";
-import { ErrorFactory } from "../../errorfactory";
-import { RelaenManager } from "../../relaenmanager";
-import { table } from "console";
 
 /**
  * oracle provider

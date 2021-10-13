@@ -1,10 +1,8 @@
 import { Connection } from "../../connection";
 import { ErrorFactory } from "../../errorfactory";
 import { BaseProvider } from "../../baseprovider";
-import { EntityManager } from "../../entitymanager";
 import { IMysqlConnectionCfg } from "./mysqloptions";
 import { LockType } from "../../types";
-import { table } from "console";
 
 /**
  * mysql provider

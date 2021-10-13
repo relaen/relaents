@@ -1,5 +1,3 @@
-import { EntityFactory } from "../../entityfactory";
-import { ErrorFactory } from "../../errorfactory";
 import { Translator } from "../../translator";
 import { EQueryType, IEntityCfg } from "../../types";
 

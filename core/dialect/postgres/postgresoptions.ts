@@ -2,6 +2,7 @@ import { IConnectionCfg } from "../../types";
 
 /**
  * postgres ConnectionCfg
+ * @since 0.4.0
  */
 export interface IPostgresConnectionCfg extends IConnectionCfg {
 

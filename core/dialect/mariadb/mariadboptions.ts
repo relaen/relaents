@@ -2,6 +2,7 @@ import { IConnectionCfg, } from "../../types";
 
 /**
  * mariadb ConnectionCfg
+ * @since 0.4.0
  */
 export interface IMariadbConnectionCfg extends IConnectionCfg {
     /**

@@ -2,6 +2,7 @@ import { IConnectionCfg } from "../../types";
 
 /**
  * mssql ConnectionCfg
+ * @since 0.4.0
  */
 export interface IMssqlConnectionCfg extends IConnectionCfg {
     /**

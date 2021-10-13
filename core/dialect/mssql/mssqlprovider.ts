@@ -6,7 +6,6 @@ import { EntityManager } from "../../entitymanager";
 import { NativeQuery } from "../../nativequery";
 import { TransactionManager } from "../../transactionmanager";
 import { IMssqlConnectionCfg } from "./mssqloptions";
-import { table } from "console";
 
 /**
  * mssql provider

@@ -2,6 +2,7 @@ import { IConnectionCfg } from "../../types";
 
 /**
  * mysql ConnectionCfg
+ * @since 0.4.0
  */
 export interface IMysqlConnectionCfg extends IConnectionCfg {
     /**

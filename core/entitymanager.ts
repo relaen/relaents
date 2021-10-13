@@ -306,6 +306,7 @@ class EntityManager {
                     }
                     break;
                 case 'table':
+                    //@since 0.4.0
                     let fn: string = orm.id.keyName;
                     let tx: Transaction = this.connection.createTransaction();
                     // sqlite 使用begin immediate替代begin开启事务，其它数据库开启事务
