@@ -92,6 +92,7 @@ http://www.noomi.cn/relaen/api.html
 
 ## 配置文件
 relaen依赖配置文件进行初始化，配置内容如下：
+
 配置项|说明|类型|必填|可选值|默认值|备注
 -|-|-|-|-|-|-
 dialect|数据库产品|string|是|mysql,oracle,mssql|无|支持的数据库产品持续更新 
@@ -113,6 +114,7 @@ usePool|原生连接是否开启连接池|boolean|否|无|无|在开启数据库
 
 **连接池配置**  
 如果pool为空对象，则max和min使用默认值。
+
 配置项|说明|类型|必填|默认值
 -|-|-|-|-
 max|最大连接数|number|否|10
