@@ -1,11 +1,8 @@
 # 简介
 
-1. 简单介绍项目
-   - relaen版本 V0.3.0
-   - relaen是 [noomi](http://www.noomi.cn/webroute/home) 团队打造的一套node环境下基于typescript的 [ORM](https://baike.baidu.com/item/对象关系映射/311152?fromtitle=ORM&fromid=3583252&fr=aladdin) 框架。支持 Active Record 和 Data Mapper模式，支持实体类操作、创建查询构造器、原生sql、一级缓存和日志文件等。relaen 参考了很多其他优秀的ORM实现，整合了一部分思想，简化了开发使用方式。
-   - 为了提供用户更加便捷的开发使用，我们提供实体生成工具 relaen-cli，来帮助生成用户数据库中表对应的实体信息，为开发提供了极大的便利。
-2. 支持数据库
-   - 支持 MySQL、Oracle Database 12c +、Microsoft SQL Server 2012 +、PostgreSQL 10+、MariaDB、Sqlite 数据库
+relaen是 [noomi](http://www.noomi.cn/webroute/home) 团队打造的一套node环境下基于typescript的 [ORM](https://baike.baidu.com/item/对象关系映射/311152?fromtitle=ORM&fromid=3583252&fr=aladdin) 框架。支持 Active Record 和 Data Mapper模式，支持实体类操作、创建查询构造器、原生sql、一级缓存和日志文件等。relaen 参考了很多其他优秀的ORM实现，实现更加清晰便捷的开发方式。并且提供实体自动生成工具 relaen-cli，将数据库表快速自动生成对应开发实体模型。
+
+目前支持 MySQL、Oracle Database 12c +、Microsoft SQL Server 2012 +、PostgreSQL 10+、MariaDB、Sqlite 数据库。
 
 # 快速入手
 
