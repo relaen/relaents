@@ -1,8 +1,95 @@
-# 简介
+# Relaen
 
 relaen是 [noomi](http://www.noomi.cn/webroute/home) 团队打造的一套node环境下基于typescript的 [ORM](https://baike.baidu.com/item/对象关系映射/311152?fromtitle=ORM&fromid=3583252&fr=aladdin) 框架。支持 Active Record 和 Data Mapper模式，支持实体类操作、创建查询构造器、原生sql、一级缓存和日志文件等。relaen 参考了很多其他优秀的ORM实现，实现更加清晰便捷的开发方式。并且提供实体自动生成工具 relaen-cli，将数据库表快速自动生成对应开发实体模型。
 
-目前支持 MySQL、Oracle Database 12c +、Microsoft SQL Server 2012 +、PostgreSQL 10+、MariaDB、Sqlite 数据库。
+## 使用限制
+
+relaen当前支持 MySQL、Oracle Database 12c +、Microsoft SQL Server 2012 +、PostgreSQL 10+、MariaDB、Sqlite 数据库，其它数据库产品陆续加入中。
+
+## 交流
+1. QQ群：926248391；
+2. 加入验证问题：who are you，回答：relaen。
+
+## 实体对象生成
+relaen提供了[relaen cli](https://www.npmjs.com/package/relaen-cli)工具，该工具可自动生成relaen所需要的实体。
+
+## 文档
+### API
+http://www.noomi.cn/relaen/api.html
+
+## 版本
+### 0.0.5
+正式发布
+
+### 0.0.6
+1. 增加RelaenManager.init方法传入对象参数；
+2. 抛出sql执行异常，便于第三方框架进行异常捕获。
+
+### 0.0.7
+1. 修复update时关联字段的存储bug；
+2. 修复Query.getResultList方法 start参数为0时查询结果问题。
+
+#### 0.0.8
+1. 更新readme
+
+#### 0.0.9
+1. 修改delete返回值说明；
+2. 修复insert后返回实体主键不正确的bug；
+3. 修复Query setParameter方法的bug。
+
+#### 0.1.0
+1. 修复EntityManagerFactory.getCurrentEntityManager返回null时的处理；
+2. 修复Query.getResultList的参数设置，当start为0时的异常。
+
+#### 0.1.1
+1. 修改打包内容，解决找不到".map"文件的警告
+
+#### 0.1.2
+1. 增加api文档
+
+#### 0.1.3
+1. 修改cache更新策略：当执行 insert,update,delete 时清空entitymanager的cache；
+2. 修改实体类以自己作为外键时的query bug；
+3. 修改一对多条件下，字段名和引用字段名不一致时，获取关联对象时不正确的bug；
+4. 增加getResult时获取单个属性值操作，如count(m)获取记录数；
+5. 修改状态为NEW时，拥有主键的对象执行save方法时为insert的bug；
+6. Query和NativeQuery的getResult加上insert、delete、update类语句执行功能；
+7. 修复entity nullable字段在insert时的处理；
+8. 修复外键作为主键时的update sql 不正确的bug；
+9. 给EntityManager增加了 findOne,findMany,deleteMany方法；
+10. 保存数据时，增加字段长度检查;
+11. 修复connection close时未添加await关键字的bug。
+
+#### 0.2.0
+1. 取消原有rql创建方式，采用链式创建sql，参考示例代码的linkQuery方法；
+2. 增强实体类和实体对象的方法。
+
+#### 0.2.1
+1. 给实体类的findMany方法增加orderby参数;
+2. 修复insert或update时，相同字段出现多次执行不正确的bug；
+3. 修复where条件多个参数且参数值不是对象时的bug；
+4. 修复外键且主键情况下，设置外键对象并保存后，主键id错误的bug。
+
+#### 0.2.2
+1. 去掉entity中的__status属性，由EntityManagerFactory统一管理；
+2. 查询结果为null或undefined，则该属性不会存在于结果集中，避免出现全部属性为空的对象。
+
+#### 0.3.0
+1. 增加oracle、mssql、postgres数据库支持；
+2. 增加entity scheme配置项。
+
+#### 0.4.0
+1. 增加mariadb、sqlite数据库支持；
+2. 增加乐观锁与悲观锁机制；
+3. 增加主键表选项生成；
+4. 增加Query中条件构建；
+5. 增加实体查询属性隐藏配置select；
+6. 增加原生连接传递参数options；
+7. 增加文件日志记录；
+8. 增加防止全表删除属性fullTableOperation；
+9. 增加原生查询nativequery字符串绑定参数setParameter方法；
+10. 新增事务隔离级设置方法；
+11. 完善分页语句判断
 
 # 快速入手
 
