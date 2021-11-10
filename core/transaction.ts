@@ -2,6 +2,7 @@ import { Connection } from "./connection";
 import { Logger } from "./logger";
 import { RelaenThreadLocal } from "./threadlocal";
 import { TransactionManager } from "./transactionmanager";
+import { IsolationLevel } from "./types";
 
 /**
  * 事务基类
@@ -68,6 +69,5 @@ abstract class Transaction {
         Logger.log('Transaction is rolled back.');
     }
 }
-// 事务隔离级别
-type IsolationLevel = "SERIALIZABLE" | "READ UNCOMMITTED" | "READ COMMITTED" | "REPEATABLE READ";
-export { Transaction, IsolationLevel }
+
+export { Transaction }

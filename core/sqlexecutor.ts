@@ -9,7 +9,7 @@ import { ConnectionManager } from "./connectionmanager";
 export class SqlExecutor {
     /**
      * 执行mysql sql语句
-     * @param connection    db connection
+     * @param em            EntityManager
      * @param sql           待执行sql
      * @param params        参数数组
      * @param start         开始记录行

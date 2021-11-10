@@ -24,10 +24,10 @@ class EntityManagerFactory {
 
     /**
      * 创建 entity manager，使用后需要释放
-     * @param conn  数据库连接对象
-     * @returns     entitymanager
+     * @param isCache   是否开启缓存
+     * @returns         实体管理器
      */
-    public static async createEntityManager(isCache?: boolean) {
+    public static async createEntityManager(isCache?: boolean): Promise<EntityManager> {
         let id: number = RelaenUtil.genId();
         let conn: Connection = await getConnection(id);
         let sid = conn.threadId;
@@ -48,10 +48,10 @@ class EntityManagerFactory {
 
     /**
      * 关闭entitymanager
-     * @param em        entitymanager
+     * @param em        实体管理器
      * @param force     是否强制关闭
      */
-    public static async closeEntityManager(em: EntityManager, force?: boolean) {
+    public static async closeEntityManager(em: EntityManager, force?: boolean): Promise<void> {
         //获取threadId
         let sid: number = em.connection.threadId;
         if (!force) {
@@ -79,6 +79,7 @@ class EntityManagerFactory {
 
     /**
      * 获取当前entitymanager，使用后不用释放
+     * @returns     实体管理器
      */
     public static getCurrentEntityManager(): EntityManager {
         let sid = RelaenThreadLocal.getThreadId();
@@ -109,6 +110,8 @@ class EntityManagerFactory {
 
 /**
  * 返回entity manager
+ * @param isCache   是否开启缓存
+ * @returns         实体管理器
  */
 async function getEntityManager(isCache?: boolean): Promise<EntityManager> {
     isCache = typeof isCache === "boolean" ? isCache : RelaenManager.cache;

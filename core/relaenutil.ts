@@ -20,8 +20,9 @@ class RelaenUtil {
 
     /**
      * 获取table名
-     * @param cfg   实体配置
-     * @returns     表名串，如果有schema，则加上schema
+     * @param cfg       实体配置
+     * @param schema    数据库模式
+     * @returns         表名串，如果有schema，则加上schema
      */
     public static getTableName(cfg: IEntityCfg | string, schema?: string) {
         if (typeof cfg === 'object') {
@@ -32,8 +33,8 @@ class RelaenUtil {
 
     /**
      * 获取id名 
-     * @param entity 实体类名|实体对象|实体配置
-     * @returns      实体id名
+     * @param entity    实体类名|实体对象|实体配置
+     * @returns         实体id名
      */
     public static getIdName(entity: string | BaseEntity | IEntityCfg): string {
         let cfg: IEntityCfg;
@@ -64,6 +65,7 @@ class RelaenUtil {
     /**
      * 获取id值
      * @param entity    实体对象
+     * @returns         实体id值
      */
     public static getIdValue(entity: IEntity): any {
         let cfg: IEntityCfg = EntityFactory.getClass(entity.constructor.name);

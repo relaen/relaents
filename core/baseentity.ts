@@ -23,8 +23,8 @@ export class BaseEntity extends Object implements IEntity {
 
     /**
      * 保存实体
-     * @param em                    entity manager
      * @param ignoreUndefinedValue  忽略undefined值，针对update时有效
+     * @lockMode                    锁模式
      * @returns                     保存后的实体
      */
     public async save(ignoreUndefinedValue?: boolean, lockMode?: LockMode): Promise<IEntity> {
@@ -36,7 +36,7 @@ export class BaseEntity extends Object implements IEntity {
 
     /**
      * 删除实体
-     * @param em    entity manager
+     * @returns     删除实体
      */
     public async delete(): Promise<IEntity> {
         let em = await getEntityManager();
@@ -47,8 +47,8 @@ export class BaseEntity extends Object implements IEntity {
 
     /**
      * 根据id查询单个实体
-     * @param id                实体主键
-     * @returns                 查询实体
+     * @param id    实体主键
+     * @returns     查询实体
      */
     public static async find(id: any): Promise<IEntity> {
         let em = await getEntityManager();
@@ -59,7 +59,8 @@ export class BaseEntity extends Object implements IEntity {
 
     /**
      * 根据条件查询单个实体
-     * @param params            参数对象，参考EntityManager.findOne方法说明
+     * @param params    参数对象，参考EntityManager.findOne方法说明
+     * @returns         实体
      * @since 0.2.0
      */
     public static async findOne(params?: object): Promise<IEntity> {
@@ -71,10 +72,11 @@ export class BaseEntity extends Object implements IEntity {
 
     /**
      * 根据条件查找多个对象
-     * @param params            参数对象，参考EntityManager.findOne方法说明
-     * @param start             开始记录行
-     * @param limit             获取记录数
-     * @param order             排序规则 {paramName1:'desc',paramName2:'asc',...} paramName1:参数名,desc:降序 asc:升序
+     * @param params    参数对象，参考EntityManager.findOne方法说明
+     * @param start     开始记录行
+     * @param limit     获取记录数
+     * @param order     排序规则 {paramName1:'desc',paramName2:'asc',...} paramName1:参数名,desc:降序 asc:升序
+     * @returns         实体集
      * @since 0.2.0                 
      */
     public static async findMany(params?: object, start?: number, limit?: number, order?: object): Promise<Array<IEntity>> {
@@ -87,6 +89,7 @@ export class BaseEntity extends Object implements IEntity {
     /**
      * 获取记录数
      * @param params    参数对象，参考EntityManager.findOne
+     * @return          记录数
      * @since 0.2.0
      */
     public static async getCount(params?: object): Promise<number> {
@@ -100,7 +103,7 @@ export class BaseEntity extends Object implements IEntity {
      * 删除对象
      * @param id    实体id值
      * @returns     删除的实体
-     * @since       0.2.0
+     * @since 0.2.0
      */
     public static async delete(id: any): Promise<boolean> {
         let em = await getEntityManager();
@@ -112,7 +115,7 @@ export class BaseEntity extends Object implements IEntity {
     /**
      * 删除对象
      * @param params    参数对象，参考EntityManager.findOne
-     * @returns         true/false
+     * @returns         删除成功返回true
      */
     public static async deleteMany(params?: object): Promise<boolean> {
         let em = await getEntityManager();

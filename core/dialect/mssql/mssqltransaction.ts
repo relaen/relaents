@@ -1,6 +1,7 @@
 import { ConnectionManager } from "../../connectionmanager";
 import { Logger } from "../../logger";
-import { IsolationLevel, Transaction } from "../../transaction";
+import { Transaction } from "../../transaction";
+import { IsolationLevel } from "../../types";
 
 /**
  * mssql 事务类
@@ -25,6 +26,7 @@ export class MssqlTransaction extends Transaction {
     /**
      * 设置当前事务
      * @param isolation 事务隔离级
+     * @since           0.4.0
      */
     public async setisolationLevel(isolationLevel: IsolationLevel) {
         if (isolationLevel) {
@@ -38,7 +40,6 @@ export class MssqlTransaction extends Transaction {
      * 开始事务
      */
     async begin() {
-        // await this.tr.begin(isolationLevel);
         await this.tr.begin();
         super.begin();
     }

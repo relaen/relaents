@@ -1,6 +1,7 @@
 import { ConnectionManager } from "../../connectionmanager";
 import { Logger } from "../../logger";
-import { IsolationLevel, Transaction } from "../../transaction";
+import { Transaction } from "../../transaction";
+import { IsolationLevel } from "../../types";
 
 /**
  * mysql 事务类
@@ -11,6 +12,7 @@ class MysqlTransaction extends Transaction {
     /**
      * 设置当前事务
      * @param isolation 事务隔离级
+     * @since           0.4.0
      */
     public async setisolationLevel(isolationLevel: IsolationLevel) {
         if (isolationLevel) {
@@ -22,6 +24,7 @@ class MysqlTransaction extends Transaction {
 
     /**
      * 开始事务
+     * @throws      开始事务错误
      */
     public async begin() {
         await new Promise((resolve, reject) => {
@@ -37,6 +40,7 @@ class MysqlTransaction extends Transaction {
 
     /**
      * 事务提交
+     * @throws      提交事务错误
      */
     public async commit() {
         await new Promise((resolve, reject) => {
@@ -53,6 +57,7 @@ class MysqlTransaction extends Transaction {
 
     /**
      * 事务回滚
+     * @throws      回滚事务错误
      */
     public async rollback() {
         await new Promise((resolve, reject) => {

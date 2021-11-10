@@ -9,7 +9,6 @@ import { LockType } from "../../types";
  * oracle provider
  * @since 0.3.0
  */
-// 需要手动加
 export class OracleProvider extends BaseProvider {
 
     /**
@@ -80,7 +79,7 @@ export class OracleProvider extends BaseProvider {
      * @param params        参数数组
      * @returns             结果(集)
      */
-    public async exec(connection: Connection, sql: string, params?: any[]) {
+    public async exec(connection: Connection, sql: string, params?: any[]): Promise<any> {
         // 默认自动提交
         let autoCommit = connection.autoCommit === false ? false : true;
         params = params || [];
@@ -99,7 +98,7 @@ export class OracleProvider extends BaseProvider {
      * @returns         处理后的sql
      * @since           0.2.0
      */
-    public handleStartAndLimit(sql: string, start?: number, limit?: number) {
+    public handleStartAndLimit(sql: string, start?: number, limit?: number): string {
         if (limit && start) {
             return sql + " OFFSET " + start + " ROWS FETCH NEXT " + limit + " ROWS ONLY";
         }
@@ -137,8 +136,10 @@ export class OracleProvider extends BaseProvider {
      * @param type      锁类型    
      * @param tables    表名，表锁时使用
      * @param schema    模式名，表锁时使用
+     * @retruns         加锁sql语句
+     * @since           0.4.0
      */
-    public lock(type: LockType, tables?: string[], schema?: string) {
+    public lock(type: LockType, tables?: string[], schema?: string): string {
         if (schema) {
             tables.forEach((v, i) => {
                 tables[i] = schema + '.' + tables[i];
@@ -154,6 +155,8 @@ export class OracleProvider extends BaseProvider {
                 return "FOR UPDATE"
             case 'row_write':
                 return "FOR UPDATE";
+            default:
+                return '';
         }
     }
 }

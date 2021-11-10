@@ -1,7 +1,8 @@
 import { ConnectionManager } from "../../connectionmanager";
 import { ErrorFactory } from "../../errorfactory";
 import { Logger } from "../../logger";
-import { IsolationLevel, Transaction } from "../../transaction";
+import { Transaction } from "../../transaction";
+import { IsolationLevel } from "../../types";
 
 /**
  * oracle 事务类
@@ -12,6 +13,7 @@ export class OracleTransaction extends Transaction {
     /**
      * 设置当前事务
      * @param isolation 事务隔离级
+     * @since           0.4.0
      */
     public async setisolationLevel(isolationLevel: IsolationLevel) {
         // Oracle only supports SERIALIZABLE and READ COMMITTED isolation

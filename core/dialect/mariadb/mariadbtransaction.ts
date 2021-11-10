@@ -1,6 +1,7 @@
 import { ConnectionManager } from "../../connectionmanager";
 import { Logger } from "../../logger";
-import { IsolationLevel, Transaction } from "../../transaction";
+import { Transaction } from "../../transaction";
+import { IsolationLevel } from "../../types";
 
 /**
  * mariadb 事务类
@@ -11,6 +12,7 @@ class MariadbTransaction extends Transaction {
     /**
      * 设置当前事务
      * @param isolation 事务隔离级
+     * @since           0.4.0
      */
     public async setisolationLevel(isolationLevel: IsolationLevel) {
         if (isolationLevel) {

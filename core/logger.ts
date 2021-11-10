@@ -6,6 +6,11 @@ class Logger {
 
     private static log4js;
 
+    /**
+     * 初始化日志管理器
+     * @param debug     是否开启dubug模式
+     * @param fileLog   是否开启文件日志
+     */
     public static init(debug: boolean, fileLog: boolean) {
         const log4js = require('log4js');
         // 默认文件日志配置
@@ -50,7 +55,8 @@ class Logger {
 
     /**
      * 写日志到控制台
-     * @param msg   待写消息
+     * @param sql       sql语句
+     * @param params    sql语句参数
      */
     public static log(sql: string, params?: any[] | object) {
         let msg = "[Relaen execute sql]:\"" + sql + "\"";
@@ -62,7 +68,7 @@ class Logger {
 
     /**
      * 写错误消息
-     * @param msg 
+     * @param err   sql执行错误
      */
     public static error(err: Error) {
         let msg = "[Relaen execute sql] Error:\"" + err.message + "\"";

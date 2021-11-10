@@ -70,7 +70,7 @@ export class PostgresProvider extends BaseProvider {
      * @param params        参数数组
      * @returns             结果(集)
      */
-    public async exec(connection: Connection, sql: string, params?: any[]) {
+    public async exec(connection: Connection, sql: string, params?: any[]): Promise<any> {
         let r = await connection.conn.query(sql, params);
         return r.rows ? r.rows : r;
     }
@@ -133,8 +133,10 @@ export class PostgresProvider extends BaseProvider {
      * @param type      锁类型    
      * @param tables    表名，表锁时使用
      * @param schema    模式名，表锁时使用
+     * @retruns         加锁sql语句
+     * @since           0.4.0
      */
-    public lock(type: LockType, tables?: string[], schema?: string) {
+    public lock(type: LockType, tables?: string[], schema?: string): string {
         if (schema && tables) {
             tables.forEach((v, i) => {
                 tables[i] = schema + '.' + tables[i];
@@ -149,6 +151,8 @@ export class PostgresProvider extends BaseProvider {
                 return "FOR SHARE";
             case 'row_write':
                 return "FOR UPDATE";
+            default:
+                return '';
         }
     }
 
@@ -156,7 +160,7 @@ export class PostgresProvider extends BaseProvider {
      * 获取新增返回主键字段sql语句
      * @param idField 主键字段
      */
-    public insertReturn(idField: string) {
+    public insertReturn(idField: string): string {
         return 'RETURNING ' + idField;
     }
 }

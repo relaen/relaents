@@ -27,11 +27,11 @@ class ConnectionManager {
      * @param cfg relaen配置文件的数据库配置对象
      */
     public static init(cfg: IConnectionCfg) {
-        let providerClass:any = ProviderFactory.get();
-        if(!providerClass){
+        let providerClass: any = ProviderFactory.get();
+        if (!providerClass) {
             throw ErrorFactory.getError("0300", [RelaenManager.dialect]);
         }
-        this.provider = Reflect.construct(providerClass,[cfg]);
+        this.provider = Reflect.construct(providerClass, [cfg]);
     }
 
     /**
@@ -67,13 +67,13 @@ class ConnectionManager {
      * @param connection    数据库连接对象
      * @param force         是否强制释放
      */
-    public static async closeConnection(connection: Connection, force?: boolean) {
+    public static async closeConnection(connection: Connection, force?: boolean): Promise<any> {
         //获取threadId
         let sid: number = connection.threadId;
         //非强制释放，检查计数器
         if (!force) {
             if (sid && this.connectionMap.has(sid)) {
-                let conn:Connection = this.connectionMap.get(sid);
+                let conn: Connection = this.connectionMap.get(sid);
                 if (--conn.useCount <= 0) { //最后一个close，需要从map删除
                     force = true;
                 }
@@ -94,7 +94,7 @@ class ConnectionManager {
      * @param conn          连接对象
      * @since 0.3.0
      */
-    public static addConnection(threadId:number,conn:Connection){
+    public static addConnection(threadId: number, conn: Connection) {
         this.connectionMap.set(threadId, conn);
     }
 
@@ -103,7 +103,7 @@ class ConnectionManager {
      * @param threadId      线程id
      * @since 0.3.0
      */
-     public static removeConnection(threadId:number){
+    public static removeConnection(threadId: number) {
         this.connectionMap.delete(threadId);
     }
 }

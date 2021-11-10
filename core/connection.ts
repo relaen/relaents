@@ -55,7 +55,7 @@ class Connection {
      * @param conn      实际的连接
      * @sinace 0.3.0
      */
-    public setConn(conn: any) {
+    public setConn(conn: any): void {
         if (!conn) {
             return;
         }
@@ -67,7 +67,7 @@ class Connection {
      * 关闭连接
      * @param force     是否强制关闭
      */
-    public async close(force?: boolean) {
+    public async close(force?: boolean): Promise<void> {
         await ConnectionManager.closeConnection(this, force);
     }
 

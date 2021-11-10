@@ -78,7 +78,7 @@ export class MariadbProvider extends BaseProvider {
      * @param params        参数数组
      * @returns             结果(集)
      */
-    public async exec(connection: Connection, sql: string, params?: any[]) {
+    public async exec(connection: Connection, sql: string, params?: any[]): Promise<any> {
         return await connection.conn.query(sql, params);
     }
 
@@ -115,8 +115,10 @@ export class MariadbProvider extends BaseProvider {
      * @param type      锁类型    
      * @param tables    表名，表锁时使用
      * @param schema    模式名，表锁时使用
+     * @returns         加锁sql语句
+     * @since           0.4.0
      */
-    public lock(type: LockType, tables?: string[], schema?: string) {
+    public lock(type: LockType, tables?: string[], schema?: string): string {
         switch (type) {
             //表连接为 ' ' 空格
             case 'table_read':
@@ -133,6 +135,8 @@ export class MariadbProvider extends BaseProvider {
     /**
      * 获取释放锁sql语句
      * @param type      锁类型
+     * @returns         释放锁sql语句
+     * @since           0.4.0
      */
     public unlock(type: LockType) {
         switch (type) {

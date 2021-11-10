@@ -4,7 +4,7 @@ import { EntityFactory } from "./entityfactory";
 import { ErrorFactory } from "./errorfactory";
 import { RelaenUtil } from "./relaenutil";
 import { RelaenManager } from "./relaenmanager";
-import { ConnectionManager, LockType, ProviderFactory } from "..";
+import { ConnectionManager } from "..";
 
 /**
  * 翻译器
@@ -77,6 +77,10 @@ export abstract class Translator {
      */
     public lockMode: LockMode;
 
+    /**
+     * 构造翻译器
+     * @param entityName    实体名
+     */
     constructor(entityName: string) {
         this.mainEntityName = entityName;
         this.mainEntityCfg = EntityFactory.getClass(this.mainEntityName);
@@ -87,7 +91,8 @@ export abstract class Translator {
 
     /**
      * entity转insert sql
-     * @param entity 
+     * @param entity    实体
+     * @returns         [sql, values]
      */
     public entityToInsert(entity: any): any[] {
         let arr: string[] = [];
@@ -136,6 +141,7 @@ export abstract class Translator {
      * entity转update sql
      * @param entity                待更新entity
      * @param ignoreUndefinedValue  忽略undefined值
+     * @returns                     [sql, values]
      */
     public entityToUpdate(entity: IEntity, ignoreUndefinedValue?: boolean): any[] {
         let arr: string[] = [];
@@ -211,6 +217,7 @@ export abstract class Translator {
      * entity转update sql
      * @param entity        实体对象
      * @param className     实体类名
+     * @returns             [sql, values]
      */
     public toDelete(entity: any): any[] {
         let idName: string;
@@ -263,7 +270,6 @@ export abstract class Translator {
         }
         this.selectedFields = arr;
     }
-
 
     /**
      * 处理一个字段
@@ -384,7 +390,7 @@ export abstract class Translator {
 
     /**
      * 处理重复entityName
-     * @param arr           实体类名数组
+     * @param arr       实体类名数组
      */
     public handleFrom(arr: string[]) {
         for (let t of arr) {
@@ -412,10 +418,10 @@ export abstract class Translator {
 
     /**
      * 处理group by
-     * @param params 
-     * @param entityName 
+     * @param params    分组参数
+     * @returns         
      */
-    public handleGroup(params: string | string[]): string {
+    public handleGroup(params: string | string[]) {
         if (!params) {
             return null;
         }
@@ -432,7 +438,7 @@ export abstract class Translator {
 
     /**
      * 处理having条件
-     * @param params        参数对象，每个参数值参考ICondValueObj接口
+     * @param params    参数对象，每个参数值参考ICondValueObj接口
      */
     public handleHaving(params: object) {
         let condition = this.handleCondition(params);
@@ -541,8 +547,8 @@ export abstract class Translator {
 
     /**
      * 处理order by
-     * @param params 
-     * @param entityName 
+     * @param params        排序参数
+     * @param entityName    实体名
      */
     public handleOrder(params: object, entityName?: string): string {
         if (!params || typeof params !== 'object') {

@@ -66,8 +66,8 @@ class EntityFactory {
     /**
      * 添加实体字段
      * @param entityName    实体类名
-     * @param propName      实体字段名
-     * @param cfg
+     * @param colName       实体字段名
+     * @param cfg           实体字段配置
      */
     public static addColumn(entityName: string, colName: string, cfg: IEntityColumn) {
         this.checkAndNewClass(entityName);
@@ -114,12 +114,12 @@ class EntityFactory {
 
     /**
      * 是否有entity class
-     * @param entityName 实体类名
+     * @param entityName    实体类名
+     * @returns             是否存在
      */
     public static hasClass(entityName: string): boolean {
         return this.entityClasses.has(entityName);
     }
-
 
     /**
      * 从文件添加实体到工厂

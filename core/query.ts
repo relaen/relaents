@@ -19,7 +19,7 @@ class Query {
     entityManager: EntityManager;
 
     /**
-     * 参数值数组
+     * 参数值数组或对象
      */
     paramArr: any[] | object;
 
@@ -60,10 +60,8 @@ class Query {
 
     /**
      * 构造query对象
-     * @param rql               relean ql 
      * @param em                entity manager
      * @param entityClassName   对应的结果实体类名
-     * @param notTransate       不转换rql
      */
     constructor(em: EntityManager, entityClassName?: string) {
         if (entityClassName && !EntityFactory.getClass(entityClassName)) {
@@ -81,8 +79,8 @@ class Query {
 
     /**
      * 设置查询参数值
-     * @param paramName 
-     * @param value 
+     * @param index     占位符下标
+     * @param value     占位符值 
      */
     public setParameter(index: number, value: any) {
         //补全参数个数
@@ -97,7 +95,7 @@ class Query {
 
     /**
      * 设置多个参数值，从下标0开始
-     * @param valueArr 值数组
+     * @param valueArr  值数组
      */
     public setParameters(valueArr: Array<any>) {
         valueArr.forEach((value, i) => {
@@ -318,7 +316,6 @@ class Query {
      *                  参数值有两种方式，一种是直接在参数名后给值，一种是给对象，对象中包括:
      *                  value:值,rel:关系,before:字段前字符串(通常为"("),after:值后字符串(通常为"and","or",")")
      *                  关系包括 >,<,>=,<=,<>,is,like等
-     * @returns      数组，第一个where后的条件语句，第二个元素为值数组，如: [where 语句,[1,2]]
      * @since 0.2.0
      */
     where(params: object): Query {
@@ -328,7 +325,6 @@ class Query {
 
     /**
      * 添加排序对象
-     * @param className 
      * @param params    {paramName1:'desc',paramName2:'asc',...} paramName1:参数名,desc:降序 asc:升序
      * @since 0.2.0
      */
@@ -374,7 +370,6 @@ class Query {
      *                  参数值有两种方式，一种是直接在参数名后给值，一种是给对象，对象中包括:
      *                  value:值,rel:关系,before:字段前字符串(通常为"("),after:值后字符串(通常为"and","or",")")
      *                  关系包括 >,<,>=,<=,<>,is,like等
-     * @returns      数组，第一个where后的条件语句，第二个元素为值数组，如: [where 语句,[1,2]]
      */
     having(params: object) {
         this.translator.handleHaving(params);
@@ -383,7 +378,7 @@ class Query {
 
     /**
      * 设置查询锁模式
-     * @param lockMode 锁模式
+     * @param lockMode  锁模式
      */
     setLock(lockMode: LockMode) {
         if (lockMode) {

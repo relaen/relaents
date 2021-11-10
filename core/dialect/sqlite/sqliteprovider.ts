@@ -33,6 +33,7 @@ export class SqliteProvider extends BaseProvider {
 
     /**
      * 获取连接
+     * @throws      连接错误
      * @returns     数据库连接 
      */
     public async getConnection(): Promise<any> {
@@ -48,6 +49,7 @@ export class SqliteProvider extends BaseProvider {
 
     /**
      * 关闭连接
+     * @throws           连接错误
      * @param connection 数据库连接对象
      */
     public async closeConnection(connection: Connection): Promise<any> {
@@ -68,7 +70,7 @@ export class SqliteProvider extends BaseProvider {
      * @param params        参数数组
      * @returns             结果(集)
      */
-    public async exec(connection: Connection, sql: string, params?: any[] | object) {
+    public async exec(connection: Connection, sql: string, params?: any[] | object): Promise<any> {
         return new Promise(async (resolve, reject) => {
             // insert into 使用run
             const isInsertQuery = sql.substr(0, 11).toLocaleLowerCase() === 'insert into';

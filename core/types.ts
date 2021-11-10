@@ -364,4 +364,9 @@ enum EQueryType {
  */
 type LockType = 'table_read' | 'table_write' | 'row_read' | 'row_write';
 type LockMode = 'optimistic' | 'pessimistic';
-export { IConnectionCfg, IConnectionPool, IEntity, IEntityCfg, IEntityColumn, IEntityRefColumn, IEntityPKey, IEntityRelation, ICondValueObj, ERelationType, EEntityState, EQueryType, LockType, LockMode }
+
+/**
+ * 事务隔离级别
+ */
+type IsolationLevel = "SERIALIZABLE" | "READ UNCOMMITTED" | "READ COMMITTED" | "REPEATABLE READ";
+export { IConnectionCfg, IConnectionPool, IEntity, IEntityCfg, IEntityColumn, IEntityRefColumn, IEntityPKey, IEntityRelation, ICondValueObj, ERelationType, EEntityState, EQueryType, LockType, LockMode, IsolationLevel }

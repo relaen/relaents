@@ -38,15 +38,16 @@ export abstract class BaseProvider {
      * 关闭连接
      * @param connection    数据库连接对象
      */
-    public async closeConnection(connection: Connection) {
+    public async closeConnection(connection: Connection): Promise<void> {
 
     }
 
     /**
-     * 执行postgres sql语句
+     * 执行sql语句
      * @param connection    数据库连接
      * @param sql           sql语句
      * @param params        参数
+     * @returns             结果(集)
      */
     public async exec(connection: Connection, sql: string, params?: any[] | object): Promise<any> {
         return null;
@@ -88,24 +89,27 @@ export abstract class BaseProvider {
      * @param type      锁类型    
      * @param tables    表名，表锁时使用
      * @param schema    模式名，表锁时使用
+     * @returns         加锁sql语句
      */
-    public lock(type: LockType, tables?: string[], schema?: string) {
+    public lock(type: LockType, tables?: string[], schema?: string): string {
         return null;
     }
 
     /**
      * 获取释放锁sql语句
      * @param type      锁类型
+     * @returns         释放锁sql语句
      */
-    public unlock(type: LockType) {
+    public unlock(type: LockType): string {
         return null;
     }
 
     /**
      * 获取新增返回主键字段sql语句
-     * @param idField 主键字段
+     * @param idField   主键字段
+     * @returns         查询主键sql语句
      */
-    public insertReturn(idField: string) {
+    public insertReturn(idField: string): string {
         return null;
     }
 }

@@ -44,6 +44,7 @@ export class MysqlProvider extends BaseProvider {
 
     /**
      * 获取连接
+     * @throws      获取连接失败错误
      * @returns     数据库连接
      */
     public async getConnection(): Promise<any> {
@@ -69,9 +70,10 @@ export class MysqlProvider extends BaseProvider {
 
     /**
      * 关闭连接
+     * @throws              关闭连接错误
      * @param connection    数据库连接对象
      */
-    public async closeConnection(connection: Connection) {
+    public async closeConnection(connection: Connection): Promise<any> {
         if (this.pool) {
             connection.conn.release();
             return Promise.resolve(null);
@@ -92,9 +94,10 @@ export class MysqlProvider extends BaseProvider {
      * @param connection    db connection
      * @param sql           待执行sql
      * @param params        参数数组
+     * @throws              语句执行错误
      * @returns             结果(集)
      */
-    public async exec(connection: Connection, sql: string, params?: any[]) {
+    public async exec(connection: Connection, sql: string, params?: any[]): Promise<any> {
         return await new Promise((resolve, reject) => {
             connection.conn.query(sql, params, (err, results, fields) => {
                 if (err) {
@@ -138,8 +141,10 @@ export class MysqlProvider extends BaseProvider {
      * @param type      锁类型    
      * @param tables    表名，表锁时使用
      * @param schema    模式名，表锁时使用
+     * @retruns         加锁sql语句
+     * @since           0.4.0
      */
-    public lock(type: LockType, tables?: string[], schema?: string) {
+    public lock(type: LockType, tables?: string[], schema?: string): string {
         switch (type) {
             //表连接为 ' ' 空格
             case 'table_read':
@@ -156,8 +161,10 @@ export class MysqlProvider extends BaseProvider {
     /**
      * 获取释放锁sql语句
      * @param type      锁类型
+     * @returns         释放锁sql语句
+     * @since           0.4.0
      */
-    public unlock(type: LockType) {
+    public unlock(type: LockType): string {
         switch (type) {
             case 'table_write':
                 return "UNLOCK TABLES";

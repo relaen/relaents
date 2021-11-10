@@ -12,8 +12,8 @@ import { RelaenUtil } from "./relaenutil";
  */
 class NativeQuery extends Query {
     /**
-     * 构造query对象
-     * @param rql               relean ql 
+     * 构造原生查询对象
+     * @param sql               sql语句 
      * @param em                entity manager
      * @param entityClassName   实体类名
      */
@@ -23,9 +23,9 @@ class NativeQuery extends Query {
     }
 
     /**
-     * 设置查询参数值，支持字符串占位符
-     * @param paramName 
-     * @param value 
+     * 设置查询参数值，占位符支持下标和字符串
+     * @param index     占位符
+     * @param value     参数值
      */
     public setParameter(index: number | string, value: any) {
         if (!this.paramArr) {
@@ -44,7 +44,7 @@ class NativeQuery extends Query {
 
     /**
      * 设置多个参数值，数组从下标0开始|对象以属性名绑定
-     * @param valueArr 值数组
+     * @param valueArr 值数组|值对象
      */
     public setParameters(valueArr: any[] | object) {
         if (Array.isArray(valueArr)) {
@@ -71,6 +71,7 @@ class NativeQuery extends Query {
 
     /**
      * 获取单个实体或单个属性值
+     * @returns     结果
      */
     public async getResult(): Promise<any> {
         if (!this.execSql) {
@@ -98,6 +99,7 @@ class NativeQuery extends Query {
      * 获取结果列表
      * @param start     开始索引
      * @param limit     记录数
+     * @returns         结果集
      */
     public async getResultList(start?: number, limit?: number): Promise<any> {
         this.setStart(start);
@@ -115,7 +117,8 @@ class NativeQuery extends Query {
 
     /**
      * 根据查询结果生成单个数据对象
-     * @param r 
+     * @param r     原生查询结果
+     * @returns     转化实体对象
      */
     private genOne(r: any) {
         if (this.entityClassName) {

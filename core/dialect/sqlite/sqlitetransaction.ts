@@ -7,6 +7,7 @@ import { Transaction } from "../../transaction";
 class SqliteTransaction extends Transaction {
     /**
      * 开始事务
+     * @param sqliteTransaction     事务类型
      */
     public async begin(sqliteTransaction?: 'immediate' | 'exclusive') {
         await new Promise((resolve, reject) => {
@@ -22,10 +23,6 @@ class SqliteTransaction extends Transaction {
                 resolve(null);
             });
         });
-    }
-
-    public async beginImmediate() {
-
     }
 
     /**

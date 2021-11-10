@@ -173,8 +173,10 @@ export class MssqlProvider extends BaseProvider {
      * @param type      锁类型    
      * @param tables    表名，表锁时使用
      * @param schema    模式名，表锁时使用
-     */
-    public lock(type: LockType, tables?: string[], schema?: string) {
+     * @retruns         加锁sql语句
+     * @since           0.4.0    
+    */
+    public lock(type: LockType, tables?: string[], schema?: string): string {
         if (schema && tables) {
             tables.forEach((v, i) => {
                 tables[i] = schema + '.' + tables[i];
@@ -194,9 +196,10 @@ export class MssqlProvider extends BaseProvider {
 
     /**
      * 获取新增返回主键字段sql语句
-     * @param idField 主键字段
+     * @param idField   主键字段
+     * @returns         查询主键sql语句
      */
-    public insertReturn(idField: string) {
+    public insertReturn(idField: string):string {
         return "SELECT @@IDENTITY AS insertId";
     }
 

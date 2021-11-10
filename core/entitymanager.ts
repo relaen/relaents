@@ -126,9 +126,9 @@ class EntityManager {
 
     /**
      * 通过id查找实体
-     * @param entityClass   entity class 名
-     * @param id            entity id 值
-     * @returns             entity
+     * @param entityClassName   entity class 名
+     * @param id                entity id 值
+     * @returns                 entity
      */
     public async find(entityClassName: string, id: any): Promise<IEntity> {
         let orm: IEntityCfg = EntityFactory.getClass(entityClassName);
@@ -187,7 +187,7 @@ class EntityManager {
      * @param orm       实体配置
      * @param isField   默认返回属性名，true返回数据库字段
      */
-    public isSelectField(orm: IEntityCfg, isField?: boolean) {
+    public isSelectField(orm: IEntityCfg, isField?: boolean): any {
         let arr = [];
         for (let [key, values] of orm.columns) {
             if (values.select !== false) {
@@ -311,6 +311,7 @@ class EntityManager {
                     let tx: Transaction = this.connection.createTransaction();
                     // sqlite 使用begin immediate替代begin开启事务，其它数据库开启事务
                     await tx.begin('immediate');
+                    await tx.begin()
 
                     // 加表锁，需要单独执行语句
                     let locksql = ConnectionManager.provider.lock("table_write", [orm.id.table], orm.schema);
