@@ -80,15 +80,15 @@ http://www.noomi.cn/relaen/api.html
 #### 0.4.0
 1. 增加mariadb、sqlite数据库支持；
 2. 增加乐观锁与悲观锁机制；
-3. 增加主键表选项生成；
-4. 增加Query中条件构建；
-5. 增加实体查询属性隐藏配置select；
-6. 增加原生连接传递参数options；
-7. 增加文件日志记录；
-8. 增加防止全表删除属性fullTableOperation；
-9. 增加原生查询nativequery字符串绑定参数setParameter方法；
-10. 新增事务隔离级设置方法；
-11. 完善分页语句判断
+3. 增加主键生成策略table生成；
+4. 增加Query查询的groupBy、having方法；
+5. 增加实体属性查询是否隐藏属性select；
+6. 增加原生连接参数options；
+7. 增加文件日志Logger；
+8. 增加全表操作属性fullTableOperation，防止全表删除；
+9. 增加nativequery原生查询的参数绑定setParameter方法支持字符串绑定；
+10. 新增事务隔离级设置setisolationLevel方法；
+11. 完善分页语句handleStartAndLimit方法处理。
 
 ## 配置文件
 relaen依赖配置文件进行初始化，配置内容如下：

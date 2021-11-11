@@ -67,12 +67,19 @@ interface IConnectionCfg {
     entities: Array<string>
     /**
      * 数据库原生配置，详细配置参照各数据库文档
+     * @since 0.4.0
      */
     options: any;
     /**
      * 是否开启连接池，数据库原生配置使用
+     * @since 0.4.0
      */
     usePool: boolean;
+    /**
+     * 是否允许全表操作
+     * @since 0.4.0
+     */
+    fullTableOperation: boolean;
 }
 
 /**
@@ -166,11 +173,13 @@ interface IEntityColumn {
 
     /**
      * 乐观锁，数据版本Version
+     * @since 0.4.0
      */
     version?: boolean;
 
     /**
      * 实体类查询，不显示字段
+     * @since 0.4.0
      */
     select?: boolean;
 }

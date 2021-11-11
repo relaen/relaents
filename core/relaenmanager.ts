@@ -47,11 +47,13 @@ class RelaenManager {
 
     /**
      * 是否文件日志
+     * @since 0.4.0
      */
     public static fileLog: boolean;
 
     /**
-     * 是否禁止全表更新与删除，默认禁止
+     * 是否允许全表操作，默认禁止
+     * @since 0.4.0
      */
     public static fullTableOperation: boolean;
 

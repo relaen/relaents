@@ -358,6 +358,7 @@ class Query {
     /**
      * 添加分组条件
      * @param params 属性或属性数组
+     * @since 0.4.0
      */
     groupBy(params: string | Array<string>) {
         this.translator.handleGroup(params);
@@ -370,6 +371,7 @@ class Query {
      *                  参数值有两种方式，一种是直接在参数名后给值，一种是给对象，对象中包括:
      *                  value:值,rel:关系,before:字段前字符串(通常为"("),after:值后字符串(通常为"and","or",")")
      *                  关系包括 >,<,>=,<=,<>,is,like等
+     * @since 0.4.0
      */
     having(params: object) {
         this.translator.handleHaving(params);
@@ -379,6 +381,7 @@ class Query {
     /**
      * 设置查询锁模式
      * @param lockMode  锁模式
+     * @since 0.4.0
      */
     setLock(lockMode: LockMode) {
         if (lockMode) {

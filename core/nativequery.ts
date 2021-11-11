@@ -26,6 +26,7 @@ class NativeQuery extends Query {
      * 设置查询参数值，占位符支持下标和字符串
      * @param index     占位符
      * @param value     参数值
+     * @since 0.4.0
      */
     public setParameter(index: number | string, value: any) {
         if (!this.paramArr) {
@@ -45,6 +46,7 @@ class NativeQuery extends Query {
     /**
      * 设置多个参数值，数组从下标0开始|对象以属性名绑定
      * @param valueArr 值数组|值对象
+     * @since 0.4.0
      */
     public setParameters(valueArr: any[] | object) {
         if (Array.isArray(valueArr)) {
