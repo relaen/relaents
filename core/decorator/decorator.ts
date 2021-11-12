@@ -12,7 +12,7 @@ import { EntityFactory } from "../entityfactory";
  * @param schema    数据库名
  */
 function Entity(tblName:string,schema?:string){
-    return (target) =>{
+    return (target) => {
         EntityFactory.addClass(target,tblName,schema);
     }
 }
@@ -23,7 +23,7 @@ function Entity(tblName:string,schema?:string){
  * @param cfg       配置项
  */
 function Id(cfg?:IEntityPKey){
-    return (target:any,propertyName:string)=>{
+    return (target: any, propertyName: string) => {
         EntityFactory.addPKey(target.constructor.name,propertyName,cfg);
     }
 }

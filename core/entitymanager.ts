@@ -151,6 +151,7 @@ class EntityManager {
      * @param params            参数对象{propName1:propValue1,propName2:{value:propValue2,rel:'>',before:'(',after:')',logic:'OR'}...}
      *                          参数值有两种方式，一种是值，一种是值对象，值对象参考ICondValueObj接口说明
      * @param order             排序对象 {propName1:asc,propName2:desc,...}
+     * @returns                 实体
      * @since 0.1.3 
      */
     public async findOne(entityClassName: string, params?: object, order?: object): Promise<any> {
@@ -168,6 +169,7 @@ class EntityManager {
      * @param start             开始记录行
      * @param limit             获取记录数
      * @param order             排序对象，参考findOne
+     * @returns                 实体集
      * @since 0.1.3
      */
     public async findMany(entityClassName: string, params?: object, start?: number, limit?: number, order?: object): Promise<Array<any>> {
@@ -186,6 +188,7 @@ class EntityManager {
      * 是否存在隐藏字段
      * @param orm       实体配置
      * @param isField   默认返回属性名，true返回数据库字段
+     * @returns         字段集
      */
     public isSelectField(orm: IEntityCfg, isField?: boolean): any {
         let arr = [];
@@ -212,6 +215,7 @@ class EntityManager {
      * 获取记录数
      * @param entityClassName   实体类名
      * @param params            参数对象，参考findOne
+     * @returns                 记录数
      */
     public async getCount(entityClassName: string, params?: object) {
         let query: Query = this.createQuery(entityClassName);
@@ -233,7 +237,6 @@ class EntityManager {
 
     /**
      * 创建查询对象
-     * @param rql               relean ql
      * @param entityClassName   实体类名
      * @returns                 查询对象
      */
@@ -387,6 +390,8 @@ class EntityManager {
      * 预处理实体对象
      * @param entity                实体对象
      * @param ignoreUndefinedValue  忽略undefined值
+     * @throws                      处理错误
+     * @returns                     成功true
      */
     private preHandleEntity(entity: IEntity, ignoreUndefinedValue?: boolean): boolean {
         let className: string = entity.constructor.name;

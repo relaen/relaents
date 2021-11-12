@@ -419,7 +419,6 @@ export abstract class Translator {
     /**
      * 处理group by
      * @param params    分组参数
-     * @returns         
      */
     public handleGroup(params: string | string[]) {
         if (!params) {

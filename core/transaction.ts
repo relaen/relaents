@@ -40,7 +40,6 @@ abstract class Transaction {
      * @param isolation 事务隔离级
      */
     public async setisolationLevel(isolationLevel: IsolationLevel) {
-        return null;
     }
 
     /**
