@@ -334,7 +334,7 @@ export class Shop extends BaseEntity{
 | 参数名   | 类型    | 说明                                        |
 | -------- | ------- | ------------------------------------------- |
 | name     | string  | 数据库表中字段名                            |
-| refName  | string  | 外键字段名 TODO 好像在列注解未使用          |
+| refName  | string  | 外键字段名           |
 | type     | string  | 数据类型 包括int double string date object  |
 | nullable | boolean | 是否可为空                                  |
 | length   | number  | 长度，type为字符串时有效                    |
