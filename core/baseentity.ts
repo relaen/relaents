@@ -24,7 +24,7 @@ export class BaseEntity extends Object implements IEntity {
     /**
      * 保存实体
      * @param ignoreUndefinedValue  忽略undefined值，针对update时有效
-     * @lockMode                    锁模式
+     * @param lockMode              锁模式
      * @returns                     保存后的实体
      */
     public async save(ignoreUndefinedValue?: boolean, lockMode?: LockMode): Promise<IEntity> {
