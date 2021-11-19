@@ -18,10 +18,6 @@ relaen提供了[relaen cli](https://www.npmjs.com/package/relaen-cli)工具，�
 http://www.noomi.cn/relaen/api.html
 
 ## 版本
-<<<<<<< HEAD
-=======
-
->>>>>>> 2221704cd8d765170bad761f322fc5abb38e2205
 #### 0.0.5
 正式发布
 
