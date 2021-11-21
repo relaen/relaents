@@ -2,15 +2,16 @@ import {BaseEntity,Entity,Column,Id,JoinColumn,ManyToOne,EntityProxy} from '../.
 import {User} from './user';
 import {Group} from './group';
 
-@Entity("t_group_user",'test')
+@Entity('t_group_user')
 export class GroupUser extends BaseEntity{
 	@Id()
 	@Column({
 		name:'group_user_id',
 		type:'int',
-		nullable:false
+		nullable:false,
+		identity:true
 	})
-	private groupUserId:number;
+	public groupUserId:number;
 
 	@ManyToOne({entity:'User'})
 	@JoinColumn({
@@ -18,7 +19,7 @@ export class GroupUser extends BaseEntity{
 		refName:'user_id',
 		nullable:true
 	})
-	private user:User;
+	public user:User;
 
 	@ManyToOne({entity:'Group'})
 	@JoinColumn({
@@ -26,31 +27,16 @@ export class GroupUser extends BaseEntity{
 		refName:'group_id',
 		nullable:true
 	})
-	private group:Group;
+	public group:Group;
 
 	constructor(idValue?:number){
 		super();
 		this.groupUserId = idValue;
 	}
-	public getGroupUserId():number{
-		return this.groupUserId;
-	}
-	public setGroupUserId(value:number){
-		this.groupUserId = value;
-	}
-
 	public async getUser():Promise<User>{
-		return await EntityProxy.get(this,'user');
+		return this['user']?this['user']:await EntityProxy.get(this,'user');
 	}
-	public setUser(value:User){
-		this.user = value;
-	}
-
 	public async getGroup():Promise<Group>{
-		return await EntityProxy.get(this,'group');
+		return this['group']?this['group']:await EntityProxy.get(this,'group');
 	}
-	public setGroup(value:Group){
-		this.group = value;
-	}
-
 }

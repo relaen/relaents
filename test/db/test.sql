@@ -88,7 +88,7 @@ DROP TABLE IF EXISTS `t_user`;
 CREATE TABLE `t_user` (
   `user_id` int(11) NOT NULL AUTO_INCREMENT,
   `user_name` varchar(32) DEFAULT NULL,
-  `user_pwd` char(32) DEFAULT NULL,
+  `user_password` char(32) DEFAULT NULL,
   PRIMARY KEY (`user_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8;
 

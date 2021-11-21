@@ -1,15 +1,16 @@
 import {BaseEntity,Entity,Column,Id,OneToMany,EntityProxy} from '../..';
 import {GroupUser} from './groupuser';
 
-@Entity("t_group",'test')
+@Entity('t_group')
 export class Group extends BaseEntity{
 	@Id()
 	@Column({
 		name:'group_id',
 		type:'int',
-		nullable:false
+		nullable:false,
+		identity:true
 	})
-	private groupId:number;
+	public groupId:number;
 
 	@Column({
 		name:'group_name',
@@ -17,37 +18,19 @@ export class Group extends BaseEntity{
 		nullable:true,
 		length:32
 	})
-	private groupName:string;
+	public groupName:string;
 
 	@OneToMany({
 		entity:'GroupUser',
 		mappedBy:'group'
 	})
-	private groupUsers:Array<GroupUser>;
+	public groupUsers:Array<GroupUser>;
 
 	constructor(idValue?:number){
 		super();
 		this.groupId = idValue;
 	}
-	public getGroupId():number{
-		return this.groupId;
-	}
-	public setGroupId(value:number){
-		this.groupId = value;
-	}
-
-	public getGroupName():string{
-		return this.groupName;
-	}
-	public setGroupName(value:string){
-		this.groupName = value;
-	}
-
 	public async getGroupUsers():Promise<Array<GroupUser>>{
-		return await EntityProxy.get(this,'groupUsers');
+		return this['groupUsers']?this['groupUsers']:await EntityProxy.get(this,'groupUsers');
 	}
-	public setGroupUsers(value:Array<GroupUser>){
-		this.groupUsers = value;
-	}
-
 }

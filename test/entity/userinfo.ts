@@ -2,7 +2,7 @@ import {BaseEntity,Entity,Column,Id,JoinColumn,OneToOne,OneToMany,EntityProxy} f
 import {User} from './user';
 import {Shop} from './shop';
 
-@Entity("t_user_info",'test')
+@Entity('t_user_info')
 export class UserInfo extends BaseEntity{
 	@Id()
 	@Column({
@@ -10,7 +10,7 @@ export class UserInfo extends BaseEntity{
 		type:'int',
 		nullable:false
 	})
-	private userId:number;
+	public userId:number;
 
 	@OneToOne({entity:'User'})
 	@JoinColumn({
@@ -18,7 +18,7 @@ export class UserInfo extends BaseEntity{
 		refName:'user_id',
 		nullable:true
 	})
-	private user:User;
+	public user:User;
 
 	@Column({
 		name:'real_name',
@@ -26,14 +26,14 @@ export class UserInfo extends BaseEntity{
 		nullable:true,
 		length:64
 	})
-	private realName:string;
+	public realName:string;
 
 	@Column({
 		name:'age',
 		type:'int',
 		nullable:true
 	})
-	private age:number;
+	public age:number;
 
 	@Column({
 		name:'sexy',
@@ -41,7 +41,7 @@ export class UserInfo extends BaseEntity{
 		nullable:true,
 		length:1
 	})
-	private sexy:string;
+	public sexy:string;
 
 	@Column({
 		name:'remarks',
@@ -49,78 +49,31 @@ export class UserInfo extends BaseEntity{
 		nullable:true,
 		length:256
 	})
-	private remarks:string;
+	public remarks:string;
 
 	@OneToMany({
 		entity:'Shop',
-		mappedBy:'owner'
+		mappedBy:'userInfoForOwnerId'
 	})
-	private ownShops:Array<Shop>;
+	public shopForOwnerIds:Array<Shop>;
 
 	@OneToMany({
 		entity:'Shop',
-		mappedBy:'manager'
+		mappedBy:'userInfoForManagerId'
 	})
-	private manageShops:Array<Shop>;
+	public shopForManagerIds:Array<Shop>;
 
 	constructor(idValue?:number){
 		super();
 		this.userId = idValue;
 	}
-	public getUserId():number{
-		return this.userId;
-	}
-	public setUserId(value:number){
-		this.userId = value;
-	}
-
 	public async getUser():Promise<User>{
-		return await EntityProxy.get(this,'user');
+		return this['user']?this['user']:await EntityProxy.get(this,'user');
 	}
-	public setUser(value:User){
-		this.user = value;
+	public async getShopForOwnerIds():Promise<Array<Shop>>{
+		return this['shopForOwnerIds']?this['shopForOwnerIds']:await EntityProxy.get(this,'shopForOwnerIds');
 	}
-
-	public getRealName():string{
-		return this.realName;
+	public async getShopForManagerIds():Promise<Array<Shop>>{
+		return this['shopForManagerIds']?this['shopForManagerIds']:await EntityProxy.get(this,'shopForManagerIds');
 	}
-	public setRealName(value:string){
-		this.realName = value;
-	}
-
-	public getAge():number{
-		return this.age;
-	}
-	public setAge(value:number){
-		this.age = value;
-	}
-
-	public getSexy():string{
-		return this.sexy;
-	}
-	public setSexy(value:string){
-		this.sexy = value;
-	}
-
-	public getRemarks():string{
-		return this.remarks;
-	}
-	public setRemarks(value:string){
-		this.remarks = value;
-	}
-
-	public async getOwnShops():Promise<Array<Shop>>{
-		return await EntityProxy.get(this,'ownShops');
-	}
-	public setOwnShops(value:Array<Shop>){
-		this.ownShops = value;
-	}
-
-	public async getManageShops():Promise<Array<Shop>>{
-		return await EntityProxy.get(this,'manageShops');
-	}
-	public setManageShops(value:Array<Shop>){
-		this.manageShops = value;
-	}
-
 }
