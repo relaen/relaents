@@ -5,8 +5,8 @@ import { getEntityManager } from "./entitymanagerfactory";
 import { ErrorFactory } from "./errorfactory";
 import { NativeQuery } from "./nativequery";
 import { RelaenUtil } from "./relaenutil";
-import { RelaenManager } from "./relaenmanager";
 import { Logger } from "./logger";
+
 /**
  * 实体代理类
  */
@@ -15,10 +15,11 @@ class EntityProxy {
      * 获取实体关联对象
      * @param entity    实体
      * @param propName  关联属性名
+     * @returns         实体关联对象
      */
     public static async get(entity: IEntity, propName: string): Promise<any> {
         if (!RelaenUtil.getIdValue(entity)) {
-            Logger.error(ErrorFactory.getError("0105").message);
+            Logger.error(ErrorFactory.getError("0105"));
             return null;
         }
 
@@ -38,8 +39,8 @@ class EntityProxy {
             if (rel.type === ERelationType.ManyToOne || rel.type === ERelationType.OneToOne && !rel.mappedBy) {
                 let sql: string;
                 let query: NativeQuery;
-                sql = "select m.* from " + RelaenUtil.getTableName(eo1) + " m," + RelaenUtil.getTableName(eo) + " m1 where m." +
-                    column.refName + "= m1." + column.name + " and m1." + eo.columns.get(eo.id.name).name + " = ?";
+                sql = "SELECT m.* FROM " + RelaenUtil.getTableName(eo1) + " m," + RelaenUtil.getTableName(eo) + " m1 WHERE m." +
+                    column.refName + "= m1." + column.name + " AND m1." + eo.columns.get(eo.id.name).name + " = ?";
                 query = em.createNativeQuery(sql, rel.entity);
                 //设置外键id
                 query.setParameter(0, RelaenUtil.getIdValue(entity));
@@ -57,7 +58,7 @@ class EntityProxy {
                 if (!column1) {
                     throw ErrorFactory.getError('0022', [rel.entity, column1]);
                 }
-                let rql: string = "select * from " + RelaenUtil.getTableName(eo1) + " where " + column1.name + " = ?";
+                let rql: string = "SELECT * FROM " + RelaenUtil.getTableName(eo1) + " WHERE " + column1.name + " = ?";
                 //查询外键对象
                 let query: NativeQuery = em.createNativeQuery(rql, rel.entity);
                 //设置查询值

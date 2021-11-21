@@ -1,26 +1,82 @@
-import { RelaenManager } from "./relaenmanager";
-
 /**
  * 日志类
+ * @since 0.4.0
  */
-class Logger{
+class Logger {
+
+    private static log4js;
+
+    /**
+     * 初始化日志管理器
+     * @param debug     是否开启dubug模式
+     * @param fileLog   是否开启文件日志
+     */
+    public static init(debug: boolean, fileLog: boolean) {
+        if (!debug && !fileLog) return;
+        const log4js = require('log4js');
+        // 默认文件日志配置
+        let fileAppenders = {
+            type: 'file',
+            filename: 'relaen.log',
+            layout: {
+                type: "pattern",
+                pattern: "[%d] %m"
+            }
+        };
+        if (typeof fileLog === 'object') {
+            fileAppenders = fileLog;
+        }
+        log4js.configure({
+            appenders: {
+                // debug模式默认
+                console: { type: 'console', layout: { type: "pattern", pattern: "%m" } },
+                // 文件模式
+                file: fileAppenders
+            },
+            categories: {
+                default: { appenders: ["console"], level: "off" },
+                debug: { appenders: ["console"], level: "debug" },
+                fileLog: { appenders: ["file"], level: "info" },
+                debug_fileLog: { appenders: ["console", "file"], level: "debug" }
+            }
+        });
+        let category = "default";
+        if (debug && fileLog) {
+            category = "debug_fileLog";
+        }
+        if (debug && !fileLog) {
+            category = "debug"
+        }
+        if (!debug && fileLog) {
+            category = "fileLog"
+        }
+        this.log4js = log4js.getLogger(category);
+    }
+
+
     /**
      * 写日志到控制台
-     * @param msg   待写消息
+     * @param sql       sql语句
+     * @param params    sql语句参数
      */
-    public static console(msg:string){
-        if(RelaenManager.debug){
-            console.log(msg);
+    public static log(sql: string, params?: any[] | object) {
+        if (this.log4js) {
+            this.log4js.info("[Relaen execute sql]:\"" + sql + "\"");
+            if (params) {
+                this.log4js.info("Parameters is " + JSON.stringify(params));
+            }
         }
     }
 
     /**
      * 写错误消息
-     * @param msg 
+     * @param err   sql执行错误
      */
-    public static error(msg){
-        console.error(msg);
+    public static error(err: Error) {
+        if (this.log4js) {
+            this.log4js.error("[Relaen execute sql] Error:\"" + err.message + "\"");
+        }
     }
 }
 
-export{Logger};
+export { Logger };

@@ -40,18 +40,15 @@ interface IConnectionCfg {
      * 数据库
      */
     database: string;
-
     /**
-     * 连接超时时间
+     * 连接超时时间（ms）
      * @since 0.3.0
      */
-    timeout:number;
-
+    connectTimeout: number;
     /**
-     * 连接后idle超时时间（ms）
+     * 空闲超时时间，开启连接池使用（ms）
      */
     idleTimeout: number;
-
     /**
      * 连接池配置
      */
@@ -64,11 +61,25 @@ interface IConnectionCfg {
      * 是否调试模式
      */
     debug: boolean;
-
     /**
      * 实体配置数组 
      */
     entities: Array<string>
+    /**
+     * 数据库原生配置，详细配置参照各数据库文档
+     * @since 0.4.0
+     */
+    options: any;
+    /**
+     * 是否开启连接池，数据库原生配置使用
+     * @since 0.4.0
+     */
+    usePool: boolean;
+    /**
+     * 是否允许全表操作
+     * @since 0.4.0
+     */
+    fullTableOperation: boolean;
 }
 
 /**
@@ -156,9 +167,21 @@ interface IEntityColumn {
     length?: number;
 
     /**
-     * 是否自增,mssql
+     * 是否自增，mssql
      */
     identity?: boolean;
+
+    /**
+     * 乐观锁，数据版本Version
+     * @since 0.4.0
+     */
+    version?: boolean;
+
+    /**
+     * 实体类查询，不显示字段
+     * @since 0.4.0
+     */
+    select?: boolean;
 }
 
 /**
@@ -193,7 +216,7 @@ interface IEntityPKey {
     /**
      * 主键生成策略 identity,sequence,table,uuid
      */
-    generator?: string;
+    generator?: "identity" | "sequence" | "table" | "uuid";
 
     /**
      * 主键来源表，数据库表，专门用于主键生成
@@ -208,7 +231,7 @@ interface IEntityPKey {
     /**
      * 主键值字段名，如果generator为'table'，则该项不能为空
      */
-     valueName?: string;
+    valueName?: string;
 
     /**
      * 主键对应记录项名，如果generator为'table'，则该项不能为空
@@ -283,28 +306,6 @@ interface ICondValueObj {
 }
 
 /**
- * 外键约束
- */
-enum EFkConstraint {
-    /**
-     * 无操作
-     */
-    NONE = 'none',
-    /**
-     * 限制修改和删除
-     */
-    RESTRICT = 'restrict',
-    /**
-     * 级联操作
-     */
-    CASCADE = 'cascade',
-    /**
-     * 外键置空
-     */
-    SETNULL = 'set null'
-}
-
-/**
  * 关系类型
  */
 enum ERelationType {
@@ -349,6 +350,7 @@ enum EQueryType {
      * select
      */
     SELECT = 0,
+
     /**
      * insert
      */
@@ -365,4 +367,15 @@ enum EQueryType {
     DELETE = 3
 
 }
-export { IConnectionCfg, IConnectionPool, IEntity, IEntityCfg, IEntityColumn, IEntityRefColumn, IEntityPKey, IEntityRelation, ICondValueObj, EFkConstraint, ERelationType, EEntityState, EQueryType }
+
+/**
+ * 锁机制类型
+ */
+type LockType = 'table_read' | 'table_write' | 'row_read' | 'row_write';
+type LockMode = 'optimistic' | 'pessimistic';
+
+/**
+ * 事务隔离级别
+ */
+type IsolationLevel = "SERIALIZABLE" | "READ UNCOMMITTED" | "READ COMMITTED" | "REPEATABLE READ";
+export { IConnectionCfg, IConnectionPool, IEntity, IEntityCfg, IEntityColumn, IEntityRefColumn, IEntityPKey, IEntityRelation, ICondValueObj, ERelationType, EEntityState, EQueryType, LockType, LockMode, IsolationLevel }

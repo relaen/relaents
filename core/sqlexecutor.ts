@@ -9,14 +9,17 @@ import { ConnectionManager } from "./connectionmanager";
 export class SqlExecutor {
     /**
      * 执行mysql sql语句
-     * @param connection    db connection
+     * @param em            EntityManager
      * @param sql           待执行sql
      * @param params        参数数组
      * @param start         开始记录行
      * @param limit         最大记录行
      * @returns             执行结果或undefined
      */
-    public static async exec(em: EntityManager, sql: string, params?: any[], start?: number, limit?: number): Promise<any> {
+    public static async exec(em: EntityManager, sql: string, params?: any[] | object, start?: number, limit?: number): Promise<any> {
+        if (!sql) {
+            return null;
+        }
         sql = sql.trim();
         //sql类型：0:查询 1:增删改
         let sqlType: number = ['insert', 'update', 'delete'].includes(sql.substr(0, 6).toLowerCase()) ? 1 : 0;
@@ -26,7 +29,13 @@ export class SqlExecutor {
         //结果
         let result: any;
         if (sqlType === 0) {  //查询可从缓存中获取
-            sql = ConnectionManager.provider.handleStartAndLimit(sql, start, limit);
+            //sql语句末加行锁，分页加在行锁语句前（待优化加锁分页执行顺序）
+            if (sql.substr(-10).toLowerCase() === 'for update') {
+                sql = ConnectionManager.provider.handleStartAndLimit(sql.substr(0, sql.length - 11), start, limit) + ' FOR UPDATE';
+            } else {
+                sql = ConnectionManager.provider.handleStartAndLimit(sql, start, limit);
+            }
+
             key = sql;
             //构造缓存key
             if (params) {
@@ -42,13 +51,9 @@ export class SqlExecutor {
         //处理占位符
         sql = RelaenUtil.handlePlaceholder(sql);
         //打印sql
-        Logger.console("[Relaen execute sql]:\"" + sql + "\"");
-        //打印参数
-        if (params) {
-            Logger.console("Parameters is " + JSON.stringify(params));
-        }
-        try{
-            result = await ConnectionManager.provider.exec(em.connection,sql,params);
+        Logger.log(sql, params);
+        try {
+            result = await ConnectionManager.provider.exec(em.connection, sql, params);
             //执行增删改，则清空cache
             if (sqlType === 1) {
                 em.clearCache();
@@ -56,9 +61,11 @@ export class SqlExecutor {
                 em.addToCache(key, result);
             }
         } catch (e) {
+            Logger.error(e);
             throw ("[Relaen execute sql] Error:\"" + e.message + "\"");
         }
-        Logger.console("[Relaen execute sql]:\"OK\"");
+        // Logger.log("[Relaen execute sql]:\"OK\"");
+        Logger.log("OK");
         return result;
     }
 }

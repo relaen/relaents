@@ -1,37 +1,38 @@
 import { Connection } from "../../connection";
-import { IConnectionCfg, IEntity, IEntityCfg } from "../../types";
 import { BaseProvider } from "../../baseprovider";
 import { EntityManager } from "../../entitymanager";
 import { NativeQuery } from "../../nativequery";
-import { RelaenUtil } from "../../relaenutil";
-import { EntityManagerFactory } from "../../entitymanagerfactory";
+import { IPostgresConnectionCfg } from "./postgresoptions";
+import { LockType } from "../../types";
 
 /**
  * postgres provider
  * @since 0.3.0
  */
-export class PostgresProvider extends BaseProvider{
+export class PostgresProvider extends BaseProvider {
     /**
      * 构造器
      * @param cfg   连接配置
      */
-    constructor(cfg:IConnectionCfg) {
+    constructor(cfg: IPostgresConnectionCfg) {
         super(cfg);
         this.dbMdl = require('pg');
-        this.options = {
+        this.options = cfg.options ? cfg.options : {
             user: cfg.username,
             password: cfg.password,
             host: cfg.host,
             port: cfg.port,
             database: cfg.database,
-            timeout:cfg.idleTimeout||0
+            // ssl: cfg.ssl,
+            connectionTimeoutMillis: cfg.connectTimeout,
         };
-        
-        if (cfg.pool) {
-            //最大连接数
-            if(cfg.pool.max){
-                this.options.max = this.pool.max
-            }    
+
+        // 连接池
+        if (cfg.usePool || cfg.pool) {
+            if (!cfg.options && cfg.pool) {
+                this.options['max'] = cfg.pool.max;
+                this.options['idleTimeoutMillis'] = cfg.idleTimeout;
+            }
             this.pool = new this.dbMdl.Pool(this.options);
         }
     }
@@ -40,10 +41,9 @@ export class PostgresProvider extends BaseProvider{
      * 获取postgres连接
      * @returns     数据库连接
      */
-    public async getConnection():Promise<any> {
+    public async getConnection(): Promise<any> {
         if (this.pool) {
-            let conn = await this.pool.connect();
-            return conn;
+            return await this.pool.connect();
         }
         let conn = new this.dbMdl.Client(this.options);
         await conn.connect();
@@ -70,9 +70,9 @@ export class PostgresProvider extends BaseProvider{
      * @param params        参数数组
      * @returns             结果(集)
      */
-    public async exec(connection: Connection, sql: string, params?: any[]) {
+    public async exec(connection: Connection, sql: string, params?: any[]): Promise<any> {
         let r = await connection.conn.query(sql, params);
-        return r.rows?r.rows:r;
+        return r.rows ? r.rows : r;
     }
 
     /**
@@ -83,11 +83,17 @@ export class PostgresProvider extends BaseProvider{
      * @returns         处理后的sql
      * @since           0.2.0
      */
-    public handleStartAndLimit(sql: string, start?: number, limit?: number):string {
-        if (!Number.isInteger(start) || start < 0 || !Number.isInteger(limit) || limit <= 0) {
-            return sql;
+    public handleStartAndLimit(sql: string, start?: number, limit?: number): string {
+        if (limit && start) {
+            return sql + ' LIMIT ' + limit + ' OFFSET ' + start;
         }
-        return sql + ' LIMIT ' + limit + ' OFFSET ' + start;
+        if (limit) {
+            return sql + ' LIMIT ' + limit;
+        }
+        if (start) {
+            return sql + ' OFFSET ' + start;
+        }
+        return sql;
     }
 
     /**
@@ -97,10 +103,10 @@ export class PostgresProvider extends BaseProvider{
      * @param schema    schema
      * @returns         sequence 值
      */
-    public async getSequenceValue(em:EntityManager,seqName:string,schema?:string):Promise<number>{
-         // 需要指定sequence所属schema
+    public async getSequenceValue(em: EntityManager, seqName: string, schema?: string): Promise<number> {
+        // 需要指定sequence所属schema
         let query: NativeQuery = em.createNativeQuery(
-            "select nextval('" + (schema?schema + "." + seqName:seqName) + "')"
+            "select nextval('" + (schema ? schema + "." + seqName : seqName) + "')"
         );
         let r = await query.getResult();
         if (r) {
@@ -115,10 +121,46 @@ export class PostgresProvider extends BaseProvider{
      * @param result    sql执行结果
      * @returns         主键
      */
-    public getIdentityId(result:any): number{
-        if (!result || result.length>1){
+    public getIdentityId(result: any): number {
+        if (!result || result.length > 1) {
             return;
         }
         return <number>Object.values(result[0])[0];
+    }
+
+    /**
+     * 获取加锁sql语句
+     * @param type      锁类型    
+     * @param tables    表名，表锁时使用
+     * @param schema    模式名，表锁时使用
+     * @retruns         加锁sql语句
+     * @since           0.4.0
+     */
+    public lock(type: LockType, tables?: string[], schema?: string): string {
+        if (schema && tables) {
+            tables.forEach((v, i) => {
+                tables[i] = schema + '.' + tables[i];
+            });
+        }
+        switch (type) {
+            case 'table_read':
+                return "LOCK TABLE " + tables.join() + " IN SHARE MODE";
+            case 'table_write':
+                return "LOCK TABLE " + tables.join() + " IN EXCLUSIVE MODE";
+            case 'row_read':
+                return "FOR SHARE";
+            case 'row_write':
+                return "FOR UPDATE";
+            default:
+                return '';
+        }
+    }
+
+    /**
+     * 获取新增返回主键字段sql语句
+     * @param idField 主键字段
+     */
+    public insertReturn(idField: string): string {
+        return 'RETURNING ' + idField;
     }
 }

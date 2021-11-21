@@ -4,10 +4,10 @@ import { Transaction } from "../../transaction";
 import { IsolationLevel } from "../../types";
 
 /**
- * postgres 事务类
+ * mariadb 事务类
  * @since 0.3.0
  */
-export class PostgresTransaction extends Transaction {
+class MariadbTransaction extends Transaction {
 
     /**
      * 设置当前事务
@@ -23,26 +23,28 @@ export class PostgresTransaction extends Transaction {
     }
 
     /**
-     * 事务开始
+     * 开始事务
      */
-    async begin() {
-        await this.conn.conn.query('begin');
+    public async begin() {
+        await this.conn.conn.beginTransaction();
         super.begin();
     }
 
     /**
      * 事务提交
      */
-    async commit() {
-        await this.conn.conn.query('commit');
+    public async commit() {
+        await this.conn.conn.commit();
         super.commit();
     }
 
     /**
      * 事务回滚
      */
-    async rollback() {
-        await this.conn.conn.query('rollback');
+    public async rollback() {
+        await this.conn.conn.rollback();
         super.rollback();
     }
 }
+
+export { MariadbTransaction }

@@ -2,11 +2,10 @@ import { EntityManager } from "./entitymanager";
 import { BaseEntity } from "./baseentity";
 import { SqlExecutor } from "./sqlexecutor";
 import { EntityFactory } from "./entityfactory";
-import { IEntityCfg, IEntity, EEntityState, EQueryType, IEntityRelation } from "./types";
+import { IEntityCfg, IEntity, EEntityState, EQueryType, IEntityRelation, LockMode } from "./types";
 import { ErrorFactory } from "./errorfactory";
 import { RelaenUtil } from "./relaenutil";
 import { EntityManagerFactory } from "./entitymanagerfactory";
-import { RelaenManager } from "./relaenmanager";
 import { Translator } from "./translator";
 import { TranslatorFactory } from "./translatorfactory";
 
@@ -20,9 +19,9 @@ class Query {
     entityManager: EntityManager;
 
     /**
-     * 参数值数组
+     * 参数值数组或对象
      */
-    paramArr: any[];
+    paramArr: any[] | object;
 
     /**
      * 执行sql
@@ -57,13 +56,12 @@ class Query {
     /**
      * 解释器
      */
-    private translator:Translator;
+    private translator: Translator;
+
     /**
      * 构造query对象
-     * @param rql               relean ql 
      * @param em                entity manager
      * @param entityClassName   对应的结果实体类名
-     * @param notTransate       不转换rql
      */
     constructor(em: EntityManager, entityClassName?: string) {
         if (entityClassName && !EntityFactory.getClass(entityClassName)) {
@@ -74,17 +72,19 @@ class Query {
         this.type = EQueryType.SELECT;
         this.paramArr = [];
         //初始化translator
-        this.translator = TranslatorFactory.get(entityClassName);
+        if (this.constructor.name === 'Query') {
+            this.translator = TranslatorFactory.get(entityClassName);
+        }
     }
 
     /**
      * 设置查询参数值
-     * @param paramName 
-     * @param value 
+     * @param index     占位符下标
+     * @param value     占位符值 
      */
     public setParameter(index: number, value: any) {
         //补全参数个数
-        if (this.paramArr.length <= index) {
+        if (Array.isArray(this.paramArr) && this.paramArr.length <= index) {
             for (let i = this.paramArr.length; i <= index; i++) {
                 this.paramArr.push(null);
             }
@@ -95,13 +95,13 @@ class Query {
 
     /**
      * 设置多个参数值，从下标0开始
-     * @param valueArr 值数组
+     * @param valueArr  值数组
      */
     public setParameters(valueArr: Array<any>) {
         valueArr.forEach((value, i) => {
             //对于entity，只获取其主键
             let v = value instanceof BaseEntity ? RelaenUtil.getIdValue(value) : value;
-            if (i >= this.paramArr.length) {
+            if (Array.isArray(this.paramArr) && i >= this.paramArr.length) {
                 this.paramArr.push(v);
             } else {
                 this.paramArr[i] = v;
@@ -114,7 +114,9 @@ class Query {
      * @param start     开始位置
      */
     public setStart(start: number) {
-        this.start = start;
+        if (start >= 0) {
+            this.start = start;
+        }
     }
 
     /**
@@ -122,7 +124,9 @@ class Query {
      * @param limit     记录数
      */
     public setLimit(limit: number) {
-        this.limit = limit;
+        if (limit > 0) {
+            this.limit = limit;
+        }
     }
 
     /**
@@ -136,7 +140,7 @@ class Query {
         let r;
         switch (this.type) {
             case EQueryType.SELECT:
-                r = await this.getResultList(-1, -1, notEntity);
+                r = await this.getResultList(null, 1, notEntity);
                 if (r && r.length > 0) {
                     //返回实体
                     if (!notEntity) {
@@ -169,13 +173,9 @@ class Query {
             return null;
         }
         this.preHandle();
-        if (start >= 0) {
-            this.start = start;
-        }
-        if (limit > 0) {
-            this.limit = limit;
-        }
-        
+        this.setStart(start);
+        this.setLimit(limit);
+
         let results: any[] = await SqlExecutor.exec(this.entityManager, this.execSql, this.paramArr, this.start, this.limit);
         if (!notEntity && Array.isArray(results)) {
             let retArr: any[] = [];
@@ -309,14 +309,13 @@ class Query {
         this.translator.handleFrom(tables);
         return this;
     }
-  
+
     /**
      * 添加where条件
      * @param params    参数对象{paramName1:paramValue1,paramName2:{value:paramValue2,rel:'>',before:'(',after:'and'}...}
      *                  参数值有两种方式，一种是直接在参数名后给值，一种是给对象，对象中包括:
      *                  value:值,rel:关系,before:字段前字符串(通常为"("),after:值后字符串(通常为"and","or",")")
      *                  关系包括 >,<,>=,<=,<>,is,like等
-     * @returns      数组，第一个where后的条件语句，第二个元素为值数组，如: [where 语句,[1,2]]
      * @since 0.2.0
      */
     where(params: object): Query {
@@ -326,7 +325,6 @@ class Query {
 
     /**
      * 添加排序对象
-     * @param className 
      * @param params    {paramName1:'desc',paramName2:'asc',...} paramName1:参数名,desc:降序 asc:升序
      * @since 0.2.0
      */
@@ -354,6 +352,41 @@ class Query {
     delete() {
         this.type = EQueryType.DELETE;
         this.translator.sqlType = this.type;
+        return this;
+    }
+
+    /**
+     * 添加分组条件
+     * @param params 属性或属性数组
+     * @since 0.4.0
+     */
+    groupBy(params: string | Array<string>) {
+        this.translator.handleGroup(params);
+        return this;
+    }
+
+    /**
+     * 添加where条件
+     * @param params    参数对象{paramName1:paramValue1,paramName2:{value:paramValue2,rel:'>',before:'(',after:'and'}...}
+     *                  参数值有两种方式，一种是直接在参数名后给值，一种是给对象，对象中包括:
+     *                  value:值,rel:关系,before:字段前字符串(通常为"("),after:值后字符串(通常为"and","or",")")
+     *                  关系包括 >,<,>=,<=,<>,is,like等
+     * @since 0.4.0
+     */
+    having(params: object) {
+        this.translator.handleHaving(params);
+        return this;
+    }
+
+    /**
+     * 设置查询锁模式
+     * @param lockMode  锁模式
+     * @since 0.4.0
+     */
+    setLock(lockMode: LockMode) {
+        if (lockMode) {
+            this.translator.lockMode = lockMode;
+        }
         return this;
     }
 }
