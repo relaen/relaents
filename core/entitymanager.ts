@@ -1,4 +1,4 @@
-import { IEntityCfg, EEntityState, IEntity, IEntityRelation, IEntityColumn } from "./types";
+import { EEntityState, IEntity, IEntityColumn, ELockType ,ESqliteTransactionType} from "./types";
 import { SqlExecutor } from "./sqlexecutor";
 import { EntityFactory } from "./entityfactory";
 import { Query } from "./query";
@@ -6,10 +6,13 @@ import { Connection } from "./connection";
 import { ErrorFactory } from "./errorfactory";
 import { NativeQuery } from "./nativequery";
 import { EntityManagerFactory } from "./entitymanagerfactory";
-import { RelaenUtil } from "./relaenutil";
 import { BaseEntity } from "./baseentity";
 import { TranslatorFactory } from "./translatorfactory";
 import { ConnectionManager } from "./connectionmanager";
+import { Transaction } from "./transaction";
+import { SqliteTransaction } from "./dialect/sqlite/sqlitetransaction";
+import { RelaenManager } from "./relaenmanager";
+import { EntityConfig } from "./entityconfig";
 
 /**
  * 实体管理器
@@ -25,6 +28,11 @@ class EntityManager {
     public connection: Connection;
 
     /**
+     * 是否开启缓存
+     */
+    public isCache: boolean;
+
+    /**
      * 查询结果集缓存
      *     key:sql语句和参数值组合成的字符串，value:查询结果集
      */
@@ -35,9 +43,10 @@ class EntityManager {
      * @param conn  连接对象
      * @param id    entity manager id
      */
-    constructor(conn: Connection, id?: number) {
+    constructor(conn: Connection, id?: number, isCache?: boolean) {
         this.id = id;
         this.connection = conn;
+        this.isCache = isCache;
         this.cache = new Map();
     }
 
@@ -46,6 +55,7 @@ class EntityManager {
      * 如果状态为new，则执行insert，同时改变为persist，如果为persist，则执行update
      * @param entity                实体
      * @param ignoreUndefinedValue  忽略undefined值，针对update时有效
+     * @param lockMode              乐观锁，针对update时有效
      * @returns                     保存后的实体
      */
     public async save(entity: IEntity, ignoreUndefinedValue?: boolean): Promise<IEntity> {
@@ -58,7 +68,7 @@ class EntityManager {
         //无主键或状态为new
         if (status === EEntityState.NEW) {
             //检查并生成主键
-            let idValue: any = RelaenUtil.getIdValue(entity);
+            let idValue: any = EntityFactory.getIdValue(entity);
             let sqlAndValue: any[];
             if (idValue) { //存在主键
                 //如果有主键，则查询是否存在对应实体
@@ -80,8 +90,8 @@ class EntityManager {
             //修改状态
             EntityManagerFactory.setEntityStatus(entity, EEntityState.PERSIST);
             //设置主键值
-            if (!RelaenUtil.getIdValue(entity)) {
-                RelaenUtil.setIdValue(entity, ConnectionManager.provider.getIdentityId(r));
+            if (!EntityFactory.getIdValue(entity)) {
+                EntityFactory.setIdValue(entity, ConnectionManager.provider.getIdentityId(r));
             }
         } else { //update
             //更新到数据库
@@ -101,8 +111,11 @@ class EntityManager {
      * @returns             被删除实体
      */
     public async delete(entity: any, className?: string): Promise<boolean> {
-        let translator = TranslatorFactory.get(entity.constructor.name);
-        let sqlAndValue = translator.toDelete(entity, className);
+        if (entity instanceof BaseEntity) {
+            className = entity.constructor.name;
+        }
+        let translator = TranslatorFactory.get(className);
+        let sqlAndValue = translator.toDelete(entity);
         if (sqlAndValue) {
             await SqlExecutor.exec(this, sqlAndValue[0], [sqlAndValue[1]]);
         }
@@ -111,20 +124,16 @@ class EntityManager {
 
     /**
      * 通过id查找实体
-     * @param entityClass   entity class 名
-     * @param id            entity id 值
-     * @returns             entity
+     * @param entityClassName   entity class 名
+     * @param id                entity id 值
+     * @returns                 entity
      */
     public async find(entityClassName: string, id: any): Promise<IEntity> {
-        let orm: IEntityCfg = EntityFactory.getClass(entityClassName);
-        if (!orm) {
-            throw ErrorFactory.getError("0020", [entityClassName]);
+        let eo: EntityConfig = EntityFactory.getEntityConfig(entityClassName);
+        if (!eo) {
+            throw ErrorFactory.getError("0010", [entityClassName]);
         }
-        let idName: string = RelaenUtil.getIdName(entityClassName);
-        if (!idName) {
-            throw ErrorFactory.getError("0103");
-        }
-        let sql = "select * from " + RelaenUtil.getTableName(orm) + " where " + orm.columns.get(idName).name + ' = ?';
+        let sql = "SELECT " + this.getSelectFields(eo, true) + " FROM " + eo.getTableName(true) + " WHERE " + eo.getIdName() + '=?';
         let query = this.createNativeQuery(sql, entityClassName);
         query.setParameter(0, id);
         return await query.getResult();
@@ -136,7 +145,8 @@ class EntityManager {
      * @param params            参数对象{propName1:propValue1,propName2:{value:propValue2,rel:'>',before:'(',after:')',logic:'OR'}...}
      *                          参数值有两种方式，一种是值，一种是值对象，值对象参考ICondValueObj接口说明
      * @param order             排序对象 {propName1:asc,propName2:desc,...}
-     * @since 0.1.3
+     * @returns                 实体
+     * @since 0.1.3 
      */
     public async findOne(entityClassName: string, params?: object, order?: object): Promise<any> {
         let lst = await this.findMany(entityClassName, params, 0, 1, order);
@@ -153,20 +163,49 @@ class EntityManager {
      * @param start             开始记录行
      * @param limit             获取记录数
      * @param order             排序对象，参考findOne
+     * @returns                 实体集
      * @since 0.1.3
      */
     public async findMany(entityClassName: string, params?: object, start?: number, limit?: number, order?: object): Promise<Array<any>> {
+        let orm: EntityConfig = EntityFactory.getEntityConfig(entityClassName);
+        if (!orm) {
+            throw ErrorFactory.getError("0010", [entityClassName]);
+        }
         let query: Query = this.createQuery(entityClassName);
-        return await query.select('*')
+        return await query.select(this.getSelectFields(orm))
             .where(params)
             .orderBy(order)
             .getResultList(start, limit);
     }
 
     /**
+     * 获取选择字段集
+     * @param orm       实体配置
+     * @param isField   默认返回属性名，true返回数据库字段字符串
+     * @returns         字段集
+     */
+    public getSelectFields(orm: EntityConfig, isField?: boolean): any {
+        let arr = [];
+        for (let [key, value] of orm.columns) {
+            //不要隐藏字段、外键
+            if (value.select !== false && !orm.hasRelation(key)) {
+                arr.push(isField ? value.name : key);
+            }
+        };
+        if (isField) {
+            if (arr.length === 0) {
+                return '*';
+            }
+            return arr.join(',');
+        }
+        return arr;
+    }
+
+    /**
      * 获取记录数
      * @param entityClassName   实体类名
      * @param params            参数对象，参考findOne
+     * @returns                 记录数
      */
     public async getCount(entityClassName: string, params?: object) {
         let query: Query = this.createQuery(entityClassName);
@@ -185,13 +224,13 @@ class EntityManager {
     public async deleteMany(entityClassName: string, params?: object): Promise<boolean> {
         return await this.createQuery(entityClassName).delete().where(params).getResult();
     }
+
     /**
      * 创建查询对象
-     * @param rql               relean ql
      * @param entityClassName   实体类名
      * @returns                 查询对象
      */
-    public createQuery(entityClassName?: string): Query {
+    public createQuery(entityClassName: string): Query {
         return new Query(this, entityClassName);
     }
 
@@ -221,7 +260,9 @@ class EntityManager {
      * @since           0.2.0
      */
     public addToCache(key: string, value: any) {
-        this.cache.set(key, value);
+        if (this.cache) {
+            this.cache.set(key, value);
+        }
     }
     /**
      * 从cache中获取
@@ -246,97 +287,100 @@ class EntityManager {
      */
     private async genKey(entity: IEntity) {
         //如果generator为table，则从指定主键生成表中获取主键，并赋予entity
-        let orm: IEntityCfg = EntityFactory.getClass(entity.constructor.name);
-        if (orm && orm.id) {
-            let value;
-            switch (orm.id.generator) {
-                case 'sequence':
-                    value = await ConnectionManager.provider.getSequenceValue(this,orm.id.seqName,orm.schema);
-                    //抛出异常
-                    if(!value){
-                        throw ErrorFactory.getError("0051");
-                    }
-                    break;
-                case 'table':  //TODO 0.3.1版本使用此功能
-                    let fn: string = orm.id.keyName;
-                    //需要加锁
-                    let query: NativeQuery = this.createNativeQuery("select " + orm.id.valueName + " from " + 
-                        RelaenUtil.getTableName(orm.id.table,orm.schema) + " where "+ orm.id.columnName +" ='" + fn + "'");
-                    let r = await query.getResult();
-                    if (r) {
-                        //转换为整数
-                        value = parseInt(r);
-                        query = this.createNativeQuery("update " + RelaenUtil.getTableName(orm.id.table,orm.schema) + 
-                            " set " + orm.id.valueName + "="  + (++value) + 
-                            " where "+ orm.id.columnName + " ='" + fn + "'");
-                        await query.getResult();
-                    }
-                    //释放锁
-                    //TODO 0.3.1
-                    break;
-                case 'uuid':
-                    value = require('uuid').v1();
-                    break;
-            }
-            //设置主键值
-            if (value) {
-                RelaenUtil.setIdValue(entity, value);
-            }
-        }
-    }
+        let eo: EntityConfig = EntityFactory.getEntityConfig(entity.constructor.name);
+        let idCfg = eo.getId();
+        let value;
+        switch (idCfg.generator) {
+            case 'sequence':
+                value = await ConnectionManager.provider.getSequenceValue(this, idCfg.seqName, eo.schema);
+                //抛出异常
+                if (!value) {
+                    throw ErrorFactory.getError("0051", [(eo.schema || '') + idCfg.seqName]);
+                }
+                break;
+            case 'table':
+                //@since 0.4.0
+                let fn: string = idCfg.keyName;
+                let tx: Transaction = this.connection.createTransaction();
+                // sqlite 使用begin immediate替代begin开启事务，其它数据库开启事务
+                if (RelaenManager.dialect === 'sqlite') {
+                    (<SqliteTransaction>tx).setType(ESqliteTransactionType.IMMEDIATE);
+                }
+                await tx.begin();
 
-    /**
-     * 从对象生成实体
-     * @param obj   对象
-     * @returns     实体对象
-     */
-    private genEntityFromObject(obj: any): IEntity {
-        if (!obj.__entityClassName) {
-            return null;
+                // 加表锁，需要单独执行语句
+                let locksql = ConnectionManager.provider.lock(ELockType.TABLEWRITE, [eo.table], eo.schema);
+                if (locksql) {
+                    await this.createNativeQuery(locksql).getResult();
+                }
+
+                // 查询主键值
+                let query: NativeQuery = this.createNativeQuery("SELECT " + idCfg.valueName + " FROM " +
+                    eo.getTableName(true) + " WHERE " + idCfg.columnName + " ='" + fn + "'");
+                let r = await query.getResult();
+                if (r) {
+                    //转换为整数
+                    value = parseInt(r);
+                    query = this.createNativeQuery("UPDATE " + eo.getTableName(true) +
+                        " SET " + idCfg.valueName + "=" + (++value) +
+                        " WHERE " + idCfg.columnName + " ='" + fn + "'");
+                    await query.getResult();
+                }
+
+                //处理不是commit/rollback的释放锁
+                let endLock = ConnectionManager.provider.unlock(ELockType.TABLEWRITE);
+                if (endLock) {
+                    await this.createNativeQuery(endLock).getResult();
+                }
+                //释放锁
+                await tx.commit();
+                // 没有查询到主键抛错
+                if (!value) {
+                    throw ErrorFactory.getError('0401', [entity.constructor.name]);
+                }
+                break;
+            case 'uuid':
+                value = require('uuid').v1();
+                break;
         }
-        let ecfg: IEntityCfg = EntityFactory.getClass(obj.__entityClassName);
-        if (!ecfg) {
-            throw ErrorFactory.getError("0020", [obj.__entityClassName]);
+        //设置主键值
+        if (value) {
+            EntityFactory.setIdValue(entity, value);
         }
-        let en: IEntity = new ecfg.entity;
-        for (let col of ecfg.columns) {
-            //字段属性名
-            let fn = col[0];
-            //字段对象
-            let fo = col[1];
-            if (!fo.refName) { //非外键
-                en[fn] = obj[fn];
-            } else if (obj[fn] && ecfg.relations.has(fn)) { //外键
-                let rel: IEntityRelation = ecfg.relations.get(fn);
-                en[fn] = this.find(rel.entity, obj[fn]);
-            }
-        }
+
     }
 
     /**
      * 预处理实体对象
      * @param entity                实体对象
      * @param ignoreUndefinedValue  忽略undefined值
+     * @throws                      处理错误
+     * @returns                     成功true
      */
     private preHandleEntity(entity: IEntity, ignoreUndefinedValue?: boolean): boolean {
         let className: string = entity.constructor.name;
-        let orm: IEntityCfg = EntityFactory.getClass(className);
-        if (!orm) {
+        let eo: EntityConfig = EntityFactory.getEntityConfig(className);
+        if (!eo) {
             throw ErrorFactory.getError("0010", [className]);
         }
-        for (let key of orm.columns) {
+        for (let key of eo.columns) {
             let fo: IEntityColumn = key[1];
             let v: any;
             if (fo.refName) { //外键，只取主键
-                if (entity[key[0]] instanceof BaseEntity) {
-                    v = RelaenUtil.getIdValue(entity[key[0]]);
+                
+                if(typeof entity[key[0]] === 'object'){
+                    let eo1 = EntityFactory.getEntityConfig(eo.getRelation(key[0]).entity);
+                    v = entity[key[0]][eo1.getId().name];
                 }
+                // if (entity[key[0]] instanceof BaseEntity) {
+                //     v = EntityFactory.getIdValue(entity[key[0]]);
+                // }
             } else {
                 v = entity[key[0]];
             }
             if ((v === null || v === undefined)) {
                 if (!ignoreUndefinedValue && !fo.nullable) {//null 判断
-                    if (key[0] !== orm.id.name) {//如果与主键不同且不能为空，则抛出异常 
+                    if (key[0] !== eo.id.name) {//如果与主键不同且不能为空，则抛出异常 
                         throw ErrorFactory.getError('0021', [key[0]]);
                     }
                 }

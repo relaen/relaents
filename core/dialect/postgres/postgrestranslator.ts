@@ -1,7 +1,5 @@
-import { EntityFactory } from "../../entityfactory";
-import { ErrorFactory } from "../../errorfactory";
 import { Translator } from "../../translator";
-import { EQueryType, IEntityCfg } from "../../types";
+import { EQueryType} from "../../types";
 
 /**
  * postgres 翻译器
@@ -20,17 +18,5 @@ export class PostgresTranslator extends Translator{
             case EQueryType.DELETE:
                 return this.getDeleteSql(true);
         }
-    }
-
-    /**
-     * entity转insert sql
-     * @param entity 
-     */
-     public entityToInsert(entity: any): any[] {
-        let orm: IEntityCfg = EntityFactory.getClass(entity.constructor.name);
-        if (!orm) {
-            throw ErrorFactory.getError("0010", [entity.constructor.name]);
-        }
-        return super.entityToInsert(entity,'RETURNING ' + orm.columns.get(orm.id.name).name);
     }
 }

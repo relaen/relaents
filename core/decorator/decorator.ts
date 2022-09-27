@@ -1,4 +1,4 @@
-import { IEntityPKey, IEntityColumn, IEntityRelation, IEntityRefColumn, ERelationType } from "../types";
+import { IEntityPKey, IEntityColumn, IEntityRelation, IEntityRefColumn, ERelationType, IJoinTable } from "../types";
 import { EntityFactory } from "../entityfactory";
 
 /**
@@ -12,8 +12,8 @@ import { EntityFactory } from "../entityfactory";
  * @param schema    数据库名
  */
 function Entity(tblName:string,schema?:string){
-    return (target) =>{
-        EntityFactory.addClass(target,tblName,schema);
+    return (target) => {
+        EntityFactory.addEntityConfig(target,tblName,schema);
     }
 }
 
@@ -23,7 +23,7 @@ function Entity(tblName:string,schema?:string){
  * @param cfg       配置项
  */
 function Id(cfg?:IEntityPKey){
-    return (target:any,propertyName:string)=>{
+    return (target: any, propertyName: string) => {
         EntityFactory.addPKey(target.constructor.name,propertyName,cfg);
     }
 }
@@ -39,6 +39,32 @@ function Column(cfg:IEntityColumn){
             throw "@Column配置参数错误";
         }
         EntityFactory.addColumn(target.constructor.name,propertyName,cfg);
+    }
+}
+
+/**
+ * @exclude
+ * 版本号装饰器，乐观锁时有效，装饰属性
+ */
+function Version(){
+    return (target:any,propertyName:string)=>{
+        EntityFactory.addVersion(target.constructor.name,propertyName);
+    }
+}
+
+/**
+ * @exclude
+ * 字段装饰器，装饰属性
+ * @param cfg 配置项
+ */
+function JoinTable(cfg:IJoinTable){
+    return (target:any,propertyName:string)=>{
+        let cfg1:IEntityColumn = {
+            joinColumn:cfg.columnName,
+            joinTable:cfg.table,
+            refName:cfg.refName
+        }
+        EntityFactory.addColumn(target.constructor.name,propertyName,cfg1);
     }
 }
 
@@ -105,4 +131,4 @@ function ManyToMany(cfg:IEntityRelation){
     }
 }
 
-export {Entity,Id,Column,JoinColumn,OneToMany,OneToOne,ManyToOne,ManyToMany}
+export {Entity,Id,Column,Version,JoinTable,JoinColumn,OneToMany,OneToOne,ManyToOne,ManyToMany}

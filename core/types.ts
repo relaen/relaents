@@ -40,18 +40,15 @@ interface IConnectionCfg {
      * 数据库
      */
     database: string;
-
     /**
-     * 连接超时时间
+     * 连接超时时间（ms）
      * @since 0.3.0
      */
-    timeout:number;
-
+    connectTimeout: number;
     /**
-     * 连接后idle超时时间（ms）
+     * 空闲超时时间，开启连接池使用（ms）
      */
     idleTimeout: number;
-
     /**
      * 连接池配置
      */
@@ -64,21 +61,31 @@ interface IConnectionCfg {
      * 是否调试模式
      */
     debug: boolean;
-
     /**
      * 实体配置数组 
      */
     entities: Array<string>
+    /**
+     * 数据库原生配置，详细配置参照各数据库文档
+     * @since 0.4.0
+     */
+    options: any;
+    /**
+     * 是否开启连接池，数据库原生配置使用
+     * @since 0.4.0
+     */
+    usePool: boolean;
+    /**
+     * 是否允许全表操作
+     * @since 0.4.0
+     */
+    fullTableOperation: boolean;
 }
 
 /**
  * 实体接口
  */
 interface IEntity {
-    /**
-     * 状态
-     */
-    __status: EEntityState;
     /**
      * 保存方法
      */
@@ -118,12 +125,12 @@ interface IEntityCfg {
     /**
      * 字段集合，键为对象属性名(非表字段名)
      */
-    columns: Map<string, IEntityColumn>;
+    columns?: Map<string, IEntityColumn>;
 
     /**
      * 关系集合，键为对象属性名(非表字段名)
      */
-    relations: Map<string, IEntityRelation>;
+    relations?: Map<string, IEntityRelation>;
 }
 
 /**
@@ -156,9 +163,32 @@ interface IEntityColumn {
     length?: number;
 
     /**
-     * 是否自增,mssql
+     * 是否自增，mssql
      */
     identity?: boolean;
+
+
+    /**
+     * 关联表，ManyToMany有效
+     */
+    joinTable?: string;
+
+    /**
+     * 在关联表中的字段名，ManyToMany中有效
+     */
+    joinColumn?: string;
+
+    /**
+     * 乐观锁，数据版本Version
+     * @since 0.4.0
+     */
+    version?: boolean;
+
+    /**
+     * 实体类查询，不显示字段
+     * @since 0.4.0
+     */
+    select?: boolean;
 }
 
 /**
@@ -182,6 +212,26 @@ interface IEntityRefColumn {
 }
 
 /**
+ * 中间表，ManyToMany时有效
+ */
+interface IJoinTable {
+    /**
+     * 中间表名
+     */
+    table: string;
+
+    /**
+     * 在table中的主键字段名，默认为主键字段名
+     */
+    columnName?: string;
+
+    /**
+     * 外键字段名，默认为对应实体主键字段名
+     */
+    refName?: string;
+}
+
+/**
  * 实体主键配置
  */
 interface IEntityPKey {
@@ -193,12 +243,12 @@ interface IEntityPKey {
     /**
      * 主键生成策略 identity,sequence,table,uuid
      */
-    generator?: string;
+    generator?: "identity" | "sequence" | "table" | "uuid";
 
     /**
      * 主键来源表，数据库表，专门用于主键生成
      */
-    table?: string;
+    // table?: string;
 
     /**
      * 主键键字段名，如果generator为'table'，则该项不能为空
@@ -208,7 +258,7 @@ interface IEntityPKey {
     /**
      * 主键值字段名，如果generator为'table'，则该项不能为空
      */
-     valueName?: string;
+    valueName?: string;
 
     /**
      * 主键对应记录项名，如果generator为'table'，则该项不能为空
@@ -283,28 +333,6 @@ interface ICondValueObj {
 }
 
 /**
- * 外键约束
- */
-enum EFkConstraint {
-    /**
-     * 无操作
-     */
-    NONE = 'none',
-    /**
-     * 限制修改和删除
-     */
-    RESTRICT = 'restrict',
-    /**
-     * 级联操作
-     */
-    CASCADE = 'cascade',
-    /**
-     * 外键置空
-     */
-    SETNULL = 'set null'
-}
-
-/**
  * 关系类型
  */
 enum ERelationType {
@@ -349,6 +377,7 @@ enum EQueryType {
      * select
      */
     SELECT = 0,
+
     /**
      * insert
      */
@@ -365,4 +394,42 @@ enum EQueryType {
     DELETE = 3
 
 }
-export { IConnectionCfg, IConnectionPool, IEntity, IEntityCfg, IEntityColumn, IEntityRefColumn, IEntityPKey, IEntityRelation, ICondValueObj, EFkConstraint, ERelationType, EEntityState, EQueryType }
+
+/**
+ * 锁机制类型
+ */
+enum ELockType {
+    TABLEREAD = 'table_read',
+    TABLEWRITE = 'table_write',
+    ROWREAD = 'row_read',
+    ROWWRITE = 'row_write'
+};
+
+/**
+ * 锁类型
+ */
+enum ELockMode {
+    OPTIMISTIC = 'optimistic',
+    PESSIMISTIC_READ = 'pessimistic_read',
+    PESSIMISTIC_WRITE = 'pessimistic',
+}
+
+/**
+ * 事务隔离级别
+ */
+enum EIsolationLevel {
+    SERIALIZABLE = 'SERIALIZABLE',
+    READUNCOMMITTED = 'READ UNCOMMITTED',
+    READCOMMITTED = 'READ COMMITTED',
+    REPEATABLEREAD = 'REPEATABLE READ'
+};
+
+/**
+ * Sqlite事务类型
+ */
+enum ESqliteTransactionType {
+    DEFERRED = 'deferred',
+    IMMEDIATE = 'immediate',
+    EXCLUSIVE = 'exclusive'
+};
+export { IConnectionCfg, IConnectionPool, IEntity, IEntityCfg, IEntityColumn, IEntityRefColumn, IJoinTable, IEntityPKey, IEntityRelation, ICondValueObj, ERelationType, EEntityState, EQueryType, ELockType, ELockMode, EIsolationLevel, ESqliteTransactionType }

@@ -77,6 +77,10 @@ http://www.noomi.cn/relaen/api.html
 1. 增加oracle、mssql、postgres数据库支持；
 2. 增加entity scheme配置项。
 
+#### 0.3.1
+1. 修改EntityFactory.getEntityConfig,EntityFactory.getAllEntityConfig方法为public
+
+
 ## 配置文件
 relaen依赖配置文件进行初始化，配置内容如下：
 配置项|说明|类型|必填|可选值|默认值|备注

@@ -1,6 +1,6 @@
 import { Connection } from "./connection";
 import { EntityManager } from "./entitymanager";
-import { IConnectionCfg } from "./types";
+import { IConnectionCfg, ELockType } from "./types";
 
 /**
  * 数据库驱动器接口
@@ -23,13 +23,14 @@ export abstract class BaseProvider {
      */
     protected dbMdl: any;
 
-    constructor(cfg:IConnectionCfg){
-        
+    constructor(cfg: IConnectionCfg) {
+
     }
+
     /**
      * 获取连接
      */
-    public async getConnection():Promise<any>{
+    public async getConnection(): Promise<any> {
         return null;
     }
 
@@ -37,17 +38,22 @@ export abstract class BaseProvider {
      * 关闭连接
      * @param connection    数据库连接对象
      */
-    public async closeConnection(connection: Connection){
+    public async closeConnection(connection: Connection): Promise<void> {
+
+    }
+
+    public async endPool() {
 
     }
 
     /**
-     * 执行postgres sql语句
+     * 执行sql语句
      * @param connection    数据库连接
      * @param sql           sql语句
      * @param params        参数
+     * @returns             结果(集)
      */
-    public async exec(connection: Connection, sql: string, params?: any[]):Promise<any>{
+    public async exec(connection: Connection, sql: string, params?: any[] | object): Promise<any> {
         return null;
     }
 
@@ -58,7 +64,7 @@ export abstract class BaseProvider {
      * @param limit     记录数
      * @returns         处理后的sql
      */
-    public handleStartAndLimit(sql: string, start?: number, limit?: number):string{
+    public handleStartAndLimit(sql: string, start?: number, limit?: number): string {
         return null;
     }
 
@@ -69,7 +75,7 @@ export abstract class BaseProvider {
      * @param schema    schema
      * @returns         sequence 值
      */
-    getSequenceValue(em:EntityManager,seqName:string,schema?:string):Promise<number>{
+    public getSequenceValue(em: EntityManager, seqName: string, schema?: string): Promise<number> {
         return null;
     }
 
@@ -78,7 +84,36 @@ export abstract class BaseProvider {
      * @param result    sql执行结果
      * @returns         主键
      */
-    public getIdentityId(result:any): number{
+    public getIdentityId(result: any): number {
+        return null;
+    }
+
+    /**
+     * 获取加锁sql语句
+     * @param type      锁类型    
+     * @param tables    表名，表锁时使用
+     * @param schema    模式名，表锁时使用
+     * @returns         加锁sql语句
+     */
+    public lock(type: ELockType, tables?: string[], schema?: string): string {
+        return null;
+    }
+
+    /**
+     * 获取释放锁sql语句
+     * @param type      锁类型
+     * @returns         释放锁sql语句
+     */
+    public unlock(type: ELockType): string {
+        return null;
+    }
+
+    /**
+     * 获取新增返回主键字段sql语句
+     * @param idField   主键字段
+     * @returns         查询主键sql语句
+     */
+    public insertReturn(idField: string): string {
         return null;
     }
 }
