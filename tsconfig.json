@@ -11,8 +11,9 @@
     "noUnusedParameters":false
   },
   "include":[
-    "**/*.ts"
+    "./core/**/*.ts","./index.ts"
   ],
   "exclude": [
+    
   ]
 }

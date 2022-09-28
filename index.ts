@@ -3,6 +3,7 @@ export * from './core/baseentity';
 export * from './core/baseprovider';
 export * from './core/connection';
 export * from './core/connectionmanager';
+export * from './core/entityconfig';
 export * from './core/entityfactory';
 export * from './core/entitymanager';
 export * from './core/entitymanagerfactory';
