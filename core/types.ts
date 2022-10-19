@@ -229,7 +229,7 @@ interface IJoinTable {
      * 外键字段名，默认为对应实体主键字段名
      */
     refName?: string;
-}
+ }
 
 /**
  * 实体主键配置

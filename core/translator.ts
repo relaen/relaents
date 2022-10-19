@@ -108,6 +108,10 @@ export abstract class Translator {
         let idField: string = this.mainEntityCfg.columns.get(this.mainEntityCfg.id.name).name;
 
         for (let [key, cfg] of this.mainEntityCfg.columns) {
+            //manytomany不处理
+            if(cfg.joinTable){
+                continue;
+            }
             let v: any;
             if (cfg.refName) { //外键，只取主键
                 let refEn = entity[key];
@@ -162,6 +166,9 @@ export abstract class Translator {
         let versionValue: number;
 
         for (let [key, cfg] of this.mainEntityCfg.columns) {
+            if(cfg.joinTable){
+                continue;
+            }
             //如果绑定字段名不存在，则用属性名
             let fn = cfg.name ? cfg.name : key;
             //字段值

@@ -79,7 +79,7 @@ http://www.noomi.cn/relaen/api.html
 
 #### 0.3.1
 1. 修改EntityFactory.getEntityConfig,EntityFactory.getAllEntityConfig方法为public
-
+2. 修改ManyToMany属性为null时保存错误bug
 
 ## 配置文件
 relaen依赖配置文件进行初始化，配置内容如下：

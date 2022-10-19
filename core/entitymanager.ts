@@ -367,14 +367,10 @@ class EntityManager {
             let fo: IEntityColumn = key[1];
             let v: any;
             if (fo.refName) { //外键，只取主键
-                
                 if(typeof entity[key[0]] === 'object'){
                     let eo1 = EntityFactory.getEntityConfig(eo.getRelation(key[0]).entity);
                     v = entity[key[0]][eo1.getId().name];
                 }
-                // if (entity[key[0]] instanceof BaseEntity) {
-                //     v = EntityFactory.getIdValue(entity[key[0]]);
-                // }
             } else {
                 v = entity[key[0]];
             }
