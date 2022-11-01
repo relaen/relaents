@@ -1,6 +1,6 @@
 # Relaen
 
-relaen是 [noomi](http://www.noomi.cn/webroute/home) 团队打造的一套node环境下基于typescript的 [ORM](https://baike.baidu.com/item/对象关系映射/311152?fromtitle=ORM&fromid=3583252&fr=aladdin) 框架。支持 Active Record 和 Data Mapper模式，支持实体类操作、创建查询构造器、原生sql、一级缓存和日志文件等。relaen 参考了很多其他优秀的ORM实现，实现更加清晰便捷的开发方式。并且提供实体自动生成工具 relaen-cli，将数据库表快速自动生成对应开发实体模型。
+relaen是 [noomi](http://www.noomi.cn/webroute/home) 团队打造的一套node环境下基于typescript的 [ORM](https://baike.baidu.com/item/对象关系映射/311152?fromtitle=ORM&fromid=3583252&fr=aladdin) 框架。支持 Active Record 和 Data Mapper模式，支持实体类操作、创建查询构造器、原生sql、一级缓存和日志文件等。relaen 参考了很多其他优秀的ORM实现，实现更加清晰便捷的开发方式。并且提供实体自动生成工具 relaen-cli，将数据库表快速自动生成对应开发实体模型。 
 
 ## 使用限制
 
