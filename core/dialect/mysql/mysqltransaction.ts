@@ -5,18 +5,16 @@ import { EIsolationLevel } from "../../types";
 
 /**
  * mysql 事务类
- * @since 0.3.0
  */
 class MysqlTransaction extends Transaction {
 
     /**
      * 设置当前事务
-     * @param isolation 事务隔离级
-     * @since           0.4.0
+     * @param isolation - 事务隔离级
      */
     public async setIsolationLevel(isolationLevel: EIsolationLevel) {
         if (isolationLevel) {
-            let sql = "SET TRANSACTION ISOLATION LEVEL " + isolationLevel;
+            const sql = "SET TRANSACTION ISOLATION LEVEL " + isolationLevel;
             await ConnectionManager.provider.exec(this.conn, sql);
             Logger.log(sql);
         }

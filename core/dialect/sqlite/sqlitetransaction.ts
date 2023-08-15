@@ -3,7 +3,6 @@ import { ESqliteTransactionType } from "../../types";
 
 /**
  * Sqlite 事务类
- * @since 0.4.0
  */
 class SqliteTransaction extends Transaction {
 
@@ -12,7 +11,7 @@ class SqliteTransaction extends Transaction {
 
     /**
      * 设置sqlite事务类型（仅sqlite事务使用）
-     * @param type  事务类型
+     * @param type -  事务类型
      */
     public setType(type: ESqliteTransactionType) {
         if (type) {
@@ -22,11 +21,11 @@ class SqliteTransaction extends Transaction {
 
     /**
      * 开始事务
-     * @param sqliteTransaction     事务类型
+     * @param sqliteTransaction -     事务类型
      */
     public async begin() {
         await new Promise((resolve, reject) => {
-            let sql = this.type ? 'begin ' + this.type : 'begin';
+            const sql = this.type ? 'begin ' + this.type : 'begin';
             this.conn.conn.run(sql, (err) => {
                 if (err) {
                     return reject(err);

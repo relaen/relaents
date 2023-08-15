@@ -1,10 +1,9 @@
-import { IConnectionCfg } from "../../types";
+import { ConnectionOption } from "../../types";
 
 /**
  * Sqlite ConnectionCfg
- * @since 0.4.0
  */
-export interface ISqliteConnectionCfg extends IConnectionCfg{
+export interface SqliteConnectionOption extends ConnectionOption{
     /**
      * SQLITE_BUSY 重复执行时间
      */

@@ -2,19 +2,18 @@ import { Connection } from "../../connection";
 import { BaseProvider } from "../../baseprovider";
 import { EntityManager } from "../../entitymanager";
 import { NativeQuery } from "../../nativequery";
-import { IPostgresConnectionCfg } from "./postgresoptions";
 import { ELockType } from "../../types";
+import { PostgresConnectionOption } from "./postgresoptions";
 
 /**
  * postgres provider
- * @since 0.3.0
  */
 export class PostgresProvider extends BaseProvider {
     /**
      * 构造器
-     * @param cfg   连接配置
+     * @param cfg -   连接配置
      */
-    constructor(cfg: IPostgresConnectionCfg) {
+    constructor(cfg: PostgresConnectionOption) {
         super(cfg);
         this.dbMdl = require('pg');
         this.options = cfg.options ? cfg.options : {
@@ -23,7 +22,7 @@ export class PostgresProvider extends BaseProvider {
             host: cfg.host,
             port: cfg.port,
             database: cfg.database,
-            // ssl: cfg.ssl,
+            ssl: cfg.ssl,
             connectionTimeoutMillis: cfg.connectTimeout,
         };
 
@@ -45,14 +44,14 @@ export class PostgresProvider extends BaseProvider {
         if (this.pool) {
             return await this.pool.connect();
         }
-        let conn = new this.dbMdl.Client(this.options);
+        const conn = new this.dbMdl.Client(this.options);
         await conn.connect();
         return conn;
     }
 
     /**
      * 关闭postgres连接
-     * @param connection    数据库连接对象
+     * @param connection -    数据库连接对象
      */
     public async closeConnection(connection: Connection) {
         if (this.pool) {
@@ -65,23 +64,22 @@ export class PostgresProvider extends BaseProvider {
 
     /**
      * 执行sql语句
-     * @param connection    db connection
-     * @param sql           待执行sql
-     * @param params        参数数组
+     * @param connection -    db connection
+     * @param sql -           待执行sql
+     * @param params -        参数数组
      * @returns             结果(集)
      */
-    public async exec(connection: Connection, sql: string, params?: any[]): Promise<any> {
-        let r = await connection.conn.query(sql, params);
+    public async exec(connection: Connection, sql: string, params?: unknown[]): Promise<unknown> {
+        const r = await connection.conn.query(sql, params);
         return r.rows ? r.rows : r;
     }
 
     /**
      * 处理记录起始记录索引和记录数
-     * @param sql       sql
-     * @param start     开始索引
-     * @param limit     记录数
+     * @param sql -       sql
+     * @param start -     开始索引
+     * @param limit -     记录数
      * @returns         处理后的sql
-     * @since           0.2.0
      */
     public handleStartAndLimit(sql: string, start?: number, limit?: number): string {
         if (limit && start) {
@@ -98,30 +96,30 @@ export class PostgresProvider extends BaseProvider {
 
     /**
      * 获取实体sequence，针对主键生成策略为sequence时有效
-     * @param em        entity manager
-     * @param seqName   sequence name
-     * @param schema    schema
+     * @param em -        entity manager
+     * @param seqName -   sequence name
+     * @param schema -    schema
      * @returns         sequence 值
      */
     public async getSequenceValue(em: EntityManager, seqName: string, schema?: string): Promise<number> {
         // 需要指定sequence所属schema
-        let query: NativeQuery = em.createNativeQuery(
+        const query: NativeQuery = em.createNativeQuery(
             "select nextval('" + (schema ? schema + "." + seqName : seqName) + "')"
         );
-        let r = await query.getResult();
+        const r = await query.getResult();
         if (r) {
             //转换为整数
-            return parseInt(r);
+            return parseInt(<string>r);
         }
         return 0;
     }
 
     /**
      * 从sql执行结果获取identityid，仅对主键生成策略是identity的有效
-     * @param result    sql执行结果
+     * @param result -  sql执行结果
      * @returns         主键
      */
-    public getIdentityId(result: any): number {
+    public getIdentityId(result: unknown[]): number {
         if (!result || result.length > 1) {
             return;
         }
@@ -130,11 +128,10 @@ export class PostgresProvider extends BaseProvider {
 
     /**
      * 获取加锁sql语句
-     * @param type      锁类型    
-     * @param tables    表名，表锁时使用
-     * @param schema    模式名，表锁时使用
-     * @retruns         加锁sql语句
-     * @since           0.4.0
+     * @param type -    锁类型    
+     * @param tables -  表名，表锁时使用
+     * @param schema -  模式名，表锁时使用
+     * @returns         加锁sql语句
      */
     public lock(type: ELockType, tables?: string[], schema?: string): string {
         if (schema && tables) {
@@ -158,7 +155,7 @@ export class PostgresProvider extends BaseProvider {
 
     /**
      * 获取新增返回主键字段sql语句
-     * @param idField 主键字段
+     * @param idField - 主键字段
      */
     public insertReturn(idField: string): string {
         return 'RETURNING ' + idField;

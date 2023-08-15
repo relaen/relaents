@@ -1,10 +1,9 @@
-import { IConnectionCfg } from "../../types";
+import { ConnectionOption } from "../../types";
 
 /**
  * mssql ConnectionCfg
- * @since 0.4.0
  */
-export interface IMssqlConnectionCfg extends IConnectionCfg {
+export interface IMssqlConnectionCfg extends ConnectionOption {
     /**
      * 请求超时时间，毫秒为单位 (默认: 15000)。
      */

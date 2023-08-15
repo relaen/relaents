@@ -4,7 +4,6 @@ import { Transaction } from "./transaction";
 
 /**
  * 事务管理器
- * @since 0.3.0
  */
 export class TransactionManager{
     /**
@@ -15,7 +14,7 @@ export class TransactionManager{
 
     /**
      * 添加事务
-     * @param tx     transaction实例
+     * @param tx -     transaction实例
      */
     public static add(tx:Transaction){
         this.transactions.set(tx.threadId,tx);
@@ -25,16 +24,16 @@ export class TransactionManager{
 
     /**
      * 获取事务
-     * @param threadId  thread id，默认为当前thread id
-     * @returns         transaction实例 或 undefined
+     * @param threadId -    thread id，默认为当前thread id
+     * @returns             transaction实例 或 undefined
      */
-    public static get(threadId?:number):any{
+    public static get(threadId?:number):Transaction{
         return this.transactions.get(threadId || RelaenThreadLocal.getThreadId());
     }
 
     /**
      * 删除事务
-     * @param threadId  thread id，默认为当前thread id
+     * @param threadId -  thread id，默认为当前thread id
      */
     public static remove(threadId?:number){
         threadId ||= RelaenThreadLocal.getThreadId();

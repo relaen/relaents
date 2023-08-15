@@ -1,4 +1,4 @@
-import { IEntityPKey, IEntityColumn, IEntityRelation, IEntityRefColumn, ERelationType, IJoinTable } from "../types";
+import { EntityPKey, EntityColumnOption, EntityRelation, EntityRefColumn, ERelationType, JoinTableOption } from "../types";
 import { EntityFactory } from "../entityfactory";
 
 /**
@@ -6,10 +6,10 @@ import { EntityFactory } from "../entityfactory";
  */
 
 /**
- * @exclude
+ 
  * Entity装饰器，装饰实体(表)，装饰类
- * @param tblName   表名
- * @param schema    数据库名
+ * @param tblName -   表名
+ * @param schema -    数据库名
  */
 function Entity(tblName:string,schema?:string){
     return (target) => {
@@ -18,23 +18,23 @@ function Entity(tblName:string,schema?:string){
 }
 
 /**
- * @exclude
+ 
  * 主键装饰器，装饰属性
- * @param cfg       配置项
+ * @param cfg -       配置项
  */
-function Id(cfg?:IEntityPKey){
-    return (target: any, propertyName: string) => {
+function Id(cfg?:EntityPKey){
+    return (target:unknown, propertyName: string) => {
         EntityFactory.addPKey(target.constructor.name,propertyName,cfg);
     }
 }
 
 /**
- * @exclude
+ 
  * 字段装饰器，装饰属性
- * @param cfg 配置项
+ * @param cfg - 配置项
  */
-function Column(cfg:IEntityColumn){
-    return (target:any,propertyName:string)=>{
+function Column(cfg:EntityColumnOption){
+    return (target:unknown,propertyName:string)=>{
         if(!cfg || !cfg.type){
             throw "@Column配置参数错误";
         }
@@ -43,23 +43,23 @@ function Column(cfg:IEntityColumn){
 }
 
 /**
- * @exclude
+ 
  * 版本号装饰器，乐观锁时有效，装饰属性
  */
 function Version(){
-    return (target:any,propertyName:string)=>{
+    return (target:unknown,propertyName:string)=>{
         EntityFactory.addVersion(target.constructor.name,propertyName);
     }
 }
 
 /**
- * @exclude
+ 
  * 字段装饰器，装饰属性
- * @param cfg 配置项
+ * @param cfg - 配置项
  */
-function JoinTable(cfg:IJoinTable){
-    return (target:any,propertyName:string)=>{
-        let cfg1:IEntityColumn = {
+function JoinTable(cfg:JoinTableOption){
+    return (target:unknown,propertyName:string)=>{
+        const cfg1:EntityColumnOption = {
             joinColumn:cfg.columnName,
             joinTable:cfg.table,
             refName:cfg.refName
@@ -69,12 +69,12 @@ function JoinTable(cfg:IJoinTable){
 }
 
 /**
- * @exclude
+ 
  * 字段装饰器，装饰属性
- * @param cfg 配置项
+ * @param cfg - 配置项
  */
-function JoinColumn(cfg:IEntityRefColumn){
-    return (target:any,propertyName:string)=>{
+function JoinColumn(cfg:EntityRefColumn){
+    return (target:unknown,propertyName:string)=>{
         //引用外键字段名默认与字段名一致
         if(!cfg.refName){
             cfg.refName = cfg.name;
@@ -84,48 +84,46 @@ function JoinColumn(cfg:IEntityRefColumn){
 }
 
 /**
- * @exclude
+ 
  * 一对多关系，装饰属性
- * @param cfg   实体关系配置
+ * @param cfg -   实体关系配置
  */
-function OneToMany(cfg:IEntityRelation){
-    return (target:any,propertyName:string)=>{
+function OneToMany(cfg:EntityRelation){
+    return (target:unknown,propertyName:string)=>{
         cfg.type = ERelationType.OneToMany;
         EntityFactory.addRelation(target.constructor.name,propertyName,cfg);
     }
 }
 
 /**
- * @exclude
+ 
  * 一对一关系，装饰属性
- * @param cfg   实体关系配置
+ * @param cfg -   实体关系配置
  */
-function OneToOne(cfg:IEntityRelation){
-    return (target:any,propertyName:string)=>{
+function OneToOne(cfg:EntityRelation){
+    return (target:unknown,propertyName:string)=>{
         cfg.type = ERelationType.OneToOne;
         EntityFactory.addRelation(target.constructor.name,propertyName,cfg);
     }
 }
 
 /**
- * @exclude
  * 多对一关系，装饰属性
- * @param cfg   实体关系配置
+ * @param cfg -   实体关系配置
  */
-function ManyToOne(cfg:IEntityRelation){
-    return (target:any,propertyName:string)=>{
+function ManyToOne(cfg:EntityRelation){
+    return (target:unknown,propertyName:string)=>{
         cfg.type = ERelationType.ManyToOne;
         EntityFactory.addRelation(target.constructor.name,propertyName,cfg);
     }
 }
 
 /**
- * @exclude
  * 多对多关系，装饰属性
- * @param cfg   实体关系配置
+ * @param cfg -   实体关系配置
  */
-function ManyToMany(cfg:IEntityRelation){
-    return (target:any,propertyName:string)=>{
+function ManyToMany(cfg:EntityRelation){
+    return (target:unknown,propertyName:string)=>{
         cfg.type = ERelationType.ManyToMany;
         EntityFactory.addRelation(target.constructor.name,propertyName,cfg);
     }

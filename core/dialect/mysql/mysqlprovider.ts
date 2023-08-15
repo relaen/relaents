@@ -6,13 +6,12 @@ import { ELockType } from "../../types";
 
 /**
  * mysql provider
- * @since 0.3.0
  */
 export class MysqlProvider extends BaseProvider {
 
     /**
      * 构造器
-     * @param cfg   连接配置
+     * @param cfg -   连接配置
      */
     constructor(cfg: IMysqlConnectionCfg) {
         super(cfg);
@@ -57,7 +56,7 @@ export class MysqlProvider extends BaseProvider {
                     resolve(conn);
                 })
             } else {
-                let conn = this.dbMdl.createConnection(this.options);
+                const conn = this.dbMdl.createConnection(this.options);
                 conn.connect(err => {
                     if (err) {
                         return reject(err);
@@ -70,10 +69,10 @@ export class MysqlProvider extends BaseProvider {
 
     /**
      * 关闭连接
+     * @param connection -  数据库连接对象
      * @throws              关闭连接错误
-     * @param connection    数据库连接对象
      */
-    public async closeConnection(connection: Connection): Promise<any> {
+    public async closeConnection(connection: Connection): Promise<void> {
         if (this.pool) {
             connection.conn.release();
             return Promise.resolve(null);
@@ -101,15 +100,15 @@ export class MysqlProvider extends BaseProvider {
 
     /**
      * 执行sql语句
-     * @param connection    db connection
-     * @param sql           待执行sql
-     * @param params        参数数组
+     * @param connection -  db connection
+     * @param sql -         待执行sql
+     * @param params -      参数数组
      * @throws              语句执行错误
      * @returns             结果(集)
      */
-    public async exec(connection: Connection, sql: string, params?: any[]): Promise<any> {
+    public async exec(connection: Connection, sql: string, params?: unknown[]): Promise<unknown> {
         return await new Promise((resolve, reject) => {
-            connection.conn.query(sql, params, (err, results, fields) => {
+            connection.conn.query(sql, params, (err, results) => {
                 if (err) {
                     return reject(err);
                 }
@@ -120,11 +119,10 @@ export class MysqlProvider extends BaseProvider {
 
     /**
      * 处理记录起始记录索引和记录数
-     * @param sql       sql
-     * @param start     开始索引
-     * @param limit     记录数
+     * @param sql -       sql
+     * @param start -     开始索引
+     * @param limit -     记录数
      * @returns         处理后的sql
-     * @since           0.2.0
      */
     public handleStartAndLimit(sql: string, start?: number, limit?: number): string {
         if (limit && start) {
@@ -139,20 +137,19 @@ export class MysqlProvider extends BaseProvider {
 
     /**
      * 从sql执行结果获取identityid，仅对主键生成策略是identity的有效
-     * @param result    sql执行结果
+     * @param result -  sql执行结果
      * @returns         主键
      */
-    public getIdentityId(result: any): number {
-        return result.insertId;
+    public getIdentityId(result: unknown): number {
+        return result['insertId'];
     }
 
     /**
      * 获取加锁sql语句
-     * @param type      锁类型    
-     * @param tables    表名，表锁时使用
-     * @param schema    模式名，表锁时使用
-     * @retruns         加锁sql语句
-     * @since           0.4.0
+     * @param type -    锁类型    
+     * @param tables -  表名，表锁时使用
+     * @param schema -  模式名，表锁时使用
+     * @returns         加锁sql语句
      */
     public lock(type: ELockType, tables?: string[], schema?: string): string {
         switch (type) {
@@ -170,9 +167,8 @@ export class MysqlProvider extends BaseProvider {
 
     /**
      * 获取释放锁sql语句
-     * @param type      锁类型
+     * @param type -      锁类型
      * @returns         释放锁sql语句
-     * @since           0.4.0
      */
     public unlock(type: ELockType): string {
         switch (type) {

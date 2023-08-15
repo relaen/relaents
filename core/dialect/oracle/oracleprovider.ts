@@ -7,7 +7,6 @@ import { ELockType } from "../../types";
 
 /**
  * oracle provider
- * @since 0.3.0
  */
 export class OracleProvider extends BaseProvider {
 
@@ -18,7 +17,7 @@ export class OracleProvider extends BaseProvider {
 
     /**
      * 构造器
-     * @param cfg   连接配置
+     * @param cfg -   连接配置
      */
     constructor(cfg: IOracleConnectionCfg) {
         super(cfg);
@@ -61,7 +60,7 @@ export class OracleProvider extends BaseProvider {
 
     /**
      * 关闭连接
-     * @param connection    数据库连接对象
+     * @param connection -    数据库连接对象
      */
     public async closeConnection(connection: Connection) {
         if (this.pool) {
@@ -74,16 +73,16 @@ export class OracleProvider extends BaseProvider {
 
     /**
      * 执行sql语句
-     * @param connection    db connection
-     * @param sql           待执行sql
-     * @param params        参数数组
+     * @param connection -    db connection
+     * @param sql -           待执行sql
+     * @param params -        参数数组
      * @returns             结果(集)
      */
-    public async exec(connection: Connection, sql: string, params?: any[]): Promise<any> {
+    public async exec(connection: Connection, sql: string, params?: unknown[]): Promise<unknown> {
         // 默认自动提交
-        let autoCommit = connection.autoCommit === false ? false : true;
+        const autoCommit = connection.autoCommit === false ? false : true;
         params = params || [];
-        let r = await connection.conn.execute(sql, params, { autoCommit: autoCommit, outFormat: 4002 });
+        const r = await connection.conn.execute(sql, params, { autoCommit: autoCommit, outFormat: 4002 });
         if (r.rows) {
             return r.rows;
         }
@@ -92,11 +91,10 @@ export class OracleProvider extends BaseProvider {
 
     /**
      * 处理记录起始记录索引和记录数
-     * @param sql       sql
-     * @param start     开始索引
-     * @param limit     记录数
+     * @param sql -       sql
+     * @param start -     开始索引
+     * @param limit -     记录数
      * @returns         处理后的sql
-     * @since           0.2.0
      */
     public handleStartAndLimit(sql: string, start?: number, limit?: number): string {
         if (limit && start) {
@@ -113,17 +111,17 @@ export class OracleProvider extends BaseProvider {
 
     /**
      * 获取实体sequence，针对主键生成策略为sequence时有效
-     * @param em        entity manager
-     * @param seqName   sequence name
-     * @param schema    schema
+     * @param em -        entity manager
+     * @param seqName -   sequence name
+     * @param schema -    schema
      * @returns         sequence 值
      */
     public async getSequenceValue(em: EntityManager, seqName: string, schema?: string): Promise<number> {
         // 需要指定sequence所属schema
-        let query: NativeQuery = em.createNativeQuery(
+        const query: NativeQuery = em.createNativeQuery(
             "select " + (schema ? schema + "." + seqName : seqName) + ".nextval from dual"
         );
-        let r = await query.getResultList(-1, -1);
+        const r = await query.getResultList(-1, -1);
         if (r[0].NEXTVAL) {
             //转换为整数
             return parseInt(r[0].NEXTVAL);
@@ -133,11 +131,10 @@ export class OracleProvider extends BaseProvider {
 
     /**
      * 获取加锁sql语句
-     * @param type      锁类型    
-     * @param tables    表名，表锁时使用
-     * @param schema    模式名，表锁时使用
-     * @retruns         加锁sql语句
-     * @since           0.4.0
+     * @param type -      锁类型    
+     * @param tables -    表名，表锁时使用
+     * @param schema -    模式名，表锁时使用
+     * @returns         加锁sql语句
      */
     public lock(type: ELockType, tables?: string[], schema?: string): string {
         if (schema) {

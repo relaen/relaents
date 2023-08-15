@@ -2,7 +2,7 @@ import { EntityManager } from "./entitymanager";
 import { BaseEntity } from "./baseentity";
 import { SqlExecutor } from "./sqlexecutor";
 import { EntityFactory } from "./entityfactory";
-import { IEntity, EEntityState, EQueryType, IEntityRelation, ELockMode } from "./types";
+import { IEntity, EEntityState, EQueryType, EntityRelation, ELockMode } from "./types";
 import { ErrorFactory } from "./errorfactory";
 import { EntityManagerFactory } from "./entitymanagerfactory";
 import { Translator } from "./translator";
@@ -21,7 +21,7 @@ class Query {
     /**
      * 参数值数组或对象
      */
-    paramArr: any[] | object;
+    paramArr: unknown[] | object;
 
     /**
      * 执行sql
@@ -51,7 +51,7 @@ class Query {
     /**
      * 实体别名map
      */
-    aliasMap: Map<string, any>;
+    aliasMap: Map<string, {entity: unknown,linkName:string}>
 
     /**
      * 解释器
@@ -60,8 +60,8 @@ class Query {
 
     /**
      * 构造query对象
-     * @param em                entity manager
-     * @param entityClassName   对应的结果实体类名
+     * @param em -                entity manager
+     * @param entityClassName -   对应的结果实体类名
      */
     constructor(em: EntityManager, entityClassName?: string) {
         if (entityClassName && !EntityFactory.getEntityConfig(entityClassName)) {
@@ -73,16 +73,16 @@ class Query {
         this.paramArr = [];
         //初始化translator
         if (this.constructor.name === 'Query') {
-            this.translator = TranslatorFactory.get(entityClassName);
+            this.translator = <Translator>TranslatorFactory.get(entityClassName);
         }
     }
 
     /**
      * 设置查询参数值
-     * @param index     占位符下标
-     * @param value     占位符值 
+     * @param index -     占位符下标
+     * @param value -     占位符值 
      */
-    public setParameter(index: number, value: any) {
+    public setParameter(index: number, value: unknown) {
         //补全参数个数
         if (Array.isArray(this.paramArr) && this.paramArr.length <= index) {
             for (let i = this.paramArr.length; i <= index; i++) {
@@ -95,12 +95,12 @@ class Query {
 
     /**
      * 设置多个参数值，从下标0开始
-     * @param valueArr  值数组
+     * @param valueArr -  值数组
      */
-    public setParameters(valueArr: Array<any>) {
+    public setParameters(valueArr: Array<unknown>) {
         valueArr.forEach((value, i) => {
             //对于entity，只获取其主键
-            let v = value instanceof BaseEntity ? EntityFactory.getIdValue(value) : value;
+            const v = value instanceof BaseEntity ? EntityFactory.getIdValue(value) : value;
             if (Array.isArray(this.paramArr) && i >= this.paramArr.length) {
                 this.paramArr.push(v);
             } else {
@@ -111,7 +111,7 @@ class Query {
 
     /**
      * 设置开始记录位置
-     * @param start     开始位置
+     * @param start -     开始位置
      */
     public setStart(start: number) {
         if (start >= 0) {
@@ -121,7 +121,7 @@ class Query {
 
     /**
      * 设置获取记录数
-     * @param limit     记录数
+     * @param limit -     记录数
      */
     public setLimit(limit: number) {
         if (limit > 0) {
@@ -131,11 +131,11 @@ class Query {
 
     /**
      * 获取单个查询结果
-     * @param notEntity     不返回实体，如果类为true且只有一个属性值，则直接返回属性值，否则返回对象
+     * @param notEntity -   不返回实体，如果类为true且只有一个属性值，则直接返回属性值，否则返回对象
      * @returns             select:实体|object|值
      *                      delete:true/false
      */
-    public async getResult(notEntity?: boolean): Promise<any> {
+    public async getResult(notEntity?: boolean): Promise<unknown> {
         this.preHandle();
         let r;
         switch (this.type) {
@@ -146,7 +146,7 @@ class Query {
                     if (!notEntity) {
                         return r[0];
                     }
-                    let props = Object.getOwnPropertyNames(r[0]);
+                    const props = Object.getOwnPropertyNames(r[0]);
                     //如果只有一个属性，则只返回属性值
                     if (props.length === 1) {
                         return r[0][props[0]];
@@ -162,12 +162,12 @@ class Query {
 
     /**
      * 获取结果列表
-     * @param start         开始索引
-     * @param limit         记录数
-     * @param notEntity     是否不转成为实体
+     * @param start -         开始索引
+     * @param limit -         记录数
+     * @param notEntity -     是否不转成为实体
      * @returns             实体或对象数组
      */
-    public async getResultList(start?: number, limit?: number, notEntity?: boolean): Promise<any> {
+    public async getResultList(start?: number, limit?: number, notEntity?: boolean): Promise<unknown|unknown[]> {
         //查询时才可调用
         if (this.type !== EQueryType.SELECT) {
             return null;
@@ -176,10 +176,10 @@ class Query {
         this.setStart(start);
         this.setLimit(limit);
 
-        let results: any[] = await SqlExecutor.exec(this.entityManager, this.execSql, this.paramArr, this.start, this.limit);
+        const results = await SqlExecutor.exec(this.entityManager, this.execSql, this.paramArr, this.start, this.limit);
         if (!notEntity && Array.isArray(results)) {
-            let retArr: any[] = [];
-            for (let r of results) {
+            const retArr = [];
+            for (const r of results) {
                 retArr.push(this.genEntity(r));
             }
             return retArr;
@@ -192,11 +192,11 @@ class Query {
      */
     private preHandle() {
         if (!this.execSql) {
-            let r = this.translator.getQuerySql();
+            const r = this.translator.getQuerySql();
             this.execSql = r[0];
             this.aliasMap = new Map();
 
-            for (let o of r[1]) {
+            for (const o of <Map<string,object>>r[1]) {
                 this.aliasMap.set(o[1]['alias'], {
                     entity: o[1]['entity'],
                     linkName: o[0]
@@ -209,22 +209,22 @@ class Query {
 
     /**
      * 生成实体
-     * @param r     查询结果
+     * @param r -   查询结果
      * @returns     实体对象
      */
-    private genEntity(r: any): IEntity {
-        let ecfg: EntityConfig = EntityFactory.getEntityConfig(this.entityClassName);
-        let entity: IEntity = new ecfg.entity();
+    private genEntity(r: unknown): IEntity {
+        const ecfg: EntityConfig = EntityFactory.getEntityConfig(this.entityClassName);
+        const entity: IEntity = new ecfg.entity();
         //存储外键值
         Object.getOwnPropertyNames(r).forEach((field) => {
             //无值字段不处理
             if (r[field] === undefined || r[field] === null) {
                 return;
             }
-            let ind: number = field.indexOf('_');
+            const ind: number = field.indexOf('_');
             //别名
-            let alias: string = field.substr(0, ind);
-            let propName: string = field.substr(ind + 1);
+            const alias: string = field.substring(0, ind);
+            const propName: string = field.substring(ind + 1);
 
             //主表
             if (alias.toLocaleLowerCase() === 't0') {
@@ -239,8 +239,8 @@ class Query {
                 if (!this.aliasMap.has(alias)) {
                     return;
                 }
-                let obj: any = this.aliasMap.get(alias);
-                let arr = obj.linkName.split('.');
+                const obj = this.aliasMap.get(alias);
+                const arr = obj.linkName.split('.');
                 if (arr[0] !== this.entityClassName) {
                     return;
                 }
@@ -250,13 +250,12 @@ class Query {
         EntityManagerFactory.setEntityStatus(entity, EEntityState.PERSIST);
         return entity;
 
-        function handleSubEntity(entity: IEntity, arr: string[], key: string, value: any) {
+        function handleSubEntity(entity: IEntity, arr: string[], key: string, value: unknown) {
             let eo = entity[arr[0]];
-
             if (!eo) {
                 let orm: EntityConfig = EntityFactory.getEntityConfig(entity.constructor.name);
                 //获取关系对象
-                let rel: IEntityRelation = orm.getRelation(arr[0]);
+                const rel: EntityRelation = orm.getRelation(arr[0]);
                 if (!rel) {
                     return;
                 }
@@ -277,8 +276,7 @@ class Query {
 
     /**
      * 构造查询 字段集
-     * @param fields    属性或属性数组
-     * @since 0.2.0
+     * @param fields -    属性或属性数组
      */
     select(fields: string | Array<string>): Query {
         this.type = EQueryType.SELECT;
@@ -294,10 +292,11 @@ class Query {
     }
 
     /**
-     * 添加查询 表集
-     * @description     主表的关联表会自动处理，此处不需要加入
-     * @param tables    实体类名或实体类名数组 
-     * @since 0.2.0
+     * 添加查询表集
+     * @remarks
+     * 主表的关联表会自动处理，此处不需要加入
+     * @param tables -  实体类名或实体类名数组
+     * @returns         查询对象 
      */
     from(tables: string | Array<string>): Query {
         if (!tables) {
@@ -312,11 +311,17 @@ class Query {
 
     /**
      * 添加where条件
-     * @param params    参数对象{paramName1:paramValue1,paramName2:{value:paramValue2,rel:'>',before:'(',after:'and'}...}
-     *                  参数值有两种方式，一种是直接在参数名后给值，一种是给对象，对象中包括:
-     *                  value:值,rel:关系,before:字段前字符串(通常为"("),after:值后字符串(通常为"and","or",")")
-     *                  关系包括 >,<,>=,<=,<>,is,like等
-     * @since 0.2.0
+     * @param params -  参数对象
+     * ```js
+     *  {
+     *      paramName1:paramValue1,
+     *      paramName2:{value:paramValue2,rel:'>',before:'(',after:'and'}
+     *       ...
+     *  }
+     *  参数值有两种方式，一种是直接在参数名后给值，一种是给对象，对象中包括:
+     *  value:值,rel:关系,before:字段前字符串(通常为"("),after:值后字符串(通常为"and","or",")")
+     *  关系包括 >,<,>=,<=,<>,is,like等
+     * ```
      */
     where(params: object): Query {
         this.translator.handleWhere(params);
@@ -325,8 +330,16 @@ class Query {
 
     /**
      * 添加排序对象
-     * @param params    {paramName1:'desc',paramName2:'asc',...} paramName1:参数名,desc:降序 asc:升序
-     * @since 0.2.0
+     * @param params -  参数对象
+     * 格式为：
+     * ```js
+     *  {
+     *      paramName1:'desc',
+     *      paramName2:'asc',
+     *      ...
+     *  } 
+     * ```
+     * paramName1:参数名,desc:降序 asc:升序
      */
     orderBy(params: object) {
         this.translator.handleOrder(params);
@@ -335,7 +348,6 @@ class Query {
 
     /**
      * 添加distinct
-     * @since 0.2.0
      */
     distinct() {
         if (!this.translator.modifiers) {
@@ -347,7 +359,6 @@ class Query {
 
     /**
      * 构造删除
-     * @since 0.2.0
      */
     delete() {
         this.type = EQueryType.DELETE;
@@ -357,8 +368,7 @@ class Query {
 
     /**
      * 添加分组条件
-     * @param params 属性或属性数组
-     * @since 0.4.0
+     * @param params - 属性或属性数组
      */
     groupBy(params: string | Array<string>) {
         this.translator.handleGroup(params);
@@ -367,11 +377,17 @@ class Query {
 
     /**
      * 添加where条件
-     * @param params    参数对象{paramName1:paramValue1,paramName2:{value:paramValue2,rel:'>',before:'(',after:'and'}...}
-     *                  参数值有两种方式，一种是直接在参数名后给值，一种是给对象，对象中包括:
-     *                  value:值,rel:关系,before:字段前字符串(通常为"("),after:值后字符串(通常为"and","or",")")
-     *                  关系包括 >,<,>=,<=,<>,is,like等
-     * @since 0.4.0
+     * @param params -    参数对象
+     * ```js
+     * {
+     *      paramName1:paramValue1,
+     *      paramName2:{value:paramValue2,rel:'>',before:'(',after:'and'}
+     *      ...
+     * }
+     * 参数值有两种方式，一种是直接在参数名后给值，一种是给对象，对象中包括:
+     * value:值,rel:关系,before:字段前字符串(通常为"("),after:值后字符串(通常为"and","or",")")
+     * 关系包括 >,<,>=,<=,<>,is,like等
+     * ```
      */
     having(params: object) {
         this.translator.handleHaving(params);
@@ -380,9 +396,8 @@ class Query {
 
     /**
      * 设置查询锁模式
-     * @param ELockMode     锁模式
-     * @param ElockType     锁类型
-     * @since 0.4.0
+     * @param ELockMode -     锁模式
+     * @param ElockType -     锁类型
      */
     setLock(lockMode: ELockMode) {
         if (lockMode) {

@@ -15,17 +15,17 @@ class ErrorFactory{
      */
     /**
      * 获取异常
-     * @param errNo     异常码
-     * @param param     参数值数组，用于处理消息带参数的情况
-     * @returns         {code:异常码,message:异常信息}    
+     * @param errNo -     异常码
+     * @param param -     参数值数组，用于处理消息带参数的情况
+     * @returns           异常 code:异常码 message:异常消息
      */
-    static getError(errNo:string,param?:Array<any>):Error{
+    static getError(errNo:string,param?:unknown[]):Error{
         //默认为未知错误
         if(!RelaenTip[errNo]){
             errNo = "0000";   
         }
         let msg = RelaenTip[errNo];
-        let reg = /\$\{.+?\}/g;
+        const reg = /\$\{.+?\}/g;
         let r;
         //处理消息中的参数
         while((r=reg.exec(msg)) !== null){

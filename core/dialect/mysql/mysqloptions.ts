@@ -1,15 +1,14 @@
-import { IConnectionCfg } from "../../types";
+import { ConnectionOption } from "../../types";
 
 /**
  * mysql ConnectionCfg
- * @since 0.4.0
  */
-export interface IMysqlConnectionCfg extends IConnectionCfg {
+export interface IMysqlConnectionCfg extends ConnectionOption {
     /**
      * 带有 ssl 参数的对象或包含 ssl 配置文件名称的字符串
      * object with ssl parameters or a string containing name of ssl profile.
      */
-    readonly ssl: any;
+    readonly ssl: object;
     /**
      * 连接的字符集（默认值：UTF8_GENERAL_CI）
      * The charset for the connection. 

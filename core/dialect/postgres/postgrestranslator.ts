@@ -3,7 +3,6 @@ import { EQueryType} from "../../types";
 
 /**
  * postgres 翻译器
- * @since 0.3.0
  */
 export class PostgresTranslator extends Translator{
     /**
@@ -11,7 +10,7 @@ export class PostgresTranslator extends Translator{
      * @returns     数组[sql,linkMap,values]
      *              其中：linkMap为该translator的linkNameMap，values为查询参数值
      */
-    public getQuerySql(): any[] {
+    public getQuerySql(): [string,unknown,unknown[]] {
         switch (this.sqlType) {
             case EQueryType.SELECT:
                 return this.getSelectSql();

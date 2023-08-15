@@ -1,4 +1,4 @@
-import { IEntityColumn, IEntity, IEntityRelation, EQueryType, ICondValueObj, ELockMode, ELockType } from "./types";
+import { EntityColumnOption, IEntity, EntityRelation, EQueryType, CondValueOption, ELockMode, ELockType } from "./types";
 import { BaseEntity } from "./baseentity";
 import { EntityFactory } from "./entityfactory";
 import { ErrorFactory } from "./errorfactory";
@@ -11,11 +11,22 @@ import { EntityConfig } from "./entityconfig";
  */
 export abstract class Translator {
     /**
-     * 链式map {linkName:{entity:实体类名,alias:别名,co:字段对象}}
+     * 链式map
+     * @remarks
+     * ```json
+     *  {
+     *      linkName:{
+     *          entity:实体类名,
+     *          alias:别名,
+     *          co:字段对象,
+     *          from:link名
+     *      }
+     *  }
+     * ```
      * linkName为 实体类名[_外键引用名1_外键引用名2_...]
      * 如: Shop_owner
      */
-    public linkNameMap: Map<string, object> = new Map();
+    public linkNameMap: Map<string, {entity:string,alias:string,co?:unknown,from?:string}> = new Map();
 
     /**
      * 别名id
@@ -50,7 +61,7 @@ export abstract class Translator {
     /**
      * where条件string
      */
-    protected whereObject: any[];
+    protected whereObject: [string,unknown[]];
 
     /**
      * group by string
@@ -60,7 +71,7 @@ export abstract class Translator {
     /**
      * having条件string
      */
-    protected havingObject: any[];
+    protected havingObject: [string,unknown[]];
 
     /**
      * order by string
@@ -79,7 +90,7 @@ export abstract class Translator {
 
     /**
      * 构造翻译器
-     * @param entityName    实体名
+     * @param entityName -    实体名
      */
     constructor(entityName: string) {
         this.mainEntityName = entityName;
@@ -91,37 +102,37 @@ export abstract class Translator {
 
     /**
      * entity转insert sql
-     * @param entity    实体
+     * @param entity -  实体
      * @returns         [sql, values]
      */
-    public entityToInsert(entity: any): any[] {
-        let arr: string[] = [];
+    public entityToInsert(entity: unknown): [string,unknown] {
+        const arr: string[] = [];
         arr.push('INSERT INTO');
         arr.push(this.mainEntityCfg.getTableName(true));
         //字段组合
-        let fields: string[] = [];
+        const fields: string[] = [];
         //值组合
-        let values: string[] = [];
+        const values: string[] = [];
         //占位符
-        let qArr: string[] = [];
+        const qArr: string[] = [];
         //id字段名
-        let idField: string = this.mainEntityCfg.columns.get(this.mainEntityCfg.id.name).name;
+        const idField: string = this.mainEntityCfg.columns.get(this.mainEntityCfg.id.name).name;
 
-        for (let [key, cfg] of this.mainEntityCfg.columns) {
+        for (const [key, cfg] of this.mainEntityCfg.columns) {
             //manytomany不处理
             if(cfg.joinTable){
                 continue;
             }
-            let v: any;
+            let v;
             if (cfg.refName) { //外键，只取主键
-                let refEn = entity[key];
+                const refEn = entity[key];
                 v = refEn && refEn instanceof BaseEntity ? EntityFactory.getIdValue(refEn) : null;
             } else {
                 v = entity[key];
             }
 
             // 如果绑定字段名不存在，则用属性名
-            let fn = cfg.name ? cfg.name : key;
+            const fn = cfg.name ? cfg.name : key;
             //值为空或字段已存在，则不添加
             if (v === null || fields.includes(fn)) {
                 continue;
@@ -134,7 +145,7 @@ export abstract class Translator {
         arr.push('VALUES');
         arr.push('(' + qArr.join(',') + ')');
         //针对不同的数据库，可能存在附加串
-        let extra = ConnectionManager.provider.insertReturn(idField);
+        const extra = ConnectionManager.provider.insertReturn(idField);
         if (extra) {
             arr.push(extra);
         }
@@ -143,21 +154,21 @@ export abstract class Translator {
 
     /**
      * entity转update sql
-     * @param entity                待更新entity
-     * @param ignoreUndefinedValue  忽略undefined值
-     * @returns                     [sql, values]
+     * @param entity -               待更新entity
+     * @param ignoreUndefinedValue - 忽略undefined值
+     * @returns                      [sql, values]
      */
-    public entityToUpdate(entity: IEntity, ignoreUndefinedValue?: boolean): any[] {
-        let arr: string[] = [];
+    public entityToUpdate(entity: IEntity, ignoreUndefinedValue?: boolean): [string,unknown] {
+        const arr: string[] = [];
         arr.push('UPDATE');
         arr.push(this.mainEntityCfg.getTableName(true));
         arr.push('SET');
         //字段组合
-        let fields: string[] = [];
+        const fields: string[] = [];
         //值组合
-        let values: any[] = [];
+        const values = [];
         //id值
-        let idValue: any;
+        let idValue;
         //id字段名
         let idField: string;
         //version字段名
@@ -165,16 +176,16 @@ export abstract class Translator {
         //version值
         let versionValue: number;
 
-        for (let [key, cfg] of this.mainEntityCfg.columns) {
+        for (const [key, cfg] of this.mainEntityCfg.columns) {
             if(cfg.joinTable){
                 continue;
             }
             //如果绑定字段名不存在，则用属性名
-            let fn = cfg.name ? cfg.name : key;
+            const fn = cfg.name ? cfg.name : key;
             //字段值
-            let v: any;
+            let v;
             if (cfg.refName) { //外键，只取主键
-                let refEn = entity[key];
+                const refEn = entity[key];
                 v = refEn && refEn instanceof BaseEntity ? EntityFactory.getIdValue(refEn) : null;
             } else {
                 v = entity[key];
@@ -218,12 +229,12 @@ export abstract class Translator {
 
     /**
      * entity转update sql
-     * @param entity        实体对象或待删除的id值
-     * @param className     实体类名
+     * @param entity -      实体对象或待删除的id值
+     * @param className -   实体类名
      * @returns             [sql, values]
      */
-    public toDelete(entity: any): any[] {
-        let idValue: any;
+    public toDelete(entity: unknown): [string,unknown] {
+        let idValue;
         let eo: EntityConfig;
         if (entity instanceof BaseEntity) {
             eo = EntityFactory.getEntityConfig(entity.constructor.name);
@@ -232,7 +243,7 @@ export abstract class Translator {
             idValue = entity;
             eo = this.mainEntityCfg;
         }
-        let idName: string = eo.getIdName();
+        const idName: string = eo.getIdName();
         if (!idName || !idValue) {
             throw ErrorFactory.getError("0025");
         }
@@ -250,20 +261,20 @@ export abstract class Translator {
 
     /**
      * 处理select字段集合
-     * @param arr           字段集合
-     * @param entityName    实体类名
+     * @param arr -           字段集合
+     * @param entityName -    实体类名
      */
     public handleSelectFields(arr: string[], entityName?: string) {
         //第一个为实体名
         for (let i = 0; i < arr.length; i++) {
             let fn: string = arr[i].trim();
-            let ind1: number = fn.indexOf('(');
+            const ind1: number = fn.indexOf('(');
             if (ind1 !== -1) { //函数内
-                let foo: string = fn.substr(0, ind1).toLowerCase();
+                const foo: string = fn.substr(0, ind1).toLowerCase();
                 fn = fn.substring(ind1 + 1, fn.length - 1);
                 arr[i] = foo + '(' + this.handleOneField(fn, entityName, null, true) + ')';
             } else { //普通字段
-                let r = this.handleOneField(fn, entityName);
+                const r = this.handleOneField(fn, entityName);
                 if (r !== null) {
                     arr[i] = r;
                 } else { //移除
@@ -276,11 +287,11 @@ export abstract class Translator {
 
     /**
      * 处理一个字段
-     * @param field         字段名，字段可以带别名，如果需要转换为对象，则不能使用自定义别名
-     * @param entityName    实体类名
-     * @param linkName      链名
-     * @param isCond        是否为条件字段
-     * @param asField       字段对应别名
+     * @param field -         字段名，字段可以带别名，如果需要转换为对象，则不能使用自定义别名
+     * @param entityName -    实体类名
+     * @param linkName -      链名
+     * @param isCond -        是否为条件字段
+     * @param asField -       字段对应别名
      */
     private handleOneField(field: string, entityName?: string, linkName?: string, isCond?: boolean, asField?:string) {
         field = field.trim();
@@ -298,9 +309,9 @@ export abstract class Translator {
             entityName = entityName || this.mainEntityName;
             linkName = linkName || entityName;
             if (entityName && EntityFactory.hasEntityConfig(entityName)) {
-                let orm: EntityConfig = EntityFactory.getEntityConfig(entityName);
-                let arr = [];
-                for (let o of orm.columns) {
+                const orm: EntityConfig = EntityFactory.getEntityConfig(entityName);
+                const arr = [];
+                for (const o of orm.columns) {
                     let aliasName: string
                     if (!this.linkNameMap.has(linkName)) {
                         aliasName = 't' + this.aliasId++;
@@ -330,7 +341,7 @@ export abstract class Translator {
             field = field.substring(0,re.index);
         }
         //字段分割
-        let arr: string[] = field.split('.');
+        const arr: string[] = field.split('.');
         let index: number = 0;
         //先判断是否为主实体
         if (EntityFactory.hasEntityConfig(arr[0])) {
@@ -352,7 +363,7 @@ export abstract class Translator {
             aliasName = this.linkNameMap.get(linkName)['alias'];
         }
 
-        let orm: EntityConfig = EntityFactory.getEntityConfig(entityName);
+        const orm: EntityConfig = EntityFactory.getEntityConfig(entityName);
         if (!orm) {
             throw ErrorFactory.getError('0010', [entityName]);
         }
@@ -365,13 +376,13 @@ export abstract class Translator {
             if (!orm.columns.has(arr[i])) {
                 throw ErrorFactory.getError('0022', [entityName, arr[i]]);
             }
-            let co = orm.columns.get(arr[i]);
+            const co = orm.columns.get(arr[i]);
             //外键对象，则直接切换为外键对象
             if (co.refName) {
-                let rel: IEntityRelation = orm.getRelation(arr[i]);
-                let a1 = arr.slice(i + 1);
+                const rel: EntityRelation = orm.getRelation(arr[i]);
+                const a1 = arr.slice(i + 1);
                 //添加到join map
-                let oldLink = linkName;
+                const oldLink = linkName;
                 linkName += '.' + arr[i];
                 if (!this.linkNameMap.has(linkName)) {
                     this.linkNameMap.set(linkName, {
@@ -384,7 +395,7 @@ export abstract class Translator {
                 //关联对象后无多余字段
                 if (i === arr.length - 1) {
                     if (isCond) { //如果为条件，则转换为主键
-                        let eo: EntityConfig = EntityFactory.getEntityConfig(rel.entity);
+                        const eo: EntityConfig = EntityFactory.getEntityConfig(rel.entity);
                         a1.push(eo.getId().name);
                     } else { //查询字段，则添加*
                         a1.push('*');
@@ -406,10 +417,10 @@ export abstract class Translator {
 
     /**
      * 处理重复entityName
-     * @param arr       实体类名数组
+     * @param arr -       实体类名数组
      */
     public handleFrom(arr: string[]) {
-        for (let t of arr) {
+        for (const t of arr) {
             //加入entity alias map
             if (!this.linkNameMap.has(t)) {
                 this.linkNameMap.set(t, {
@@ -423,10 +434,10 @@ export abstract class Translator {
 
     /**
      * 处理where条件
-     * @param params        参数对象，每个参数值参考ICondValueObj接口
+     * @param params -        参数对象，每个参数值参考CondValueOption接口
      */
     public handleWhere(params: object) {
-        let condition = this.handleCondition(params);
+        const condition = this.handleCondition(params);
         if (condition && condition[0] !== '') {
             this.whereObject = condition;
         }
@@ -434,16 +445,16 @@ export abstract class Translator {
 
     /**
      * 处理group by
-     * @param params    分组参数
+     * @param params -    分组参数
      */
     public handleGroup(params: string | string[]) {
         if (!params) {
             return null;
         }
         params = typeof params === 'string' ? [params] : params;
-        let arr = [];
+        const arr = [];
         for (const param of params) {
-            let fn = this.handleOneField(param, null, null, true);
+            const fn = this.handleOneField(param, null, null, true);
             arr.push(fn);
         }
         if (arr.length > 0) {
@@ -453,10 +464,10 @@ export abstract class Translator {
 
     /**
      * 处理having条件
-     * @param params    参数对象，每个参数值参考ICondValueObj接口
+     * @param params -    参数对象，每个参数值参考CondValueOption接口
      */
     public handleHaving(params: object) {
-        let condition = this.handleCondition(params);
+        const condition = this.handleCondition(params);
         if (condition && condition[0] !== '') {
             this.havingObject = condition;
         }
@@ -464,27 +475,27 @@ export abstract class Translator {
 
     /**
      * 处理条件判断 
-     * @param params    条件参数
+     * @param params -    条件参数
      */
-    private handleCondition(params: object) {
+    private handleCondition(params: object):[string,unknown[]] {
         if (!params || typeof params !== 'object') {
             return null;
         }
         //值数组
-        let pValues: any[] = [];
+        const pValues = [];
         //where字符串
         let whereStr: string = '';
 
         Object.getOwnPropertyNames(params).forEach((item, ii) => {
             //字段名
-            let fn = this.handleOneField(item, null, null, true);
+            const fn = this.handleOneField(item, null, null, true);
             //值对象
-            let vobj: ICondValueObj = params[item];
+            const vobj: CondValueOption = params[item];
 
             //默认关系符
             let rel: string = '=';
             //值
-            let v: any;
+            let v;
             //参数值为对象且不为实体对象
             if (vobj !== null && typeof vobj === 'object' && !(vobj instanceof BaseEntity)) {
                 if (vobj.rel) {
@@ -530,7 +541,7 @@ export abstract class Translator {
                 if (!Array.isArray(v)) {
                     throw ErrorFactory.getError('0404');
                 }
-                let arr = new Array(v.length).fill('?');
+                const arr = new Array(v.length).fill('?');
                 placeholder = ' (' + arr.join() + ') ';
 
 
@@ -562,17 +573,17 @@ export abstract class Translator {
 
     /**
      * 处理order by
-     * @param params        排序参数
-     * @param entityName    实体名
+     * @param params -        排序参数
+     * @param entityName -    实体名
      */
     public handleOrder(params: object, entityName?: string): string {
         if (!params || typeof params !== 'object') {
             return null;
         }
-        let arr = [];
+        const arr = [];
         Object.getOwnPropertyNames(params).forEach((item) => {
             //字段名
-            let fn = this.handleOneField(item, entityName, null, true);
+            const fn = this.handleOneField(item, entityName, null, true);
             arr.push(fn + ' ' + (params[item] === 'asc' ? 'asc' : 'desc'));
         });
         if (arr.length > 0) {
@@ -585,7 +596,7 @@ export abstract class Translator {
      * @returns     数组[sql,linkMap,values]
      *              其中：linkMap为该translator的linkNameMap，values为查询参数值
      */
-    public getQuerySql(): any[] {
+    public getQuerySql(): [string,unknown,unknown[]] {
         switch (this.sqlType) {
             case EQueryType.SELECT:
                 return this.getSelectSql();
@@ -596,11 +607,11 @@ export abstract class Translator {
 
     /**
      * 获取select sql
-     * @param mainOrm   主表类对象
+     * @param mainOrm -   主表类对象
      * @returns 数组[sql,linkMap,values]
      *          其中：linkMap为该translator的linkNameMap，values为查询参数值
      */
-    protected getSelectSql(): any[] {
+    protected getSelectSql(): [string,unknown,unknown[]] {
         //linkName不存在主表，则需要设置主表
         if (!this.linkNameMap.has(this.mainEntityName)) {
             this.linkNameMap.set(this.mainEntityName, { alias: 't0', entity: this.mainEntityName });
@@ -628,27 +639,27 @@ export abstract class Translator {
         }
 
         //处理left join
-        let entities: string[] = [];
-        let joins: string[] = [];
-        for (let [key, link] of this.linkNameMap) {
+        const entities: string[] = [];
+        const joins: string[] = [];
+        for (const [key, link] of this.linkNameMap) {
             entities.push(link['entity']);
             if (!link['from']) {
                 continue;
             }
-            let orm: EntityConfig = EntityFactory.getEntityConfig(link['entity']);
-            let al1: string = link['alias'];
-            let al2: string = this.linkNameMap.get(link['from'])['alias'];
-            let co: IEntityColumn = link['co'];
+            const orm: EntityConfig = EntityFactory.getEntityConfig(link['entity']);
+            const al1: string = link['alias'];
+            const al2: string = this.linkNameMap.get(link['from'])['alias'];
+            const co: EntityColumnOption = link['co'];
             joins.push('LEFT JOIN ' + orm.getTableName(true) + ' ' + al1 + ' ON ' + al2 + '.' + co.name + '=' + al1 + '.' + co.refName);
         }
 
         //处理inner join
         if (this.fromTables) {
-            for (let t of this.fromTables) {
+            for (const t of this.fromTables) {
                 if (entities.includes(t)) {
                     continue;
                 }
-                let orm = EntityFactory.getEntityConfig(t);
+                const orm = EntityFactory.getEntityConfig(t);
                 //添加inner join
                 arr.push(',' + orm.getTableName(true) + ' ' + this.linkNameMap.get(t)['alias']);
             }
@@ -687,25 +698,25 @@ export abstract class Translator {
 
     /**
      * 生成增删改sql
-     * @param notNeedAlias      不需要别名
+     * @param notNeedAlias -      不需要别名
      * @returns 数组[sql,linkMap,values]
      *          其中：linkMap为该translator的linkNameMap，values为查询参数值
      */
-    protected getDeleteSql(notNeedAlias?: boolean) {
+    protected getDeleteSql(notNeedAlias?: boolean):[string,unknown,unknown[]] {
         if (!this.whereObject && !RelaenManager.fullTableOperation) {
             throw ErrorFactory.getError('0406');
         }
-        let arr: string[] = [];
+        const arr: string[] = [];
         arr.push('DELETE ' + (notNeedAlias ? '' : 't0') + ' FROM ' + this.mainEntityCfg.getTableName(true) + ' t0');
         //处理主表和join表
-        for (let o of this.linkNameMap) {
+        for (const o of this.linkNameMap) {
             if (!o[1]['from']) {
                 continue;
             }
-            let orm = EntityFactory.getEntityConfig(o[1]['entity']);
-            let al1: string = o[1]['alias'];
-            let al2: string = this.linkNameMap.get(o[1]['from'])['alias'];
-            let co: IEntityColumn = o[1]['co'];
+            const orm = EntityFactory.getEntityConfig(o[1]['entity']);
+            const al1: string = o[1]['alias'];
+            const al2: string = this.linkNameMap.get(o[1]['from'])['alias'];
+            const co: EntityColumnOption = o[1]['co'];
             arr.push('LEFT JOIN ' + orm.getTableName(true) + ' ' + al1 + ' on ' + al2 + '.' + co.name + '=' + al1 + '.' + co.refName);
         }
         if (this.whereObject) {

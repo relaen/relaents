@@ -1,10 +1,9 @@
-import { IConnectionCfg } from "../../types";
+import { ConnectionOption } from "../../types";
 
 /**
  * postgres ConnectionCfg
- * @since 0.4.0
  */
-export interface IPostgresConnectionCfg extends IConnectionCfg {
+export interface PostgresConnectionOption extends ConnectionOption {
 
     /**
      * passed directly to node.TLSSocket, supports all tls.connect options

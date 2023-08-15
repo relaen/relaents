@@ -1,7 +1,22 @@
 /**
+ * 未知方法
+ */
+export type UnknownMethod = (...args)=>unknown;
+
+/**
+ * 未知类
+ */
+export type UnknownClass = ()=>void;
+
+/**
+ * dialect类型
+ */
+export type DialectType = "mysql" | "oracle" | "mssql" | "postgres" | "mariadb" | "sqlite";
+
+/**
  * 连接池配置
  */
-interface IConnectionPool {
+export type ConnectionPoolOption = {
     /**
      * 最大连接数
      */
@@ -15,98 +30,101 @@ interface IConnectionPool {
 /**
  * 连接配置
  */
-interface IConnectionCfg {
+export type ConnectionOption = {
     /**
      * 数据库产品
      */
-    dialect: string;
+    dialect: DialectType;
     /**
      * 服务器地址
      */
-    host: string;
+    host?: string;
     /**
      * 端口号
      */
-    port: number;
+    port?: number;
     /**
      * 用户名
      */
-    username: string;
+    username?: string;
     /**
      * 密码
      */
-    password: string;
+    password?: string;
     /**
      * 数据库
      */
-    database: string;
+    database?: string;
     /**
      * 连接超时时间（ms）
-     * @since 0.3.0
      */
-    connectTimeout: number;
+    connectTimeout?: number;
     /**
      * 空闲超时时间，开启连接池使用（ms）
      */
-    idleTimeout: number;
+    idleTimeout?: number;
     /**
      * 连接池配置
      */
-    pool: IConnectionPool;
+    pool?: {min:number,max:number};
     /**
      * 是否cache
      */
-    cache: boolean;
+    cache?: boolean;
     /**
      * 是否调试模式
      */
-    debug: boolean;
+    debug?: boolean;
     /**
      * 实体配置数组 
      */
-    entities: Array<string>
-    /**
-     * 数据库原生配置，详细配置参照各数据库文档
-     * @since 0.4.0
-     */
-    options: any;
+    entities?: Array<string>
+    
     /**
      * 是否开启连接池，数据库原生配置使用
-     * @since 0.4.0
      */
-    usePool: boolean;
+    usePool?: boolean;
     /**
      * 是否允许全表操作
-     * @since 0.4.0
      */
-    fullTableOperation: boolean;
+    fullTableOperation?: boolean;
+
+    /**
+     * 是否文件日志
+     */
+    fileLog?:object|boolean;
+
+    /**
+     * 各dialect npm原生配置，配置该项后，另外配置失效
+     */
+    options?:object;
 }
 
 /**
  * 实体接口
  */
-interface IEntity {
+export interface IEntity {
     /**
      * 保存方法
      */
-    save: Function;
+    save: UnknownMethod;
     /**
      * 删除方法
      */
-    delete: Function;
+    delete: UnknownMethod;
     /**
      * 比较方法
      */
-    compare: Function;
+    compare: UnknownMethod;
 }
 /**
  * entity类配置项
  */
-interface IEntityCfg {
+export type EntityOption = {
     /**
      * 实体类
      */
-    entity?: any;
+    entity?: unknown;
     /**
      * 表名
      */
@@ -120,23 +138,23 @@ interface IEntityCfg {
     /**
      * 主键
      */
-    id?: IEntityPKey;
+    id?: EntityPKey;
 
     /**
      * 字段集合，键为对象属性名(非表字段名)
      */
-    columns?: Map<string, IEntityColumn>;
+    columns?: Map<string, EntityColumnOption>;
 
     /**
      * 关系集合，键为对象属性名(非表字段名)
      */
-    relations?: Map<string, IEntityRelation>;
+    relations?: Map<string, EntityRelation>;
 }
 
 /**
  * 实体字段配置
  */
-interface IEntityColumn {
+export type EntityColumnOption = {
     /**
      * 字段名，默认为属性名
      */
@@ -167,7 +185,6 @@ interface IEntityColumn {
      */
     identity?: boolean;
 
-
     /**
      * 关联表，ManyToMany有效
      */
@@ -180,13 +197,11 @@ interface IEntityColumn {
 
     /**
      * 乐观锁，数据版本Version
-     * @since 0.4.0
      */
     version?: boolean;
 
     /**
      * 实体类查询，不显示字段
-     * @since 0.4.0
      */
     select?: boolean;
 }
@@ -194,7 +209,7 @@ interface IEntityColumn {
 /**
  * 外键字段类型
  */
-interface IEntityRefColumn {
+export type EntityRefColumn = {
     /**
      * 字段名，默认为属性名
      */
@@ -214,7 +229,7 @@ interface IEntityRefColumn {
 /**
  * 中间表，ManyToMany时有效
  */
-interface IJoinTable {
+export type JoinTableOption = {
     /**
      * 中间表名
      */
@@ -234,7 +249,7 @@ interface IJoinTable {
 /**
  * 实体主键配置
  */
-interface IEntityPKey {
+export type EntityPKey = {
     /**
      * 对应属性名
      */
@@ -275,7 +290,7 @@ interface IEntityPKey {
 /**
  * 实体关系配置
  */
-interface IEntityRelation {
+export type EntityRelation = {
     /**
      * 被依赖的实体类名
      */
@@ -305,14 +320,14 @@ interface IEntityRelation {
 /**
  * where条件值对象接口，用于链式操作时构造条件语句
  */
-interface ICondValueObj {
+export type CondValueOption = {
     /**
      * 值
      */
-    value: any;
+    value: unknown;
 
     /**
-     * 字段与值的逻辑关系 如 =,>,<,>=,<=,<>,is,like等，默认=
+     * 字段与值的逻辑关系，如 `=,>,<,>=,<=,<>,is,like`等，默认`=`
      */
     rel?: string;
 
@@ -335,7 +350,7 @@ interface ICondValueObj {
 /**
  * 关系类型
  */
-enum ERelationType {
+export enum ERelationType {
     /**
      * 一对一关系
      */
@@ -357,7 +372,7 @@ enum ERelationType {
 /**
  * 实体状态
  */
-enum EEntityState {
+export enum EEntityState {
     /**
      * 新建状态
      */
@@ -372,7 +387,7 @@ enum EEntityState {
 /**
  * query类型
  */
-enum EQueryType {
+export enum EQueryType {
     /**
      * select
      */
@@ -392,13 +407,12 @@ enum EQueryType {
      * delete
      */
     DELETE = 3
-
 }
 
 /**
  * 锁机制类型
  */
-enum ELockType {
+export enum ELockType {
     TABLEREAD = 'table_read',
     TABLEWRITE = 'table_write',
     ROWREAD = 'row_read',
@@ -408,7 +422,7 @@ enum ELockType {
 /**
  * 锁类型
  */
-enum ELockMode {
+export enum ELockMode {
     OPTIMISTIC = 'optimistic',
     PESSIMISTIC_READ = 'pessimistic_read',
     PESSIMISTIC_WRITE = 'pessimistic',
@@ -417,7 +431,7 @@ enum ELockMode {
 /**
  * 事务隔离级别
  */
-enum EIsolationLevel {
+export enum EIsolationLevel {
     SERIALIZABLE = 'SERIALIZABLE',
     READUNCOMMITTED = 'READ UNCOMMITTED',
     READCOMMITTED = 'READ COMMITTED',
@@ -427,9 +441,8 @@ enum EIsolationLevel {
 /**
  * Sqlite事务类型
  */
-enum ESqliteTransactionType {
+export enum ESqliteTransactionType {
     DEFERRED = 'deferred',
     IMMEDIATE = 'immediate',
     EXCLUSIVE = 'exclusive'
 };
-export { IConnectionCfg, IConnectionPool, IEntity, IEntityCfg, IEntityColumn, IEntityRefColumn, IJoinTable, IEntityPKey, IEntityRelation, ICondValueObj, ERelationType, EEntityState, EQueryType, ELockType, ELockMode, EIsolationLevel, ESqliteTransactionType }

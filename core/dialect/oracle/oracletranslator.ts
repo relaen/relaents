@@ -1,9 +1,8 @@
 import { EntityFactory } from "../../entityfactory";
 import { ErrorFactory } from "../../errorfactory";
 import { RelaenManager } from "../../relaenmanager";
-import { RelaenUtil } from "../../relaenutil";
 import { Translator } from "../../translator";
-import { EQueryType, IEntityColumn } from "../../types";
+import { EQueryType, EntityColumnOption } from "../../types";
 
 /**
  * mssql 翻译器
@@ -14,7 +13,7 @@ export class OracleTranslator extends Translator {
      * @returns     数组[sql,linkMap,values]
      *              其中：linkMap为该translator的linkNameMap，values为查询参数值
      */
-    public getQuerySql(): any[] {
+    public getQuerySql(): [string,unknown,unknown[]] {
         switch (this.sqlType) {
             case EQueryType.SELECT:
                 return this.getSelectSql();
@@ -25,28 +24,28 @@ export class OracleTranslator extends Translator {
 
     /**
      * 生成增删改sql
-     * @param notNeedAlias      不需要别名
+     * @param notNeedAlias -      不需要别名
      * @returns 数组[sql,linkMap,values]
      *          其中：linkMap为该translator的linkNameMap，values为查询参数值
      */
-    protected getDeleteSql(notNeedAlias?: boolean) {
+    protected getDeleteSql(notNeedAlias?: boolean):[string,unknown,unknown[]] {
         if (!this.whereObject && !RelaenManager.fullTableOperation) {
             throw ErrorFactory.getError("0120");
         }
-        let arr: string[] = [];
+        const arr: string[] = [];
         arr.push('DELETE ' + (notNeedAlias ? '' : 't0 ') + ' FROM ' + this.mainEntityCfg.getTableName(true) + ' t0');
 
         //处理主表和join表
-        let joinArr: string[] = [];
-        for (let o of this.linkNameMap) {
+        const joinArr: string[] = [];
+        for (const o of this.linkNameMap) {
             if (!o[1]['from']) {
                 continue;
             }
 
-            let orm = EntityFactory.getEntityConfig(o[1]['entity']);
-            let al1: string = o[1]['alias'];
-            let al2: string = this.linkNameMap.get(o[1]['from'])['alias'];
-            let co: IEntityColumn = o[1]['co'];
+            const orm = EntityFactory.getEntityConfig(o[1]['entity']);
+            const al1: string = o[1]['alias'];
+            const al2: string = this.linkNameMap.get(o[1]['from'])['alias'];
+            const co: EntityColumnOption = o[1]['co'];
             joinArr.push('LEFT JOIN ' + orm.getTableName(true) + ' ' + al1 + ' on ' + al2 + '.' + co.name + '=' + al1 + '.' + co.refName);
         }
 

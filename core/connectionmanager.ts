@@ -1,7 +1,7 @@
 import { RelaenManager } from "./relaenmanager";
 import { Connection } from "./connection";
 import { RelaenThreadLocal } from "./threadlocal";
-import { IConnectionCfg } from "./types";
+import { ConnectionOption, UnknownClass } from "./types";
 import { BaseProvider } from "./baseprovider";
 import { ProviderFactory } from "./providerfactory";
 import { ErrorFactory } from "./errorfactory";
@@ -12,31 +12,38 @@ import { ErrorFactory } from "./errorfactory";
 class ConnectionManager {
     /**
      * 数据库驱动器
-     * @since 0.3.0
      */
     static provider: BaseProvider;
 
     /**
-     * 连接map {threadId:{num:conn创建次数,conn:连接}}
-     * 保证一个异步方法中只能有一个connection
+     * 连接map 
+     * @remarks
+     * 用于保证一个异步方法中只能有一个connection
+     * ```
+     * {
+     *      threadId1:connection1
+     *  }
+     * }
+     * ```
+     * 
      */
-    private static connectionMap: Map<number, any> = new Map();
+    private static connectionMap: Map<number, Connection> = new Map();
 
     /**
      * 初始化连接管理器
-     * @param cfg relaen配置文件的数据库配置对象
+     * @param cfg - relaen配置文件的数据库配置对象
      */
-    public static init(cfg: IConnectionCfg) {
-        let providerClass: any = ProviderFactory.get();
+    public static init(cfg: ConnectionOption) {
+        const providerClass = ProviderFactory.get();
         if (!providerClass) {
             throw ErrorFactory.getError("0300", [RelaenManager.dialect]);
         }
-        this.provider = Reflect.construct(providerClass, [cfg]);
+        this.provider = Reflect.construct(<UnknownClass>providerClass, [cfg]);
     }
 
     /**
      * 获取连接对象
-     * @param id   创建者id，直接使用时，不需要设置该值
+     * @param id -   创建者id，直接使用时，不需要设置该值
      * @returns    connection对象
      */
     public static async createConnection(id?: number): Promise<Connection> {
@@ -64,16 +71,16 @@ class ConnectionManager {
 
     /**
      * 关闭连接
-     * @param connection    数据库连接对象
-     * @param force         是否强制释放
+     * @param connection -    数据库连接对象
+     * @param force -         是否强制释放
      */
-    public static async closeConnection(connection: Connection, force?: boolean): Promise<any> {
+    public static async closeConnection(connection: Connection, force?: boolean): Promise<void> {
         //获取threadId
-        let sid: number = connection.threadId;
+        const sid: number = connection.threadId;
         //非强制释放，检查计数器
         if (!force) {
             if (sid && this.connectionMap.has(sid)) {
-                let conn: Connection = this.connectionMap.get(sid);
+                const conn: Connection = this.connectionMap.get(sid);
                 if (--conn.useCount <= 0) { //最后一个close，需要从map删除
                     force = true;
                 }
@@ -90,9 +97,8 @@ class ConnectionManager {
 
     /**
      * 添加conn到map
-     * @param threadId      线程id 
-     * @param conn          连接对象
-     * @since 0.3.0
+     * @param threadId -      线程id 
+     * @param conn -          连接对象
      */
     public static addConnection(threadId: number, conn: Connection) {
         this.connectionMap.set(threadId, conn);
@@ -100,8 +106,7 @@ class ConnectionManager {
 
     /**
      * 从map移除connection
-     * @param threadId      线程id
-     * @since 0.3.0
+     * @param threadId -      线程id
      */
     public static removeConnection(threadId: number) {
         this.connectionMap.delete(threadId);
@@ -110,7 +115,7 @@ class ConnectionManager {
 
 /**
  * 获取连接对象
- * @param id   创建者id，直接使用时，不需要设置该值
+ * @param id -   创建者id，直接使用时，不需要设置该值
  * @returns    connection对象
  */
 async function getConnection(id?: number): Promise<Connection> {

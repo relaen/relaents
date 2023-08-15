@@ -1,15 +1,14 @@
 import { ErrorFactory } from "./errorfactory";
-import { IEntityCfg, IEntityColumn, IEntityPKey, IEntityRelation } from "./types";
+import { EntityOption, EntityColumnOption, EntityPKey, EntityRelation, UnknownClass } from "./types";
 
 /**
  * 实体工厂中的实体配置对象
- * @since 1.0.0
  */
 export class EntityConfig{
     /**
      * 实体类
      */
-    public entity?: any;
+    public entity?: UnknownClass;
     
     /**
      * 表名
@@ -24,7 +23,7 @@ export class EntityConfig{
     /**
      * 主键
      */
-    public id?: IEntityPKey;
+    public id?: EntityPKey;
 
     /**
      * 版本属性名，用于
@@ -34,20 +33,20 @@ export class EntityConfig{
     /**
      * 字段集合，键为对象属性名(非表字段名)
      */
-    public columns: Map<string, IEntityColumn>;
+    public columns: Map<string, EntityColumnOption>;
 
     /**
      * 关系集合，键为对象属性名(非表字段名)
      */
-    public relations: Map<string, IEntityRelation>;
+    public relations: Map<string, EntityRelation>;
 
     /**
      * 构造器
-     * @param cfg   实体配置对象
+     * @param cfg -   实体配置对象
      */
-    constructor(cfg?:IEntityCfg){
+    constructor(cfg?:EntityOption){
         if(cfg){
-            for(let k of Object.keys(cfg)){
+            for(const k of Object.keys(cfg)){
                 this[k] = cfg[k];
             }
         }
@@ -57,7 +56,7 @@ export class EntityConfig{
 
     /**
      * 设置表名
-     * @param tableName 
+     * @param tableName - 
      */
     public setTableName(tableName:string){
         this.table = tableName;
@@ -65,7 +64,7 @@ export class EntityConfig{
 
     /**
      * 设置schema名
-     * @param schemaName 
+     * @param schemaName - 
      */
     public setSchemaName(schemaName:string){
         this.schema = schemaName;
@@ -73,17 +72,17 @@ export class EntityConfig{
 
     /**
      * 设置实体类
-     * @param entityCls     实体类
+     * @param entityCls -     实体类
      */
-    public setEntityClass(entityCls:any){
+    public setEntityClass(entityCls:UnknownClass){
         this.entity = entityCls;
     }
 
     /**
      * 设置主键对象
-     * @param cfg   主键配置
+     * @param cfg -   主键配置
      */
-    public setId(cfg:IEntityPKey){
+    public setId(cfg:EntityPKey){
         this.id = cfg;
     }
 
@@ -92,7 +91,7 @@ export class EntityConfig{
      * @returns     主键字段对象
      * @throws      错误码 0020
      */
-    public getId():IEntityPKey{
+    public getId():EntityPKey{
         if(!this.id){
             throw ErrorFactory.getError('0020', [this.entity.name]);
         }
@@ -104,13 +103,13 @@ export class EntityConfig{
      * @returns id字段名
      */
     public getIdName():string{
-        let id  = this.getId();
+        const id  = this.getId();
         return this.columns.get(id.name).name;
     }
 
     /**
      * 获取字段对象
-     * @param propName  实体属性名
+     * @param propName -  实体属性名
      * @returns         属性对应字段对象         
      * @throws          错误码0022
      */
@@ -123,7 +122,7 @@ export class EntityConfig{
 
     /**
      * 获取对应表名
-     * @param withSchema    是否返回schema
+     * @param withSchema -    是否返回schema
      * @returns             table name
      */
     public getTableName(withSchema?:boolean):string{
@@ -143,7 +142,7 @@ export class EntityConfig{
 
     /**
      * 属性名是否对应关系字段
-     * @param propName  属性名  
+     * @param propName -  属性名  
      * @returns         true/false
      */
     public hasRelation(propName:string):boolean{
@@ -152,7 +151,7 @@ export class EntityConfig{
 
     /**
      * 属性名是否是字段
-     * @param propName  属性名  
+     * @param propName -  属性名  
      * @returns         true/false
      */
     public hasColumn(propName:string):boolean{
@@ -160,11 +159,11 @@ export class EntityConfig{
     }
     /**
      * 获取关系字段对象
-     * @param propName  实体属性名
+     * @param propName -  实体属性名
      * @returns         实体属性对应关系对象
      * @throws          0023
      */
-    public getRelation(propName:string):IEntityRelation{
+    public getRelation(propName:string):EntityRelation{
         if(!this.relations.has(propName)){
             throw ErrorFactory.getError('0023', [this.entity.name,propName]);
         }
@@ -173,19 +172,19 @@ export class EntityConfig{
 
     /**
      * 添加列
-     * @param colName   属性名 
-     * @param cfg       列配置
+     * @param colName -   属性名 
+     * @param cfg -       列配置
      */
-    public addColumn(colName:string,cfg:IEntityColumn){
+    public addColumn(colName:string,cfg:EntityColumnOption){
         this.columns.set(colName, cfg);
     }
 
     /**
      * 添加关系
-     * @param colName   属性名
-     * @param cfg       关系配置
+     * @param colName -   属性名
+     * @param cfg -       关系配置
      */
-    public addRelation(colName:string,cfg:IEntityRelation){
+    public addRelation(colName:string,cfg:EntityRelation){
         this.relations.set(colName,cfg);
     }
 }

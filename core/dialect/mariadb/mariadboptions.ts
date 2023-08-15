@@ -1,10 +1,9 @@
-import { IConnectionCfg, } from "../../types";
+import { ConnectionOption, } from "../../types";
 
 /**
- * mariadb ConnectionCfg
- * @since 0.4.0
+ * mariadb Connection配置项
  */
-export interface IMariadbConnectionCfg extends IConnectionCfg {
+export interface MariadbConnectionOption extends ConnectionOption {
     /**
      * Enables TLS support. For more information, see the ssl option documentation.
      */

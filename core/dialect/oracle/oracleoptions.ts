@@ -1,10 +1,9 @@
-import { IConnectionCfg } from "../../types";
+import { ConnectionOption } from "../../types";
 
 /**
  * oracle ConnectionCfg
- * @since 0.4.0
  */
-export interface IOracleConnectionCfg extends IConnectionCfg {
+export interface IOracleConnectionCfg extends ConnectionOption {
 
     /**
      * 在建立到数据库的连接时使用的特权

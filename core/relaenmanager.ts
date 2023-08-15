@@ -24,6 +24,7 @@ import { SqliteTransaction } from "./dialect/sqlite/sqlitetransaction";
 import { SqliteTranslator } from "./dialect/sqlite/sqlitetranslator";
 import { MariadbTranslator } from "./dialect/mariadb/mariadbtranslator";
 import { Logger } from "./logger";
+import { ConnectionOption, DialectType } from "./types";
 
 /**
  * relaen 框架管理器
@@ -31,9 +32,8 @@ import { Logger } from "./logger";
 class RelaenManager {
     /**
      * 数据库类型
-     * mysql oracle mssql postgres mariadb sqlite
      */
-    public static dialect: "mysql" | "oracle" | "mssql" | "postgres" | "mariadb" | "sqlite";
+    public static dialect: DialectType;
 
     /**
      * 开启一级cache
@@ -47,29 +47,25 @@ class RelaenManager {
 
     /**
      * 是否文件日志
-     * @since 0.4.0
      */
-    public static fileLog: boolean;
+    public static fileLog: boolean|object;
 
     /**
      * 是否允许全表操作，默认禁止
-     * @since 0.4.0
      */
     public static fullTableOperation: boolean;
 
     /**
      * 初始化
-     * @param cfg   配置文件名或配置对象
+     * @param cfg -   配置文件名或配置对象
      */
-    public static async init(cfg: any) {
-        //TODO 不要字符串解析文件目录了吗
+    public static async init(cfg: ConnectionOption) {
         if (typeof cfg !== 'object') {
             throw ErrorFactory.getError('0001')
         }
-
         this.dialect = cfg.dialect || 'mysql';
         this.debug = cfg.debug || false;
-        this.fileLog = cfg.fileLog || false;
+        this.fileLog = cfg.fileLog;
         this.cache = cfg.cache === false ? false : true;
         this.fullTableOperation = cfg.fullTableOperation === true ? true : false;
         this.initProvider();
@@ -79,7 +75,7 @@ class RelaenManager {
         Logger.init(this.debug, this.fileLog);
         ConnectionManager.init(cfg);
         //加载实体
-        for (let path of cfg.entities) {
+        for (const path of cfg.entities) {
             await EntityFactory.addEntities(path);
         }
     }

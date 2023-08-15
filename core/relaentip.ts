@@ -1,4 +1,4 @@
-var RelaenTip = {
+export const RelaenTip = {
     "0000": "Unknown error",
     "0001": "Relaen config is wrong",
     "0002": "Wrong sql:${0}",
@@ -42,4 +42,3 @@ var RelaenTip = {
     "0408": "Entity '${0}' version can not be found",
     "0409": "Entity '${0}' version only supports number"
 }
-export { RelaenTip }

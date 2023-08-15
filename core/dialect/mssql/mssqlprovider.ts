@@ -10,12 +10,11 @@ import { EntityConfig } from "../../entityconfig";
 
 /**
  * mssql provider
- * @since 0.3.0
  */
 export class MssqlProvider extends BaseProvider {
     /**
      * 构造器
-     * @param cfg   连接配置
+     * @param cfg -   连接配置
      */
     constructor(cfg: IMssqlConnectionCfg) {
         super(cfg);
@@ -60,7 +59,7 @@ export class MssqlProvider extends BaseProvider {
 
     /**
      * 关闭连接
-     * @param connection    数据库连接对象
+     * @param connection -    数据库连接对象
      */
     public async closeConnection(connection: Connection) {
         if (!this.pool) {
@@ -71,17 +70,17 @@ export class MssqlProvider extends BaseProvider {
 
     /**
      * 执行sql语句
-     * @param connection    db connection
-     * @param sql           待执行sql
-     * @param params        参数数组
+     * @param connection -    db connection
+     * @param sql -           待执行sql
+     * @param params -        参数数组
      * @returns             结果(集)
      */
-    public async exec(connection: Connection, sql: string, params?: any[] | object): Promise<any> {
+    public async exec(connection: Connection, sql: string, params?: unknown[] | object): Promise<unknown> {
         let request; //用request作为sql执行器
         //如果事务存在，则通过事务获取request，否则通过connection获取
-        let tr = TransactionManager.get();
+        const tr = TransactionManager.get();
         if (tr) {
-            request = tr.tr.request();
+            request = tr['tr'].request();
         } else {
             request = connection.conn.request();
         }
@@ -96,15 +95,15 @@ export class MssqlProvider extends BaseProvider {
                 request.input(item, params[item]);
             })
         }
-        let result = await request.query(sql);
+        const result = await request.query(sql);
         return result.recordset;
     }
 
     /**
      * 处理记录起始记录索引和记录数
-     * @param sql       sql
-     * @param start     开始索引
-     * @param limit     记录数
+     * @param sql -       sql
+     * @param start -     开始索引
+     * @param limit -     记录数
      * @returns         处理后的sql
      */
     public handleStartAndLimit(sql: string, start?: number, limit?: number): string {
@@ -124,14 +123,14 @@ export class MssqlProvider extends BaseProvider {
         //无order by 则需要添加
         function handleOrder() {
             if (!/order\s+by/i.test(sql)) {
-                let r = /from\s+\w+/i.exec(sql);
+                const r = /from\s+\w+/i.exec(sql);
                 if (!r) {
                     return sql;
                 }
-                let tbl = r[0].replace(/from\s+/i, '');
-                let t0 = /from\s+\w+\s+t0/i.test(sql);
+                const tbl = r[0].replace(/from\s+/i, '');
+                const t0 = /from\s+\w+\s+t0/i.test(sql);
                 let orderBy = '(SELECT NULL)';
-                let cfg: EntityConfig = EntityFactory.getEntityCfgByTblName(tbl);
+                const cfg: EntityConfig = EntityFactory.getEntityCfgByTblName(tbl);
                 if (cfg) {
                     orderBy = (t0 ? 't0.' : '') + cfg.columns.get(cfg.id.name).name + ' ASC';
                 }
@@ -142,40 +141,39 @@ export class MssqlProvider extends BaseProvider {
 
     /**
      * 获取实体sequence，针对主键生成策略为sequence时有效
-     * @param em        entity manager
-     * @param seqName   sequence name
-     * @param schema    schema
+     * @param em -        entity manager
+     * @param seqName -   sequence name
+     * @param schema -    schema
      * @returns         sequence 值
      */
     public async getSequenceValue(em: EntityManager, seqName: string, schema?: string): Promise<number> {
-        let query: NativeQuery = em.createNativeQuery("select next value for " + seqName);
-        let r = await query.getResult();
+        const query: NativeQuery = em.createNativeQuery("select next value for " + seqName);
+        const r = await query.getResult();
         if (r) {
             //转换为整数
-            return parseInt(r);
+            return parseInt(<string>r);
         }
         return 0;
     }
 
     /**
      * 从sql执行结果获取identityid，仅对主键生成策略是identity的有效
-     * @param result    sql执行结果
+     * @param result -    sql执行结果
      * @returns         主键
      */
-    public getIdentityId(result: any): any {
-        if (!result || result.length > 1 || !result[0].insertId) {
+    public getIdentityId(result: unknown[]): number {
+        if (!result || result.length > 1 || !result[0]['insertId']) {
             return;
         }
-        return result[0].insertId;
+        return result[0]['insertId'];
     }
 
     /**
      * 获取加锁sql语句
-     * @param type      锁类型    
-     * @param tables    表名，表锁时使用
-     * @param schema    模式名，表锁时使用
-     * @retruns         加锁sql语句
-     * @since           0.4.0    
+     * @param type -      锁类型    
+     * @param tables -    表名，表锁时使用
+     * @param schema -    模式名，表锁时使用
+     * @returns         加锁sql语句
     */
     public lock(type: ELockType, tables?: string[], schema?: string): string {
         if (schema && tables) {
@@ -197,10 +195,10 @@ export class MssqlProvider extends BaseProvider {
 
     /**
      * 获取新增返回主键字段sql语句
-     * @param idField   主键字段
+     * @param idField -   主键字段
      * @returns         查询主键sql语句
      */
-    public insertReturn(idField: string):string {
+    public insertReturn():string {
         return "SELECT @@IDENTITY AS insertId";
     }
 

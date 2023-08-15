@@ -1,7 +1,6 @@
 /**
  * 日志类
  * 采用log4js进行日志管理
- * @since 1.0.0
  */
 class Logger {
     /**
@@ -11,13 +10,13 @@ class Logger {
 
     /**
      * 初始化日志管理器
-     * @param debug     是否开启dubug模式
-     * @param fileLog   是否开启文件日志
+     * @param debug -     是否开启dubug模式
+     * @param fileLog -   是否开启文件日志，如果为对象，则为自定义日志参数，如果为true，则设置默认参数
      */
-    public static init(debug: boolean, fileLog: boolean) {
+    public static init(debug: boolean, fileLog: boolean|object) {
         if (!debug && !fileLog) return;
-        let appenders = {};
-        let categories = { appenders: [], level: 'info' };
+        const appenders = {};
+        const categories = { appenders: [], level: 'info' };
         const log4js = require('log4js');
 
         // debug模式
@@ -51,10 +50,10 @@ class Logger {
 
     /**
      * 写日志到控制台
-     * @param sql       sql语句
-     * @param params    sql语句参数
+     * @param sql -       sql语句
+     * @param params -    sql语句参数
      */
-    public static log(sql: string, params?: any[] | object) {
+    public static log(sql: string, params?: unknown[] | object) {
         if (this.log4js) {
             this.log4js.info("[Relaen execute sql]:\"" + sql + "\"");
             if (params) {
@@ -65,7 +64,7 @@ class Logger {
 
     /**
      * 写错误消息
-     * @param err   sql执行错误
+     * @param err -   sql执行错误
      */
     public static error(err: Error) {
         if (this.log4js) {

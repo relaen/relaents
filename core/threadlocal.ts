@@ -19,7 +19,7 @@ class RelaenThreadLocal{
      * @returns     新threadId
      */
     public static newThreadId():number{
-        let sid = this.threadId++;
+        const sid = this.threadId++;
         this.localStorage.enterWith(sid);
         return sid;
     }

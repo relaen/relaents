@@ -2,6 +2,10 @@ import { RelaenManager } from "./relaenmanager";
 import { PlaceholderFactory } from "./placeholderfactory";
 
 
+/**
+ * relaen 工具类
+ */
+
 class RelaenUtil {
     /**
      * 对象id计数器
@@ -17,22 +21,22 @@ class RelaenUtil {
 
     /**
      * 处理字段字符串值
-     * @param value     待处理值
+     * @param value -   待处理值
      * @returns         处理后的字符串
      */
-    public static valueToString(value: any): string {
+    public static valueToString(value: unknown): string {
         if (typeof value !== 'string') {
             value = value + '';
         }
         //替换 ' 为 \'
-        value = value.replace(/'/g, "\'");
+        value = (<string>value).replace(/'/g, "\'");
         //两端添加 '
         return "'" + value + "'";
     }
 
     /**
      * 处理参数占位符
-     * @param sql   sql串
+     * @param sql -   sql串
      * @returns     修改后的sql
      */
     public static handlePlaceholder(sql: string): string {
@@ -40,7 +44,7 @@ class RelaenUtil {
         if (['mysql', 'mariadb', 'sqlite'].includes(RelaenManager.dialect)) {
             return sql;
         }
-        let reg = /(\'.*?\?.*?\')|\?/g;
+        const reg = /(\'.*?\?.*?\')|\?/g;
         let index = 0;
 
         return sql.replace(reg, (match, p1) => {
@@ -53,8 +57,8 @@ class RelaenUtil {
 
     /**
      * 字符串转正则表达式
-     * @param str       源串
-     * @param side      匹配的边 1 左边 2右边 3两边
+     * @param str -       源串
+     * @param side -      匹配的边 1 左边 2右边 3两边
      * @returns
      */
     private static toReg(str: string, side?: number): RegExp {

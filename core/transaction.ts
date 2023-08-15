@@ -25,9 +25,9 @@ abstract class Transaction {
 
     /**
      * 构造器
-     * @param conn  真实连接对象
+     * @param conn -  真实连接对象
      */
-    constructor(conn: any) {
+    constructor(conn: Connection) {
         this.conn = conn;
         //每个transaction都新建一个threadId
         this.threadId = RelaenThreadLocal.newThreadId();
@@ -37,14 +37,13 @@ abstract class Transaction {
 
     /**
      * 设置当前事务
-     * @param isolation 事务隔离级
+     * @param isolation - 事务隔离级
      */
-    public async setIsolationLevel(isolationLevel: EIsolationLevel) {
-    }
+    public async setIsolationLevel(isolationLevel: EIsolationLevel) {}
 
     /**
      * 事务开始
-     * @param sqliteTransaction sqlite事务类型
+     * @param sqliteTransaction - sqlite事务类型
      */
     public async begin() {
         Logger.log('Transaction is begun.');
