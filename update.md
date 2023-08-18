@@ -5,6 +5,7 @@
 
 ### 0.3.2
 1. 规范代码
+2. 修改transaction中threadid可能出现的错误
 
 ### 0.3.1
 1. 增加mariadb、sqlite数据库支持；

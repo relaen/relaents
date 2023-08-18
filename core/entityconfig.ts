@@ -176,6 +176,10 @@ export class EntityConfig{
      * @param cfg -       列配置
      */
     public addColumn(colName:string,cfg:EntityColumnOption){
+        //默认nullable为true
+        if(cfg.nullable === undefined){
+            cfg.nullable = true;
+        }
         this.columns.set(colName, cfg);
     }
 

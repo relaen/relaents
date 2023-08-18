@@ -3,7 +3,7 @@ const{AsyncLocalStorage} = require("async_hooks");
 /**
  * 线程存储
  */
-class RelaenThreadLocal{
+export class RelaenThreadLocal{
     /**
      * 线程id
      */
@@ -32,5 +32,3 @@ class RelaenThreadLocal{
         return this.localStorage.getStore();
     }
 }
-
-export{RelaenThreadLocal}

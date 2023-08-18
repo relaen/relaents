@@ -29,8 +29,12 @@ abstract class Transaction {
      */
     constructor(conn: Connection) {
         this.conn = conn;
-        //每个transaction都新建一个threadId
-        this.threadId = RelaenThreadLocal.newThreadId();
+        //如果无threadid，则新建
+        let id = RelaenThreadLocal.getThreadId()
+        if(!id){
+            id = RelaenThreadLocal.newThreadId();
+        }
+        this.threadId = id;
         //加入事务管理器
         TransactionManager.add(this);
     }

@@ -5,6 +5,7 @@ import { ConnectionOption, UnknownClass } from "./types";
 import { BaseProvider } from "./baseprovider";
 import { ProviderFactory } from "./providerfactory";
 import { ErrorFactory } from "./errorfactory";
+import { EntityManagerFactory } from "./entitymanagerfactory";
 
 /**
  * 连接管理器
@@ -25,7 +26,6 @@ class ConnectionManager {
      *  }
      * }
      * ```
-     * 
      */
     private static connectionMap: Map<number, Connection> = new Map();
 
@@ -91,6 +91,13 @@ class ConnectionManager {
         if (force) {
             //清理 connection map
             this.connectionMap.delete(sid);
+            //关闭关联entitymanager
+            if(connection.fromId){
+                const em = EntityManagerFactory.getEntityManager(connection.fromId);
+                if(em){
+                    EntityManagerFactory.closeEntityManager(em,true);
+                } 
+            }
             return await this.provider.closeConnection(connection);
         }
     }

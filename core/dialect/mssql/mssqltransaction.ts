@@ -10,7 +10,7 @@ export class MssqlTransaction extends Transaction {
     /**
      * 实际的transaction
      */
-    private tr: any;
+    private tx: any;
 
     /**
      * 构造器
@@ -19,7 +19,7 @@ export class MssqlTransaction extends Transaction {
     constructor(conn: any) {
         super(conn);
         //创建实际的transaction
-        this.tr = conn.conn.transaction();
+        this.tx = conn.conn.transaction();
     }
 
     /**
@@ -38,7 +38,7 @@ export class MssqlTransaction extends Transaction {
      * 开始事务
      */
     async begin() {
-        await this.tr.begin();
+        await this.tx.begin();
         super.begin();
     }
 
@@ -46,7 +46,7 @@ export class MssqlTransaction extends Transaction {
      * 提交事务
      */
     async commit() {
-        await this.tr.commit();
+        await this.tx.commit();
         super.commit();
     }
 
@@ -54,7 +54,7 @@ export class MssqlTransaction extends Transaction {
      * 事务回滚
      */
     async rollback() {
-        await this.tr.rollback();
+        await this.tx.rollback();
         super.rollback();
     }
 }

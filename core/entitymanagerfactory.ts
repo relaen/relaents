@@ -63,10 +63,10 @@ class EntityManagerFactory {
     public static async closeEntityManager(em: EntityManager, force?: boolean): Promise<void> {
         //获取threadId
         const sid: number = em.connection.threadId;
+        if (!sid || !this.entityManagerMap.has(sid)) {
+            return;
+        }
         if (!force) {
-            if (!sid || !this.entityManagerMap.has(sid)) {
-                return;
-            }
             const o = this.entityManagerMap.get(sid);
             if (--o.num <= 0) {
                 force = true;
@@ -87,6 +87,18 @@ class EntityManagerFactory {
     }
 
     /**
+     * 根据id获取entity manager
+     * @param id    entity manager id
+     * @returns     entity manager
+     */
+    public static getEntityManager(id:number):EntityManager{
+        const obj = this.entityManagerMap.get(id);
+        if(obj){
+            return obj.em;
+        }
+    }
+
+    /**
      * 获取当前entitymanager，使用后不用释放
      * @returns     实体管理器
      */
@@ -96,6 +108,17 @@ class EntityManagerFactory {
             return null;
         }
         return this.entityManagerMap.get(sid).em;
+    }
+
+    
+    /**
+     * 关闭当前entity manager
+     */
+    public static closeCurrentEntityManager(){
+        const em:EntityManager = this.getCurrentEntityManager();
+        if(em){
+            this.closeEntityManager(em);
+        }
     }
 
     /**
