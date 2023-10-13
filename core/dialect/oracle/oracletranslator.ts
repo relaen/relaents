@@ -1,5 +1,5 @@
 import { EntityFactory } from "../../entityfactory";
-import { ErrorFactory } from "../../errorfactory";
+import { RelaenError } from "../../message/error";
 import { RelaenManager } from "../../relaenmanager";
 import { Translator } from "../../translator";
 import { EQueryType, EntityColumnOption } from "../../types";
@@ -30,7 +30,7 @@ export class OracleTranslator extends Translator {
      */
     protected getDeleteSql(notNeedAlias?: boolean):[string,unknown,unknown[]] {
         if (!this.whereObject && !RelaenManager.fullTableOperation) {
-            throw ErrorFactory.getError("0120");
+            throw new RelaenError("0120");
         }
         const arr: string[] = [];
         arr.push('DELETE ' + (notNeedAlias ? '' : 't0 ') + ' FROM ' + this.mainEntityCfg.getTableName(true) + ' t0');
@@ -55,7 +55,6 @@ export class OracleTranslator extends Translator {
         } else {
             arr.push('WHERE ' + this.whereObject[0])
         }
-
         return [arr.join(' '), this.linkNameMap, this.whereObject ? this.whereObject[1] : undefined];
     }
 }

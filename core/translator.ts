@@ -1,7 +1,7 @@
 import { EntityColumnOption, IEntity, EntityRelation, EQueryType, CondValueOption, ELockMode, ELockType } from "./types";
 import { BaseEntity } from "./baseentity";
 import { EntityFactory } from "./entityfactory";
-import { ErrorFactory } from "./errorfactory";
+import { RelaenError } from "./message/error";
 import { RelaenManager } from "./relaenmanager";
 import { ConnectionManager } from "./connectionmanager";
 import { EntityConfig } from "./entityconfig";
@@ -96,7 +96,7 @@ export abstract class Translator {
         this.mainEntityName = entityName;
         this.mainEntityCfg = EntityFactory.getEntityConfig(this.mainEntityName);
         if (!this.mainEntityCfg) {
-            throw ErrorFactory.getError("0010", [this.mainEntityName]);
+            throw new RelaenError("0010", this.mainEntityName);
         }
     }
 
@@ -198,10 +198,10 @@ export abstract class Translator {
             //乐观锁，添加版本version
             if (key === this.mainEntityCfg.version) {
                 if (v === undefined || v === null) {
-                    throw ErrorFactory.getError('0408', [this.mainEntityName]);
+                    throw new RelaenError('0408', this.mainEntityName);
                 }
                 if (typeof v !== 'number') {
-                    throw ErrorFactory.getError('0409', [this.mainEntityName]);
+                    throw new RelaenError('0409', this.mainEntityName);
                 }
                 versionValue = v++;
                 versionField = fn;
@@ -215,7 +215,7 @@ export abstract class Translator {
             values.push(v);
         }
         if (!idValue) {
-            throw ErrorFactory.getError('0021', [this.mainEntityCfg.id.name]);
+            throw new RelaenError('0021', this.mainEntityCfg.id.name);
         }
         arr.push(fields.join(','));
         //where
@@ -245,7 +245,7 @@ export abstract class Translator {
         }
         const idName: string = eo.getIdName();
         if (!idName || !idValue) {
-            throw ErrorFactory.getError("0025");
+            throw new RelaenError("0025");
         }
         return ["DELETE FROM " + eo.getTableName(true) + ' WHERE ' + idName + '=?', idValue];
     }
@@ -270,7 +270,7 @@ export abstract class Translator {
             let fn: string = arr[i].trim();
             const ind1: number = fn.indexOf('(');
             if (ind1 !== -1) { //函数内
-                const foo: string = fn.substr(0, ind1).toLowerCase();
+                const foo: string = fn.substring(0, ind1).toLowerCase();
                 fn = fn.substring(ind1 + 1, fn.length - 1);
                 arr[i] = foo + '(' + this.handleOneField(fn, entityName, null, true) + ')';
             } else { //普通字段
@@ -365,7 +365,7 @@ export abstract class Translator {
 
         const orm: EntityConfig = EntityFactory.getEntityConfig(entityName);
         if (!orm) {
-            throw ErrorFactory.getError('0010', [entityName]);
+            throw new RelaenError('0010', entityName);
         }
 
         for (let i = index; i < arr.length; i++) {
@@ -374,7 +374,7 @@ export abstract class Translator {
             }
             //字段不存在
             if (!orm.columns.has(arr[i])) {
-                throw ErrorFactory.getError('0022', [entityName, arr[i]]);
+                throw new RelaenError('0022', entityName, arr[i]);
             }
             const co = orm.columns.get(arr[i]);
             //外键对象，则直接切换为外键对象
@@ -539,7 +539,7 @@ export abstract class Translator {
             // in,not in,between,not between 字段和值处理
             if (rel === 'IN' || rel === 'NOT IN') {
                 if (!Array.isArray(v)) {
-                    throw ErrorFactory.getError('0404');
+                    throw new RelaenError('0404');
                 }
                 const arr = new Array(v.length).fill('?');
                 placeholder = ' (' + arr.join() + ') ';
@@ -548,7 +548,7 @@ export abstract class Translator {
             }
             if (rel === 'BETWEEN' || rel === 'NOT BETWEEN') {
                 if (!Array.isArray(v) || v.length !== 2) {
-                    throw ErrorFactory.getError('0405');
+                    throw new RelaenError('0405');
                 }
                 placeholder = ' ? AND ?';
             }
@@ -704,7 +704,7 @@ export abstract class Translator {
      */
     protected getDeleteSql(notNeedAlias?: boolean):[string,unknown,unknown[]] {
         if (!this.whereObject && !RelaenManager.fullTableOperation) {
-            throw ErrorFactory.getError('0406');
+            throw new RelaenError('0406');
         }
         const arr: string[] = [];
         arr.push('DELETE ' + (notNeedAlias ? '' : 't0') + ' FROM ' + this.mainEntityCfg.getTableName(true) + ' t0');

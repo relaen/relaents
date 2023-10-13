@@ -1,3 +1,5 @@
+import { RelaenTipManager } from "./message/tipmanager";
+
 /**
  * 日志类
  * 采用log4js进行日志管理
@@ -55,9 +57,9 @@ class Logger {
      */
     public static log(sql: string, params?: unknown[] | object) {
         if (this.log4js) {
-            this.log4js.info("[Relaen execute sql]:\"" + sql + "\"");
+            this.log4js.info(RelaenTipManager.getTip("executeSql") + ":\"" + sql + "\"");
             if (params) {
-                this.log4js.info("Parameters is " + JSON.stringify(params));
+                this.log4js.info(RelaenTipManager.getTip("params") + ":" + JSON.stringify(params));
             }
         }
     }
@@ -68,7 +70,7 @@ class Logger {
      */
     public static error(err: Error) {
         if (this.log4js) {
-            this.log4js.error("[Relaen execute sql] Error:\"" + err.message + "\"");
+            this.log4js.error(RelaenTipManager.getTip("executeSql") + " Error:\"" + err.message + "\"");
         }
     }
 }

@@ -1,6 +1,6 @@
 import { ConnectionManager } from "./connectionmanager";
 import { EntityFactory } from "./entityfactory";
-import { ErrorFactory } from "./errorfactory";
+import { RelaenError } from "./message/error";
 import { TranslatorFactory } from "./translatorfactory";
 import { MssqlTranslator } from "./dialect/mssql/mssqltranslator";
 import { MysqlTranslator } from "./dialect/mysql/mysqltranslator";
@@ -61,7 +61,7 @@ class RelaenManager {
      */
     public static async init(cfg: ConnectionOption) {
         if (typeof cfg !== 'object') {
-            throw ErrorFactory.getError('0001')
+            throw new RelaenError('0001')
         }
         this.dialect = cfg.dialect || 'mysql';
         this.debug = cfg.debug || false;
@@ -124,12 +124,12 @@ class RelaenManager {
      */
     private static initTransaction() {
         //添加到transaction工厂
-        TransactionFactory.add('mssql', MssqlTransaction);
-        TransactionFactory.add('mysql', MysqlTransaction);
-        TransactionFactory.add('oracle', OracleTransaction);
-        TransactionFactory.add('postgres', PostgresTransaction);
-        TransactionFactory.add('mariadb', MariadbTransaction);
-        TransactionFactory.add('sqlite', SqliteTransaction);
+        TransactionFactory.addClass('mssql', MssqlTransaction);
+        TransactionFactory.addClass('mysql', MysqlTransaction);
+        TransactionFactory.addClass('oracle', OracleTransaction);
+        TransactionFactory.addClass('postgres', PostgresTransaction);
+        TransactionFactory.addClass('mariadb', MariadbTransaction);
+        TransactionFactory.addClass('sqlite', SqliteTransaction);
     }
 }
 

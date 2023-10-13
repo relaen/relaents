@@ -126,7 +126,7 @@ relaen提供了[relaen cli](https://www.npmjs.com/package/relaen-cli)工具，�
           "username": "root",	 //用户名
           "password": "root",	//密码
           "database": "relaen",	//数据库名
-          "entities": ["entity/*.ts"],	//实体文件配置，为编译后js地址
+          "entities": ["entity/*.js"],	//实体文件配置，为编译后js地址
           "cache": true,	//开启以及缓存
           "debug": true	 //是否调试模式
       }

@@ -77,7 +77,7 @@ class NativeQuery extends Query {
         if (!this.execSql) {
             return null;
         }
-        const isSelect: boolean = this.execSql.trim().substr(0, 6).toLowerCase() === 'select' ? true : false;
+        const isSelect: boolean = /^\s*select/i.test(this.execSql);
         //为查询执行
         if (isSelect) {
             const results = <unknown[]>await this.getResultList(0, 1);

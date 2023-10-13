@@ -4,9 +4,9 @@ import { BaseProvider } from "../../baseprovider";
 import { EntityFactory } from "../../entityfactory";
 import { EntityManager } from "../../entitymanager";
 import { NativeQuery } from "../../nativequery";
-import { TransactionManager } from "../../transactionmanager";
 import { IMssqlConnectionCfg } from "./mssqloptions";
 import { EntityConfig } from "../../entityconfig";
+import { TransactionFactory } from "../../transactionfactory";
 
 /**
  * mssql provider
@@ -42,7 +42,6 @@ export class MssqlProvider extends BaseProvider {
                 }
             }
             this.pool = new this.dbMdl.ConnectionPool(this.options);
-            console.log(this.pool.totalCount);
         }
     }
 
@@ -70,17 +69,17 @@ export class MssqlProvider extends BaseProvider {
 
     /**
      * 执行sql语句
-     * @param connection -    db connection
-     * @param sql -           待执行sql
-     * @param params -        参数数组
+     * @param connection -  db connection
+     * @param sql -         待执行sql
+     * @param params -      参数数组
      * @returns             结果(集)
      */
     public async exec(connection: Connection, sql: string, params?: unknown[] | object): Promise<unknown> {
         let request; //用request作为sql执行器
         //如果事务存在，则通过事务获取request，否则通过connection获取
-        const tr = TransactionManager.get();
-        if (tr) {
-            request = tr['tr'].request();
+        const tx = TransactionFactory.get();
+        if (tx) {
+            request = tx['tx'].request();
         } else {
             request = connection.conn.request();
         }
@@ -101,9 +100,9 @@ export class MssqlProvider extends BaseProvider {
 
     /**
      * 处理记录起始记录索引和记录数
-     * @param sql -       sql
-     * @param start -     开始索引
-     * @param limit -     记录数
+     * @param sql -     sql
+     * @param start -   开始索引
+     * @param limit -   记录数
      * @returns         处理后的sql
      */
     public handleStartAndLimit(sql: string, start?: number, limit?: number): string {
@@ -129,10 +128,12 @@ export class MssqlProvider extends BaseProvider {
                 }
                 const tbl = r[0].replace(/from\s+/i, '');
                 const t0 = /from\s+\w+\s+t0/i.test(sql);
-                let orderBy = '(SELECT NULL)';
+                let orderBy;
                 const cfg: EntityConfig = EntityFactory.getEntityCfgByTblName(tbl);
                 if (cfg) {
                     orderBy = (t0 ? 't0.' : '') + cfg.columns.get(cfg.id.name).name + ' ASC';
+                }else{
+                    orderBy = '(SELECT NULL)';
                 }
                 sql += ' ORDER BY ' + orderBy;
             }
@@ -147,7 +148,7 @@ export class MssqlProvider extends BaseProvider {
      * @returns         sequence 值
      */
     public async getSequenceValue(em: EntityManager, seqName: string, schema?: string): Promise<number> {
-        const query: NativeQuery = em.createNativeQuery("select next value for " + seqName);
+        const query: NativeQuery = em.createNativeQuery("SELECT NEXT VALUE FOR " + seqName);
         const r = await query.getResult();
         if (r) {
             //转换为整数

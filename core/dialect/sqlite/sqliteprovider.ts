@@ -71,9 +71,14 @@ export class SqliteProvider extends BaseProvider {
      */
     public async exec(connection: Connection, sql: string, params?: unknown[] | object): Promise<unknown> {
         return new Promise(async (resolve, reject) => {
+            // sql类型:0 非特殊处理  1 insert  2 begin immediate
+            let sqlType=0;
             // insert into 使用run
-            const isInsertQuery = sql.substr(0, 11).toLocaleLowerCase() === 'insert into';
-            const isBeginImmediate = sql.substr(0, 15).toLocaleLowerCase() === 'begin immediate';
+            if(/^\s*INSERT\s+INTO/i.test(sql)){
+                sqlType = 1;
+            }else if(/^\s*BEGIN\s+IMMEDIATE/i.test(sql)){
+                sqlType = 2;
+            }
             const busyErrorRetry = this.busyErrorRetry;
             const busyTimeout = this.busyTimeout;
             let retryNum = 0;
@@ -81,7 +86,7 @@ export class SqliteProvider extends BaseProvider {
 
             // 执行函数
             async function execute() {
-                if (isInsertQuery || isBeginImmediate) {
+                if (sqlType) {
                     connection.conn.run(sql, params, handler);
                 } else {
                     connection.conn.all(sql, params, handler);
@@ -102,7 +107,7 @@ export class SqliteProvider extends BaseProvider {
                     return reject(err);
                 }
                 // 结果返回
-                if (isInsertQuery) {
+                if (sqlType === 1) {
                     resolve(this);
                 } else {
                     resolve(rows);
@@ -121,9 +126,9 @@ export class SqliteProvider extends BaseProvider {
     public handleStartAndLimit(sql: string, start?: number, limit?: number): string {
         if (Number.isInteger(limit) && limit > 0) {
             if (Number.isInteger(start) && start >= 0) {
-                return sql + ' limit ' + limit + ' offset ' + start;
+                return sql + ' LIMIT ' + limit + ' OFFSET ' + start;
             }
-            return sql + ' limit ' + limit;
+            return sql + ' LIMIT ' + limit;
         }
         return sql;
     }

@@ -1,5 +1,5 @@
 import { Connection } from "../../connection";
-import { ErrorFactory } from "../../errorfactory";
+import { RelaenError } from "../../message/error";
 import { BaseProvider } from "../../baseprovider";
 import { MariadbConnectionOption } from "./mariadboptions";
 import { ELockType } from "../../types";
@@ -37,7 +37,6 @@ export class MariadbProvider extends BaseProvider {
             if (!cfg.options && cfg.pool) {
                 this.options['connectionLimit'] = cfg.pool.max;
                 this.options['idleTimeout'] = cfg.idleTimeout;
-                //TODO 检查参数对应
                 this.options['minimumIdle'] = cfg.pool.min;
             }
             this.pool = this.dbMdl.createPool(this.options);
@@ -66,7 +65,7 @@ export class MariadbProvider extends BaseProvider {
             try {
                 await connection.conn.end();
             } catch (err) {
-                ErrorFactory.getError('0202', [err]);
+                new RelaenError('0202', err);
             }
         }
     }

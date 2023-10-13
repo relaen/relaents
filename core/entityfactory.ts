@@ -1,5 +1,5 @@
 import { EntityConfig } from "./entityconfig";
-import { ErrorFactory } from "./errorfactory";
+import { RelaenError } from "./message/error";
 import { EntityPKey, EntityColumnOption, EntityRelation, IEntity, UnknownClass } from "./types";
 
 /**
@@ -50,7 +50,7 @@ class EntityFactory {
         }
         // 生成器类型为table无keyName或sequence无seqName
         if (cfg.generator === 'table' && !cfg.keyName || cfg.generator === 'sequence' && !cfg.seqName) {
-            throw ErrorFactory.getError("0050", [entityName]);
+            throw new RelaenError("0050", entityName);
         }
         const ecfg: EntityConfig = this.entityConfigs.get(entityName);
         ecfg.setId(cfg);
@@ -64,11 +64,6 @@ class EntityFactory {
     public static addVersion(entityName: string, propName: string){
         this.checkAndNew(entityName);
         const ecfg: EntityConfig = this.entityConfigs.get(entityName);
-        //TODO注释代码何意
-        // let column:EntityColumnOption = ecfg.getColumn(propName);
-        // if(column){  //选择时，不显示
-        //     column.select = false;
-        // }
         ecfg.version = propName;
     }
 

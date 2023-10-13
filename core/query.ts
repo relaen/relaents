@@ -3,7 +3,7 @@ import { BaseEntity } from "./baseentity";
 import { SqlExecutor } from "./sqlexecutor";
 import { EntityFactory } from "./entityfactory";
 import { IEntity, EEntityState, EQueryType, EntityRelation, ELockMode } from "./types";
-import { ErrorFactory } from "./errorfactory";
+import { RelaenError } from "./message/error";
 import { EntityManagerFactory } from "./entitymanagerfactory";
 import { Translator } from "./translator";
 import { TranslatorFactory } from "./translatorfactory";
@@ -65,7 +65,7 @@ class Query {
      */
     constructor(em: EntityManager, entityClassName?: string) {
         if (entityClassName && !EntityFactory.getEntityConfig(entityClassName)) {
-            throw ErrorFactory.getError("0020", [entityClassName]);
+            throw new RelaenError("0020", entityClassName);
         }
         this.entityManager = em;
         this.entityClassName = entityClassName;

@@ -38,7 +38,7 @@ export class MssqlTransaction extends Transaction {
      * 开始事务
      */
     async begin() {
-        await this.tx.begin();
+        await this.tx.begin(this.isolation);
         super.begin();
     }
 

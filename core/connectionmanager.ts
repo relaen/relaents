@@ -4,7 +4,7 @@ import { RelaenThreadLocal } from "./threadlocal";
 import { ConnectionOption, UnknownClass } from "./types";
 import { BaseProvider } from "./baseprovider";
 import { ProviderFactory } from "./providerfactory";
-import { ErrorFactory } from "./errorfactory";
+import { RelaenError } from "./message/error";
 import { EntityManagerFactory } from "./entitymanagerfactory";
 
 /**
@@ -36,7 +36,7 @@ class ConnectionManager {
     public static init(cfg: ConnectionOption) {
         const providerClass = ProviderFactory.get();
         if (!providerClass) {
-            throw ErrorFactory.getError("0300", [RelaenManager.dialect]);
+            throw new RelaenError("0300", RelaenManager.dialect);
         }
         this.provider = Reflect.construct(<UnknownClass>providerClass, [cfg]);
     }

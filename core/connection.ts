@@ -1,7 +1,6 @@
 import { Transaction } from "./transaction";
 import { ConnectionManager } from "./connectionmanager";
 import { TransactionFactory } from "./transactionfactory";
-import { UnknownClass } from "./types";
 /**
  * 数据库连接类
  */
@@ -52,7 +51,7 @@ class Connection {
 
     /**
      * 设置实际的connection
-     * @param conn -      实际的连接
+     * @param conn -    实际的连接
      */
     public setConn(conn: any): void {
         if (!conn) {
@@ -64,7 +63,7 @@ class Connection {
 
     /**
      * 关闭连接
-     * @param force -     是否强制关闭
+     * @param force -   是否强制关闭
      */
     public async close(force?: boolean): Promise<void> {
         await ConnectionManager.closeConnection(this, force);
@@ -74,8 +73,7 @@ class Connection {
      * 创建事务对象
      */
     public createTransaction(): Transaction {
-        const trClass = TransactionFactory.get();
-        return trClass ? Reflect.construct(<UnknownClass>trClass, [this]) : null;
+        return  TransactionFactory.get(this);
     }
 }
 

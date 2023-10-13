@@ -2,7 +2,7 @@ import { EntityRelation, ERelationType, EntityColumnOption, IEntity } from "./ty
 import { EntityFactory } from "./entityfactory";
 import { EntityManager } from "./entitymanager";
 import { getEntityManager } from "./entitymanagerfactory";
-import { ErrorFactory } from "./errorfactory";
+import { RelaenError } from "./message/error";
 import { NativeQuery } from "./nativequery";
 import { Logger } from "./logger";
 import { EntityConfig } from "./entityconfig";
@@ -19,7 +19,7 @@ class EntityProxy {
      */
     public static async get(entity: IEntity, propName: string): Promise<any> {
         if (!EntityFactory.getIdValue(entity)) {
-            Logger.error(ErrorFactory.getError("0105"));
+            Logger.error(new RelaenError("0105"));
             return null;
         }
 
@@ -69,13 +69,13 @@ class EntityProxy {
                 }
             }else{ //被引用
                 if (!eo1) {
-                    throw ErrorFactory.getError('0020', [rel.entity]);
+                    throw new RelaenError('0020', rel.entity);
                 }
              if((rel.type === ERelationType.OneToMany || rel.type === ERelationType.OneToOne)) {  // OneToOne OneToMany
                     //通过mappedby找到引用属性
                     const column1: EntityColumnOption = eo1.columns.get(rel.mappedBy);
                     if (!column1) {
-                        throw ErrorFactory.getError('0022', [rel.entity, column1]);
+                        throw new RelaenError('0022', rel.entity, column1);
                     }
                     
                     const sql: string = "SELECT * FROM " + eo1.getTableName(true) + " WHERE " + column1.name + " = ?";

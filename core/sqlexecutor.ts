@@ -2,6 +2,8 @@ import { Logger } from "./logger";
 import { EntityManager } from "./entitymanager";
 import { RelaenUtil } from "./relaenutil";
 import { ConnectionManager } from "./connectionmanager";
+import { RelaenError } from "./message/error";
+import { RelaenTipManager } from "./message/tipmanager";
 
 /**
  * sql执行器
@@ -22,16 +24,19 @@ export class SqlExecutor {
         }
         sql = sql.trim();
         //sql类型：0:查询 1:增删改
-        const sqlType: number = ['insert', 'update', 'delete'].includes(sql.substr(0, 6).toLowerCase()) ? 1 : 0;
-
+        const type = sql.substring(0, 6).toLowerCase();
+        if(!['select','insert', 'update', 'delete'].includes(type)){
+            throw new RelaenError('0002',sql);
+        }
+        
         //缓存key，构建方式：sql_paramsvaluestring
         let key: string;
         //结果
         let result;
-        if (sqlType === 0) {  //查询可从缓存中获取
+        if (type === 'select') {  //查询可从缓存中获取
             //sql语句末加行锁，分页加在行锁语句前（待优化加锁分页执行顺序）
-            if (sql.substr(-10).toLowerCase() === 'for update') {
-                sql = ConnectionManager.provider.handleStartAndLimit(sql.substr(0, sql.length - 11), start, limit) + ' FOR UPDATE';
+            if (sql.substring(sql.length-10).toLowerCase() === 'for update') {
+                sql = ConnectionManager.provider.handleStartAndLimit(sql.substring(0, sql.length - 11), start, limit) + ' FOR UPDATE';
             } else {
                 sql = ConnectionManager.provider.handleStartAndLimit(sql, start, limit);
             }
@@ -55,18 +60,17 @@ export class SqlExecutor {
         try {
             result = await ConnectionManager.provider.exec(em.connection, sql, params);
             //执行增删改，则清空cache
-            if (sqlType === 1) {
+            if (type !== 'select') {
                 em.clearCache();
             } else {  //添加到缓存
                 em.addToCache(key, result);
             }
         } catch (e) {
             Logger.error(e);
-            throw ("[Relaen execute sql] Error:\"" + e.message + "\"");
+            throw new RelaenError(e.message);
         }
         
-        // Logger.log("[Relaen execute sql]:\"OK\"");
-        Logger.log("OK");
+        Logger.log(RelaenTipManager.getTip('ok'));
         return result;
     }
 }

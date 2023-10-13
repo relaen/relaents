@@ -80,7 +80,7 @@ export class OracleProvider extends BaseProvider {
      */
     public async exec(connection: Connection, sql: string, params?: unknown[]): Promise<unknown> {
         // 默认自动提交
-        const autoCommit = connection.autoCommit === false ? false : true;
+        const autoCommit = connection.autoCommit !== false;
         params = params || [];
         const r = await connection.conn.execute(sql, params, { autoCommit: autoCommit, outFormat: 4002 });
         if (r.rows) {
@@ -91,9 +91,9 @@ export class OracleProvider extends BaseProvider {
 
     /**
      * 处理记录起始记录索引和记录数
-     * @param sql -       sql
-     * @param start -     开始索引
-     * @param limit -     记录数
+     * @param sql -     sql
+     * @param start -   开始索引
+     * @param limit -   记录数
      * @returns         处理后的sql
      */
     public handleStartAndLimit(sql: string, start?: number, limit?: number): string {
@@ -111,15 +111,15 @@ export class OracleProvider extends BaseProvider {
 
     /**
      * 获取实体sequence，针对主键生成策略为sequence时有效
-     * @param em -        entity manager
-     * @param seqName -   sequence name
-     * @param schema -    schema
+     * @param em -      entity manager
+     * @param seqName - sequence name
+     * @param schema -  schema
      * @returns         sequence 值
      */
     public async getSequenceValue(em: EntityManager, seqName: string, schema?: string): Promise<number> {
         // 需要指定sequence所属schema
         const query: NativeQuery = em.createNativeQuery(
-            "select " + (schema ? schema + "." + seqName : seqName) + ".nextval from dual"
+            "SELECT " + (schema ? schema + "." + seqName : seqName) + ".NEXTVAL FROM DUAL"
         );
         const r = await query.getResultList(-1, -1);
         if (r[0].NEXTVAL) {
@@ -131,9 +131,9 @@ export class OracleProvider extends BaseProvider {
 
     /**
      * 获取加锁sql语句
-     * @param type -      锁类型    
-     * @param tables -    表名，表锁时使用
-     * @param schema -    模式名，表锁时使用
+     * @param type -    锁类型    
+     * @param tables -  表名，表锁时使用
+     * @param schema -  模式名，表锁时使用
      * @returns         加锁sql语句
      */
     public lock(type: ELockType, tables?: string[], schema?: string): string {
@@ -143,7 +143,7 @@ export class OracleProvider extends BaseProvider {
             });
         }
         switch (type) {
-            //表连接为 ',' 逗号
+            //表连接为','
             case 'table_read':
                 return "LOCK TABLE " + tables.join() + " IN SHARE MODE";
             case 'table_write':

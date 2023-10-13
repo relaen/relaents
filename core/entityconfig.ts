@@ -1,4 +1,4 @@
-import { ErrorFactory } from "./errorfactory";
+import { RelaenError } from "./message/error";
 import { EntityOption, EntityColumnOption, EntityPKey, EntityRelation, UnknownClass } from "./types";
 
 /**
@@ -93,7 +93,7 @@ export class EntityConfig{
      */
     public getId():EntityPKey{
         if(!this.id){
-            throw ErrorFactory.getError('0020', [this.entity.name]);
+            throw new RelaenError('0020', this.entity.name);
         }
         return this.id;
     }
@@ -115,7 +115,7 @@ export class EntityConfig{
      */
      public getColumn(propName:string){
         if(!this.columns.has(propName)){
-            throw ErrorFactory.getError('0022', [this.entity.name,propName]);
+            throw new RelaenError('0022', this.entity.name,propName);
         }
         return this.columns.get(propName);
     }
@@ -165,7 +165,7 @@ export class EntityConfig{
      */
     public getRelation(propName:string):EntityRelation{
         if(!this.relations.has(propName)){
-            throw ErrorFactory.getError('0023', [this.entity.name,propName]);
+            throw new RelaenError('0023', this.entity.name,propName);
         }
         return this.relations.get(propName);
     }

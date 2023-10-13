@@ -104,7 +104,7 @@ export class PostgresProvider extends BaseProvider {
     public async getSequenceValue(em: EntityManager, seqName: string, schema?: string): Promise<number> {
         // 需要指定sequence所属schema
         const query: NativeQuery = em.createNativeQuery(
-            "select nextval('" + (schema ? schema + "." + seqName : seqName) + "')"
+            "SELECT NEXTVAL('" + (schema ? schema + "." + seqName : seqName) + "')"
         );
         const r = await query.getResult();
         if (r) {

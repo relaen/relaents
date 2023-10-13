@@ -1,13 +1,14 @@
 import { Connection } from "./connection";
 import { Logger } from "./logger";
+import { RelaenTipManager } from "./message/tipmanager";
 import { RelaenThreadLocal } from "./threadlocal";
-import { TransactionManager } from "./transactionmanager";
+import { TransactionFactory } from "./transactionfactory";
 import { EIsolationLevel } from "./types";
 
 /**
  * 事务基类
  */
-abstract class Transaction {
+export abstract class Transaction {
     /**
      * 连接对象
      */
@@ -30,28 +31,22 @@ abstract class Transaction {
     constructor(conn: Connection) {
         this.conn = conn;
         //如果无threadid，则新建
-        let id = RelaenThreadLocal.getThreadId()
-        if(!id){
-            id = RelaenThreadLocal.newThreadId();
-        }
-        this.threadId = id;
-        //加入事务管理器
-        TransactionManager.add(this);
+        this.threadId = RelaenThreadLocal.getThreadId()||RelaenThreadLocal.newThreadId();
     }
 
     /**
      * 设置当前事务
-     * @param isolation - 事务隔离级
+     * @param isolationLevel - 事务隔离级
      */
-    public async setIsolationLevel(isolationLevel: EIsolationLevel) {}
+    public async setIsolationLevel(isolationLevel: EIsolationLevel) {
+        this.isolation = isolationLevel
+    }
 
     /**
      * 事务开始
-     * @param sqliteTransaction - sqlite事务类型
      */
     public async begin() {
-        Logger.log('Transaction is begun.');
-        
+        Logger.log(RelaenTipManager.getTip('txbegin'));
     }
 
     /**
@@ -59,8 +54,8 @@ abstract class Transaction {
      */
     public async commit() {
         //从事务管理器移除
-        TransactionManager.remove(this.threadId);
-        Logger.log('Transaction is committed.');
+        TransactionFactory.remove();
+        Logger.log(RelaenTipManager.getTip('txcommit'));
     }
 
     /**
@@ -68,9 +63,7 @@ abstract class Transaction {
      */
     public async rollback() {
         //从事务管理器移除
-        TransactionManager.remove(this.threadId);
-        Logger.log('Transaction is rolled back.');
+        TransactionFactory.remove();
+        Logger.log(RelaenTipManager.getTip('txrollback'));
     }
 }
-
-export { Transaction }

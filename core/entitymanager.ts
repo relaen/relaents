@@ -3,7 +3,7 @@ import { SqlExecutor } from "./sqlexecutor";
 import { EntityFactory } from "./entityfactory";
 import { Query } from "./query";
 import { Connection } from "./connection";
-import { ErrorFactory } from "./errorfactory";
+import { RelaenError } from "./message/error";
 import { NativeQuery } from "./nativequery";
 import { EntityManagerFactory } from "./entitymanagerfactory";
 import { BaseEntity } from "./baseentity";
@@ -132,7 +132,7 @@ class EntityManager {
     public async find(entityClassName: string, id: unknown): Promise<IEntity> {
         const eo: EntityConfig = EntityFactory.getEntityConfig(entityClassName);
         if (!eo) {
-            throw ErrorFactory.getError("0010", [entityClassName]);
+            throw new RelaenError("0010", entityClassName);
         }
         const sql = "SELECT " + this.getSelectFields(eo, true) + " FROM " + eo.getTableName(true) + " WHERE " + eo.getIdName() + '=?';
         const query = this.createNativeQuery(sql, entityClassName);
@@ -181,7 +181,7 @@ class EntityManager {
     public async findMany(entityClassName: string, params?: object, start?: number, limit?: number, order?: object): Promise<unknown[]> {
         const orm: EntityConfig = EntityFactory.getEntityConfig(entityClassName);
         if (!orm) {
-            throw ErrorFactory.getError("0010", [entityClassName]);
+            throw new RelaenError("0010", entityClassName);
         }
         const query: Query = this.createQuery(entityClassName);
         return <unknown[]>await query.select(this.getSelectFields(orm))
@@ -304,7 +304,7 @@ class EntityManager {
                 value = await ConnectionManager.provider.getSequenceValue(this, idCfg.seqName, eo.schema);
                 //抛出异常
                 if (!value) {
-                    throw ErrorFactory.getError("0051", [(eo.schema || '') + idCfg.seqName]);
+                    throw new RelaenError("0051", (eo.schema || '') + idCfg.seqName);
                 }
                 break;
             case 'table':
@@ -344,7 +344,7 @@ class EntityManager {
                 await tx.commit();
                 // 没有查询到主键抛错
                 if (!value) {
-                    throw ErrorFactory.getError('0401', [entity.constructor.name]);
+                    throw new RelaenError('0401', entity.constructor.name);
                 }
                 break;
             case 'uuid':
@@ -368,7 +368,7 @@ class EntityManager {
         const className: string = entity.constructor.name;
         const eo: EntityConfig = EntityFactory.getEntityConfig(className);
         if (!eo) {
-            throw ErrorFactory.getError("0010", [className]);
+            throw new RelaenError("0010", className);
         }
         for (const key of eo.columns) {
             const fo: EntityColumnOption = key[1];
@@ -384,12 +384,12 @@ class EntityManager {
             if ((v === null || v === undefined)) {
                 if (!ignoreUndefinedValue && !fo.nullable) {//null 判断
                     if (key[0] !== eo.id.name) {//如果与主键不同且不能为空，则抛出异常 
-                        throw ErrorFactory.getError('0021', [key[0]]);
+                        throw new RelaenError('0021', key[0]);
                     }
                 }
                 entity[key[0]] = null;
             } else if (key[1].length && v.length > key[1].length) { //长度检测
-                throw ErrorFactory.getError('0024', [className, key[0], key[1].length]);
+                throw new RelaenError('0024', className, key[0], key[1].length);
             }
         }
         return true;

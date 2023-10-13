@@ -1,5 +1,5 @@
 import { Connection } from "../../connection";
-import { ErrorFactory } from "../../errorfactory";
+import { RelaenError } from "../../message/error";
 import { BaseProvider } from "../../baseprovider";
 import { IMysqlConnectionCfg } from "./mysqloptions";
 import { ELockType } from "../../types";
@@ -80,7 +80,7 @@ export class MysqlProvider extends BaseProvider {
             return new Promise((resolve, reject) => {
                 connection.conn.end(err => {
                     if (err) {
-                        return reject(ErrorFactory.getError('0202', [err]));
+                        return reject(new RelaenError('0202', err));
                     }
                     resolve(null);
                 });
@@ -119,9 +119,9 @@ export class MysqlProvider extends BaseProvider {
 
     /**
      * 处理记录起始记录索引和记录数
-     * @param sql -       sql
-     * @param start -     开始索引
-     * @param limit -     记录数
+     * @param sql -     sql
+     * @param start -   开始索引
+     * @param limit -   记录数
      * @returns         处理后的sql
      */
     public handleStartAndLimit(sql: string, start?: number, limit?: number): string {

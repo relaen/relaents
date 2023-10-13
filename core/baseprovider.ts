@@ -46,9 +46,9 @@ export abstract class BaseProvider {
 
     /**
      * 执行sql语句
-     * @param connection -    数据库连接
-     * @param sql -           sql语句
-     * @param params -        参数
+     * @param connection -  数据库连接
+     * @param sql -         sql语句
+     * @param params -      参数
      * @returns             结果(集)
      */
     public async exec(connection: Connection, sql: string, params?: unknown[] | object): Promise<unknown> {

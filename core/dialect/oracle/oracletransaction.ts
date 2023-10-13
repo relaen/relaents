@@ -1,5 +1,5 @@
 import { ConnectionManager } from "../../connectionmanager";
-import { ErrorFactory } from "../../errorfactory";
+import { RelaenError } from "../../message/error";
 import { Logger } from "../../logger";
 import { Transaction } from "../../transaction";
 import { EIsolationLevel } from "../../types";
@@ -20,7 +20,7 @@ export class OracleTransaction extends Transaction {
             await ConnectionManager.provider.exec(this.conn, sql);
             Logger.log(sql);
         } else if (isolationLevel === 'READ UNCOMMITTED' || isolationLevel === 'REPEATABLE READ') {
-            throw ErrorFactory.getError('0407');
+            throw new RelaenError('0407');
         }
     }
 
