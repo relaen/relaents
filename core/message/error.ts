@@ -23,7 +23,7 @@ export class RelaenError extends Error {
         if(/^\d+$/.test(code)){
             const msg = RelaenTipManager.getError(code,...args);
             this.code = <string>code;
-            this.message = `Error:"${code}",message is:"${msg}"`;
+            this.message = `${RelaenTipManager.getTip('error')}:"${code}",${RelaenTipManager.getTip('message')}:"${msg}"`;
         }else{
             this.message = code;
         }

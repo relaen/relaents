@@ -30,7 +30,7 @@ export class OracleTranslator extends Translator {
      */
     protected getDeleteSql(notNeedAlias?: boolean):[string,unknown,unknown[]] {
         if (!this.whereObject && !RelaenManager.fullTableOperation) {
-            throw new RelaenError("0120");
+            throw new RelaenError("0103");
         }
         const arr: string[] = [];
         arr.push('DELETE ' + (notNeedAlias ? '' : 't0 ') + ' FROM ' + this.mainEntityCfg.getTableName(true) + ' t0');

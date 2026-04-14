@@ -1,9 +1,25 @@
-import { RelaenTip } from "../relaentip";
-
+import LocaleEn from "../locales/relaentip_en";
+import LocaleZh from "../locales/relaentip_zh";
 /**
  * 获取体胖信息
  */
 export class RelaenTipManager{
+    /**
+     * 消息对象
+     */
+    private static tip:{error:Record<string,string>,tip:Record<string,string>};
+    /**
+     * 初始化消息
+     * @param lang - 语言，支持zh和en，默认en
+     */
+    public static async init(lang?:string){
+        switch(lang){
+            case 'zh':
+                this.tip = LocaleZh;
+            default:
+                this.tip = LocaleEn;
+        }
+    }
     /**
      * 获取消息
      * @param type -    类型
@@ -11,11 +27,11 @@ export class RelaenTipManager{
      * @param params -  参数
      * @returns         提示信息
      */
-    private static get(type:'tip'|'error',code:string,...params):string{
+    private static get(type:'tip'|'error',code:string,...params:string[]):string{
         if(params.length>0){
-            return this.compileString(RelaenTip[type][code], ...params);
+            return this.compileString(this.tip[type][code], ...params);
         }
-        return RelaenTip[type][code];
+        return this.tip[type][code];
     }
 
     /**
@@ -24,7 +40,7 @@ export class RelaenTipManager{
      * @param params -  参数
      * @returns         提示信息
      */
-    public static getTip(code:string, ...params):string{
+    public static getTip(code:string, ...params:string[]):string{
         return this.get('tip',code,...params);
     }
 
@@ -34,7 +50,7 @@ export class RelaenTipManager{
      * @param params -  参数
      * @returns         异常信息
      */
-    public static getError(code:string, ...params):string{
+    public static getError(code:string, ...params:string[]):string{
         return this.get('error',code,...params) || this.get('error','0000');
     }
 
@@ -44,7 +60,7 @@ export class RelaenTipManager{
      * @param params    参数数组
      * @returns 
      */
-    private static compileString(src: string, ...params): string {
+    private static compileString(src: string, ...params:string[]): string {
         if(!params || params.length === 0){
             return src;
         }

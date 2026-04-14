@@ -1,9 +1,9 @@
 import { ConnectionOption } from "../../types";
 
 /**
- * mysql ConnectionCfg
+ * mysql 配置项
  */
-export interface IMysqlConnectionCfg extends ConnectionOption {
+export type MysqlOption = {
     /**
      * 带有 ssl 参数的对象或包含 ssl 配置文件名称的字符串
      * object with ssl parameters or a string containing name of ssl profile.
@@ -52,4 +52,4 @@ export interface IMysqlConnectionCfg extends ConnectionOption {
      * For more information, check https://www.npmjs.com/package/mysql#connection-flags.
      */
     readonly flags: string;
-}
+} & ConnectionOption;

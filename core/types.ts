@@ -95,6 +95,10 @@ export type ConnectionOption = {
     fileLog?:object|boolean;
 
     /**
+     * 语言，支持中文（zh），英文（en），默认en
+     */
+    lang?:string;
+    /**
      * 各dialect npm原生配置，配置该项后，另外配置失效
      */
     options?:object;

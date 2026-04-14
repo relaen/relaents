@@ -1,6 +1,6 @@
 import { BaseProvider } from "../../baseprovider";
 import { Connection } from "../../connection";
-import { SqliteConnectionOption } from "./sqliteoptions";
+import { SqliteOption } from "./sqliteoption";
 
 /**
  * sqlite provider
@@ -20,7 +20,7 @@ export class SqliteProvider extends BaseProvider {
      * 构造器
      * @param cfg -   连接配置
      */
-    constructor(cfg: SqliteConnectionOption) {
+    constructor(cfg: SqliteOption) {
         super(cfg);
         this.dbMdl = require('sqlite3');
         this.options = cfg.options ? cfg.options : {
@@ -132,7 +132,6 @@ export class SqliteProvider extends BaseProvider {
         }
         return sql;
     }
-
 
     /**
      * 从sql执行结果获取identityid，仅对主键生成策略是identity的有效

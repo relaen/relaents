@@ -4,7 +4,7 @@ import { BaseProvider } from "../../baseprovider";
 import { EntityFactory } from "../../entityfactory";
 import { EntityManager } from "../../entitymanager";
 import { NativeQuery } from "../../nativequery";
-import { IMssqlConnectionCfg } from "./mssqloptions";
+import { MssqlOption } from "./mssqloption";
 import { EntityConfig } from "../../entityconfig";
 import { TransactionFactory } from "../../transactionfactory";
 
@@ -16,7 +16,7 @@ export class MssqlProvider extends BaseProvider {
      * 构造器
      * @param cfg -   连接配置
      */
-    constructor(cfg: IMssqlConnectionCfg) {
+    constructor(cfg: MssqlOption) {
         super(cfg);
         this.dbMdl = require('mssql');
         this.options = cfg.options ? cfg.options : {

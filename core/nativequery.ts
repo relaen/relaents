@@ -20,6 +20,8 @@ class NativeQuery extends Query {
     constructor(sql: string, em: EntityManager, entityClassName?: string) {
         super(em, entityClassName);
         this.execSql = sql;
+        this.entityManager = em;
+        this.entityClassName = entityClassName;
     }
 
     /**

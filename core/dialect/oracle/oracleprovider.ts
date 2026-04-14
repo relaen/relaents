@@ -2,7 +2,7 @@ import { Connection } from "../../connection";
 import { BaseProvider } from "../../baseprovider";
 import { EntityManager } from "../../entitymanager";
 import { NativeQuery } from "../../nativequery";
-import { IOracleConnectionCfg } from "./oracleoptions";
+import { OracleOption } from "./oracleoption";
 import { ELockType } from "../../types";
 
 /**
@@ -19,7 +19,7 @@ export class OracleProvider extends BaseProvider {
      * 构造器
      * @param cfg -   连接配置
      */
-    constructor(cfg: IOracleConnectionCfg) {
+    constructor(cfg: OracleOption) {
         super(cfg);
         this.dbMdl = require('oracledb');
         this.dbMdl.autoCommit = true;

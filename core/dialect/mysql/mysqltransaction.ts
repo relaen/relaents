@@ -6,7 +6,7 @@ import { EIsolationLevel } from "../../types";
 /**
  * mysql 事务类
  */
-class MysqlTransaction extends Transaction {
+export class MysqlTransaction extends Transaction {
 
     /**
      * 设置当前事务
@@ -69,6 +69,3 @@ class MysqlTransaction extends Transaction {
         });
     }
 }
-
-
-export { MysqlTransaction }

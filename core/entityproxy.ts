@@ -19,7 +19,7 @@ class EntityProxy {
      */
     public static async get(entity: IEntity, propName: string): Promise<any> {
         if (!EntityFactory.getIdValue(entity)) {
-            Logger.error(new RelaenError("0105"));
+            Logger.error(new RelaenError("0153"));
             return null;
         }
 

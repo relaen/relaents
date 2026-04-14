@@ -33,7 +33,7 @@ class EntityManagerFactory {
 
     /**
      * 创建 entity manager，使用后需要释放
-     * @param isCache -   是否开启缓存
+     * @param isCache - 是否开启缓存
      * @returns         实体管理器
      */
     public static async createEntityManager(isCache?: boolean): Promise<EntityManager> {
@@ -123,8 +123,8 @@ class EntityManagerFactory {
 
     /**
      * 设置实体状态
-     * @param entity -    实体 
-     * @param state -     状态
+     * @param entity -  实体 
+     * @param state -   状态
      */
     public static setEntityStatus(entity: IEntity, state: EEntityState) {
         this.entityStatusMap.set(entity, state);
@@ -132,7 +132,7 @@ class EntityManagerFactory {
 
     /**
      * 获取实体状态
-     * @param entity -    实体对象
+     * @param entity -  实体对象
      * @returns         实体状态或undefined
      */
     public static getEntityStatus(entity: IEntity): EEntityState {
@@ -142,7 +142,7 @@ class EntityManagerFactory {
 
 /**
  * 返回entity manager
- * @param isCache -   是否开启缓存
+ * @param isCache - 是否开启缓存
  * @returns         实体管理器
  */
 async function getEntityManager(isCache?: boolean): Promise<EntityManager> {

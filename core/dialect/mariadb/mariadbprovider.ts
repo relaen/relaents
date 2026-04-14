@@ -1,7 +1,7 @@
 import { Connection } from "../../connection";
 import { RelaenError } from "../../message/error";
 import { BaseProvider } from "../../baseprovider";
-import { MariadbConnectionOption } from "./mariadboptions";
+import { MariadbOption } from "./mariadboption";
 import { ELockType } from "../../types";
 
 /**
@@ -12,7 +12,7 @@ export class MariadbProvider extends BaseProvider {
      * 构造器
      * @param cfg -   连接配置
      */
-    constructor(cfg: MariadbConnectionOption) {
+    constructor(cfg: MariadbOption) {
         super(cfg);
         this.dbMdl = require('mariadb');
         this.options = cfg.options ? cfg.options : {

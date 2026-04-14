@@ -1,9 +1,9 @@
 import { ConnectionOption } from "../../types";
 
 /**
- * oracle ConnectionCfg
+ * oracle 配置项
  */
-export interface IOracleConnectionCfg extends ConnectionOption {
+export type OracleOption = {
 
     /**
      * 在建立到数据库的连接时使用的特权
@@ -28,4 +28,4 @@ export interface IOracleConnectionCfg extends ConnectionOption {
      * The number of connections that are opened whenever a connection request exceeds the number of currently open connections.
      */
     readonly poolIncrement: number;
-}
+} & ConnectionOption;

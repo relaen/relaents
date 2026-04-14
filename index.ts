@@ -16,7 +16,7 @@ export * from './core/placeholderfactory';
 export * from './core/providerfactory';
 export * from './core/query';
 export * from './core/relaenmanager';
-export * from './core/relaentip';
+export * from './core/locales/relaentip_en';
 export * from './core/relaenutil';
 export * from './core/sqlexecutor';
 export * from './core/threadlocal';

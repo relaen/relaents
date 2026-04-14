@@ -18,9 +18,8 @@ export class BaseEntity implements IEntity {
 
     /**
      * 保存实体
-     * @param ignoreUndefinedValue -  忽略undefined值，针对update时有效
-     * @param lockMode -              锁模式
-     * @returns                     保存后的实体
+     * @param ignoreUndefinedValue -    忽略undefined值，针对update时有效
+     * @returns                         保存后的实体
      */
     public async save(ignoreUndefinedValue?: boolean): Promise<IEntity> {
         const em = await getEntityManager();

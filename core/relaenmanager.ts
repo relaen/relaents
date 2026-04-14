@@ -25,6 +25,7 @@ import { SqliteTranslator } from "./dialect/sqlite/sqlitetranslator";
 import { MariadbTranslator } from "./dialect/mariadb/mariadbtranslator";
 import { Logger } from "./logger";
 import { ConnectionOption, DialectType } from "./types";
+import { RelaenTipManager } from "./message/tipmanager";
 
 /**
  * relaen 框架管理器
@@ -72,6 +73,7 @@ class RelaenManager {
         this.initTransaction();
         this.initTranslator();
         this.initPlaceholder();
+        await RelaenTipManager.init(cfg.lang);
         Logger.init(this.debug, this.fileLog);
         ConnectionManager.init(cfg);
         //加载实体

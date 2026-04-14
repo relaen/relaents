@@ -3,7 +3,7 @@ import { BaseProvider } from "../../baseprovider";
 import { EntityManager } from "../../entitymanager";
 import { NativeQuery } from "../../nativequery";
 import { ELockType } from "../../types";
-import { PostgresConnectionOption } from "./postgresoptions";
+import { PostgresOption } from "./postgresoption";
 
 /**
  * postgres provider
@@ -13,10 +13,10 @@ export class PostgresProvider extends BaseProvider {
      * 构造器
      * @param cfg -   连接配置
      */
-    constructor(cfg: PostgresConnectionOption) {
+    constructor(cfg: PostgresOption) {
         super(cfg);
         this.dbMdl = require('pg');
-        this.options = cfg.options ? cfg.options : {
+        this.options = cfg.options || {
             user: cfg.username,
             password: cfg.password,
             host: cfg.host,

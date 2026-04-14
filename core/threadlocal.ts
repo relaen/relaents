@@ -16,7 +16,7 @@ export class RelaenThreadLocal{
     
     /**
      * 新建thread id
-     * @returns     新threadId
+     * @returns     新建的 thread id
      */
     public static newThreadId():number{
         const sid = this.threadId++;
@@ -26,7 +26,7 @@ export class RelaenThreadLocal{
 
     /**
      * 获取当前thread id
-     * @returns     当前threadId
+     * @returns     当前thread id
      */
     public static getThreadId():number{
         return this.localStorage.getStore();

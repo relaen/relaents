@@ -51,7 +51,7 @@ class Connection {
 
     /**
      * 设置实际的connection
-     * @param conn -    实际的连接
+     * @param conn -    实际的连接对象
      */
     public setConn(conn: any): void {
         if (!conn) {

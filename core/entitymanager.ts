@@ -1,4 +1,4 @@
-import { EEntityState, IEntity, EntityColumnOption, ELockType, ESqliteTransactionType } from "./types";
+import { EEntityState, IEntity, ELockType, ESqliteTransactionType, ERelationType, EntityRelation } from "./types";
 import { SqlExecutor } from "./sqlexecutor";
 import { EntityFactory } from "./entityfactory";
 import { Query } from "./query";
@@ -344,7 +344,7 @@ class EntityManager {
                 await tx.commit();
                 // 没有查询到主键抛错
                 if (!value) {
-                    throw new RelaenError('0401', entity.constructor.name);
+                    throw new RelaenError('0052', entity.constructor.name);
                 }
                 break;
             case 'uuid':
@@ -370,26 +370,31 @@ class EntityManager {
         if (!eo) {
             throw new RelaenError("0010", className);
         }
-        for (const key of eo.columns) {
-            const fo: EntityColumnOption = key[1];
+        for (const [key,fo] of eo.columns) {
             let v;
             if (fo.refName) { //外键，只取主键
-                if (typeof entity[key[0]] === 'object') {
-                    const eo1 = EntityFactory.getEntityConfig(eo.getRelation(key[0]).entity);
-                    v = entity[key[0]][eo1.getId().name];
+                if (typeof entity[key] === 'object') {
+                    const rel = eo.getRelation(key);
+                    const eo1 = EntityFactory.getEntityConfig(rel.entity);
+                    v = entity[key][eo1.getId().name];
                 }
             } else {
                 v = entity[key[0]]; //赋值，用于长度和为空检查
             }
-            if ((v === null || v === undefined)) {
+            let relType;
+            if(eo.hasRelation(key)){
+                relType = eo.getRelation(key).type;
+            }
+            if ((v === null || v === undefined) && relType && relType !== ERelationType.OneToMany && relType !== ERelationType.ManyToMany) {
+                const rel:EntityRelation = eo.getRelation(key[0])
                 if (!ignoreUndefinedValue && !fo.nullable) {//null 判断
-                    if (key[0] !== eo.id.name) {//如果与主键不同且不能为空，则抛出异常 
-                        throw new RelaenError('0021', key[0]);
+                    if (key !== eo.id.name) {//如果与主键不同且不能为空，则抛出异常 
+                        throw new RelaenError('0021', key);
                     }
                 }
-                entity[key[0]] = null;
-            } else if (key[1].length && v.length > key[1].length) { //长度检测
-                throw new RelaenError('0024', className, key[0], key[1].length);
+                entity[key] = null;
+            } else if (fo.length && v.length > fo.length) { //长度检测
+                throw new RelaenError('0024', className, key, fo.length);
             }
         }
         return true;

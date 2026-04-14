@@ -1,12 +1,12 @@
 import { ConnectionOption } from "../../types";
 
 /**
- * postgres ConnectionCfg
+ * postgres 配置项
  */
-export interface PostgresConnectionOption extends ConnectionOption {
+export type PostgresOption = {
 
     /**
      * passed directly to node.TLSSocket, supports all tls.connect options
      */
     readonly ssl: boolean;
-}
+} & ConnectionOption;

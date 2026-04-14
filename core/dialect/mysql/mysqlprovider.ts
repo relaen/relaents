@@ -1,7 +1,7 @@
 import { Connection } from "../../connection";
 import { RelaenError } from "../../message/error";
 import { BaseProvider } from "../../baseprovider";
-import { IMysqlConnectionCfg } from "./mysqloptions";
+import { MysqlOption } from "./mysqloption";
 import { ELockType } from "../../types";
 
 /**
@@ -13,7 +13,7 @@ export class MysqlProvider extends BaseProvider {
      * 构造器
      * @param cfg -   连接配置
      */
-    constructor(cfg: IMysqlConnectionCfg) {
+    constructor(cfg: MysqlOption) {
         super(cfg);
         this.dbMdl = require('mysql');
         this.options = cfg.options ? cfg.options : {
@@ -88,6 +88,9 @@ export class MysqlProvider extends BaseProvider {
         }
     }
 
+    /**
+     * 关闭连接
+     */
     public async endPool() {
         if (this.pool) {
             new Promise((resovle, reject) => {
@@ -136,7 +139,7 @@ export class MysqlProvider extends BaseProvider {
     }
 
     /**
-     * 从sql执行结果获取identityid，仅对主键生成策略是identity的有效
+     * 从sql执行结果获取identityid，当主键生成策略是identity时有效
      * @param result -  sql执行结果
      * @returns         主键
      */
@@ -154,26 +157,25 @@ export class MysqlProvider extends BaseProvider {
     public lock(type: ELockType, tables?: string[], schema?: string): string {
         switch (type) {
             //表连接为 ' ' 空格
-            case 'table_read':
+            case ELockType.TABLEREAD:
                 return "LOCK TABLE " + tables.join(' ') + " READ";
-            case 'table_write':
+            case ELockType.TABLEWRITE:
                 return "LOCK TABLE " + tables.join(' ') + " WRITE";
-            case 'row_read':
+            case ELockType.ROWREAD:
                 return "LOCK IN SHARE MODE";
-            case 'row_write':
+            case ELockType.ROWWRITE:
                 return "FOR UPDATE";
         }
     }
 
     /**
      * 获取释放锁sql语句
-     * @param type -      锁类型
+     * @param type -    锁类型
      * @returns         释放锁sql语句
      */
     public unlock(type: ELockType): string {
-        switch (type) {
-            case 'table_write':
-                return "UNLOCK TABLES";
+        if(type === ELockType.TABLEWRITE){
+            return "UNLOCK TABLES";
         }
     }
 }

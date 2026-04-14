@@ -1,9 +1,9 @@
-import { ConnectionOption, } from "../../types";
+import { ConnectionOption } from "../../types";
 
 /**
  * mariadb Connection配置项
  */
-export interface MariadbConnectionOption extends ConnectionOption {
+export type MariadbOption = {
     /**
      * Enables TLS support. For more information, see the ssl option documentation.
      */
@@ -42,4 +42,4 @@ export interface MariadbConnectionOption extends ConnectionOption {
      * Shows the byte-encoded flags. 
      */
     readonly flags: string;
-}
+} & ConnectionOption;
